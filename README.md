@@ -7,7 +7,7 @@ Welcome to the OSNT SUME base package for NetFPGA-SUME.
 
 Before using this code, please check the release notes at:
 
-https://github.com/NetFPGA/OSNT-Public/wiki/Release-Notes-Sume
+https://github.com/NetFPGA/OSNT-Public/wiki/OSNT-SUME-Release-Notes
 
 For documentation on its content and use, as well as general
 information on OSNT, please visit the documentation wiki:
