@@ -299,6 +299,10 @@ always @(posedge axis_aclk)
       tmp0_addr      <= 1;
       st0_wr_current <= 0;
    end
+   else if (sw_rst) begin
+      tmp0_addr      <= 1;
+      st0_wr_current <= 0;
+   end
    else begin
       tmp0_addr      <= tmp0_addr_next;
       st0_wr_current <= st0_wr_next;
@@ -360,6 +364,10 @@ end
 reg   [3:0] st1_wr_current, st1_wr_next;
 always @(posedge axis_aclk)
    if (~axis_aresetn) begin
+      tmp1_addr      <= 1;
+      st1_wr_current <= 0;
+   end
+   else if (sw_rst) begin
       tmp1_addr      <= 1;
       st1_wr_current <= 0;
    end
@@ -426,6 +434,10 @@ always @(posedge axis_aclk)
       tmp2_addr      <= 1;
       st2_wr_current <= 0;
    end
+   else if (sw_rst) begin
+      tmp2_addr      <= 1;
+      st2_wr_current <= 0;
+   end
    else begin
       tmp2_addr      <= tmp2_addr_next;
       st2_wr_current <= st2_wr_next;
@@ -487,6 +499,10 @@ end
 reg   [3:0] st3_wr_current, st3_wr_next;
 always @(posedge axis_aclk)
    if (~axis_aresetn) begin
+      tmp3_addr      <= 1;
+      st3_wr_current <= 0;
+   end
+   else if (sw_rst) begin
       tmp3_addr      <= 1;
       st3_wr_current <= 0;
    end
@@ -652,6 +668,11 @@ always @(posedge axis_aclk)
       q0_count          <= 0;
       st0_rd_current    <= 0;
    end
+   else if (sw_rst) begin
+      r_mem_rd_addr[0]  <= 1;
+      q0_count          <= 0;
+      st0_rd_current    <= 0;
+   end
    else begin
       r_mem_rd_addr[0]  <= r_mem_rd_addr_next[0];
       q0_count          <= q0_count_next;
@@ -729,6 +750,11 @@ reg   [3:0]    st1_rd_current, st1_rd_next;
 
 always @(posedge axis_aclk)
    if (~axis_aresetn) begin
+      r_mem_rd_addr[1]  <= 1;
+      q1_count          <= 0;
+      st1_rd_current    <= 0;
+   end
+   else if (sw_rst) begin
       r_mem_rd_addr[1]  <= 1;
       q1_count          <= 0;
       st1_rd_current    <= 0;
@@ -814,6 +840,11 @@ always @(posedge axis_aclk)
       q2_count          <= 0;
       st2_rd_current    <= 0;
    end
+   else if (sw_rst) begin
+      r_mem_rd_addr[2]  <= 1;
+      q2_count          <= 0;
+      st2_rd_current    <= 0;
+   end
    else begin
       r_mem_rd_addr[2]  <= r_mem_rd_addr_next[2];
       q2_count          <= q2_count_next;
@@ -892,6 +923,11 @@ reg   [3:0]    st3_rd_current, st3_rd_next;
 
 always @(posedge axis_aclk)
    if (~axis_aresetn) begin
+      r_mem_rd_addr[3]  <= 1;
+      q3_count          <= 0;
+      st3_rd_current    <= 0;
+   end
+   else if (sw_rst) begin
       r_mem_rd_addr[3]  <= 1;
       q3_count          <= 0;
       st3_rd_current    <= 0;
