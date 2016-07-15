@@ -126,8 +126,8 @@ foreach verilog_file $VerilogFiles {
 }
 
 # Generate Xilinx AXIS-FIFO (xci)
-#create_ip -name fifo_generator -vendor xilinx.com -library ip -version 13.1 -module_name ${xil_ip}
-create_ip -name fifo_generator -vendor xilinx.com -library ip -version 12.0 -module_name ${xil_ip}
+create_ip -name fifo_generator -vendor xilinx.com -library ip -version 13.1 -module_name ${xil_ip}
+
 foreach item [dict keys $axis_fifo_params] {
 	set val [dict get $axis_fifo_params $item]
 	puts "( $item , $val ) pair \n"
@@ -142,23 +142,6 @@ ipx::package_project -force -import_files $xil_ip_xci
 
 # Set ip descriptions
 source ../../../lib/osnt_ip_property_common.tcl
-
-# Add SubCore Reference
-#foreach subcore ${subcore_names} {
-#	set subcore_regex NAME=~*$subcore*
-#	set subcore_ipdef [get_ipdefs -filter ${subcore_regex}]
-#
-#	ipx::add_subcore ${subcore_ipdef} [ipx::get_file_groups xilinx_verilogsynthesis -of_objects [ipx::current_core]]
-#	ipx::add_subcore ${subcore_ipdef}  [ipx::get_file_groups xilinx_verilogbehavioralsimulation -of_objects [ipx::current_core]]
-#	puts "Adding the following subcore: $subcore_ipdef \n"		
-#
-#}
-
-# process verilog header files early
-# no need for vivado 16.1
-#set_property processing_order early [ipx::get_files *.vh -of_objects [ipx::get_file_groups xilinx_verilogsynthesis -of_objects [ipx::current_core]]]
-#set_property processing_order early [ipx::get_files *.vh -of_objects [ipx::get_file_groups xilinx_verilogbehavioralsimulation -of_objects [ipx::current_core]]]
-
 
 # Auto Generate Parameters
 ipx::remove_all_hdl_parameter [ipx::current_core]
@@ -219,7 +202,6 @@ ipx::add_bus_parameter POLARITY [ipx::get_bus_interfaces user_reset -of_objects 
 set_property value ACTIVE_HIGH [ipx::get_bus_parameters POLARITY -of_objects [ipx::get_bus_interfaces user_reset -of_objects [ipx::current_core]]]
 
 # axi_lite rst
-#set_property value ACTIVE_LOW [ipx::get_bus_parameters POLARITY -of_objects [ipx::get_bus_interfaces m_axi_lite_signal_reset -of_objects [ipx::current_core]]]
 ipx::add_bus_interface m_axi_lite_aresetn [ipx::current_core]
 set_property abstraction_type_vlnv xilinx.com:signal:reset_rtl:1.0 [ipx::get_bus_interfaces m_axi_lite_aresetn -of_objects [ipx::current_core]]
 set_property bus_type_vlnv xilinx.com:signal:reset:1.0 [ipx::get_bus_interfaces m_axi_lite_aresetn -of_objects [ipx::current_core]]
@@ -232,8 +214,6 @@ ipx::add_bus_parameter FREQ_HZ [ipx::get_bus_interfaces s_axi_lite -of_objects [
 set_property description {Clock frequency (Hertz)} [ipx::get_bus_parameters FREQ_HZ -of_objects [ipx::get_bus_interfaces s_axi_lite -of_objects [ipx::current_core]]]
 
 ## other
-#ipx::add_bus_parameter ASSOCIATED_BUSIF [ipx::get_bus_interfaces user_signal_clock -of_objects [ipx::current_core]]
-#set_property value user_clk [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects [ipx::get_bus_interfaces user_signal_clock -of_objects [ipx::current_core]]]
 ipx::add_bus_parameter ASSOCIATED_BUSIF [ipx::get_bus_interfaces user_clk -of_objects [ipx::current_core]]
 set_property value user_clk [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects [ipx::get_bus_interfaces user_clk -of_objects [ipx::current_core]]]
 

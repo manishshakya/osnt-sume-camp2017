@@ -163,7 +163,8 @@ end entity cntr_incr_decr_addn_f;
 
 
 ---(
-library lib_srl_fifo_v1_0;
+library xil_defaultlib;
+
 library ieee;
 use     ieee.numeric_std.UNSIGNED;
 use     ieee.numeric_std."+";

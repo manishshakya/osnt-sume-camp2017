@@ -192,9 +192,9 @@ use     ieee.std_logic_1164.all;
 use     ieee.numeric_std.UNSIGNED;
 use     ieee.numeric_std.">=";
 use     ieee.numeric_std.TO_UNSIGNED;
-library lib_pkg_v1_0;
-use     lib_pkg_v1_0.lib_pkg.clog2;
-library lib_srl_fifo_v1_0;
+
+library xil_defaultlib;
+use     xil_defaultlib.lib_pkg.all;
 
 entity srl_fifo_rbu_f is
   generic (
@@ -252,7 +252,7 @@ begin
     -- The FIFO address counter. Addresses the next element to be read.
     -- All ones when the FIFO is empty. 
     ----------------------------------------------------------------------------
-    CNTR_INCR_DECR_ADDN_F_I : entity lib_srl_fifo_v1_0.cntr_incr_decr_addn_f
+    CNTR_INCR_DECR_ADDN_F_I : entity xil_defaultlib.cntr_incr_decr_addn_f
         generic map (
           C_SIZE   => ADDR_BITS + 1,
           C_FAMILY => C_FAMILY 
@@ -271,7 +271,7 @@ begin
     ----------------------------------------------------------------------------
     -- The dynamic shift register that holds the FIFO elements.
     ----------------------------------------------------------------------------
-    DYNSHREG_F_I : entity lib_srl_fifo_v1_0.dynshreg_f
+    DYNSHREG_F_I : entity xil_defaultlib.dynshreg_f
         generic map (
             C_DEPTH   => C_DEPTH,
             C_DWIDTH  => C_DWIDTH,
