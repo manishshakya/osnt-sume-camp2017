@@ -25,7 +25,7 @@
 #
 # @NETFPGA_LICENSE_HEADER_END@
 
-all: clean
+xil_sim: clean
 	vivado -mode tcl -source ./tcl/osnt_sume.tcl
 	sed -i 's/xsim system_wrapper_tb_behav/xsim system_wrapper_tb_behav -gui/' project/system.sim/sim_1/behav/simulate.sh
 	sed -i 's/quit//' project/system.sim/sim_1/behav/system_wrapper_tb.tcl

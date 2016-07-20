@@ -178,8 +178,8 @@ proc create_hier_cell_sume_osnt_10g_all_interface { parentCell coreName tdataWid
    connect_bd_net [get_bd_pins tx_abs_0] [get_bd_pins sume_osnt_10g_interface_0/tx_abs]
    connect_bd_net [get_bd_pins tx_fault_0] [get_bd_pins sume_osnt_10g_interface_0/tx_fault]
    connect_bd_intf_net [get_bd_intf_pins s0_axis] [get_bd_intf_pins sume_osnt_10g_interface_0/s_axis]
-   connect_bd_net [get_bd_pins tx_led_0] [get_bd_pins sume_osnt_10g_interface_0/resetdone]
-   connect_bd_net [get_bd_pins rx_led_0] [get_bd_pins sume_osnt_10g_interface_0/resetdone]
+   connect_bd_net [get_bd_pins tx_led_0] [get_bd_pins sume_osnt_10g_interface_0/resetdone_out]
+   connect_bd_net [get_bd_pins rx_led_0] [get_bd_pins sume_osnt_10g_interface_0/resetdone_out]
    connect_bd_net [get_bd_pins txp_0] [get_bd_pins sume_osnt_10g_interface_0/txp]
    connect_bd_net [get_bd_pins txn_0] [get_bd_pins sume_osnt_10g_interface_0/txn]
    connect_bd_net [get_bd_pins tx_disable_0] [get_bd_pins sume_osnt_10g_interface_0/tx_disable]
@@ -221,18 +221,18 @@ proc create_hier_cell_sume_osnt_10g_all_interface { parentCell coreName tdataWid
    connect_bd_net [get_bd_pins tx_disable_3] [get_bd_pins sume_osnt_10g_interface_3/tx_disable]
    connect_bd_intf_net [get_bd_intf_pins m3_axis] [get_bd_intf_pins sume_osnt_10g_interface_3/m_axis]
 
-   connect_bd_net [get_bd_pins clk156_out] [get_bd_pins sume_osnt_10g_interface_0/clk156_out]
+   connect_bd_net [get_bd_pins clk156_out] [get_bd_pins sume_osnt_10g_interface_0/coreclk_out]
    create_bd_cell -type ip -vlnv xilinx.com:ip:util_vector_logic:2.0 util_vector_logic_0
    set_property -dict [list CONFIG.C_SIZE {1} CONFIG.C_OPERATION {not}] [get_bd_cells util_vector_logic_0]
-   connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/areset_clk156_out] [get_bd_pins util_vector_logic_0/Op1] 
+   connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/areset_datapathclk_out] [get_bd_pins util_vector_logic_0/Op1] 
    connect_bd_net [get_bd_pins aresetn_clk156_out] [get_bd_pins util_vector_logic_0/Res]
 
-   connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/clk156_out] [get_bd_pins osnt_sume_10g_axi_if_0/S_AXI_ACLK]
+   connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/coreclk_out] [get_bd_pins osnt_sume_10g_axi_if_0/S_AXI_ACLK]
    connect_bd_net [get_bd_pins util_vector_logic_0/Res] [get_bd_pins osnt_sume_10g_axi_if_0/S_AXI_ARESETN]
 
    # Start bd internal connection
-   connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/clk156_out] [get_bd_pins sume_osnt_10g_interface_1/clk156]
-   connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/areset_clk156_out] [get_bd_pins sume_osnt_10g_interface_1/areset_clk156]
+   connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/coreclk_out] [get_bd_pins sume_osnt_10g_interface_1/coreclk]
+   connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/areset_datapathclk_out] [get_bd_pins sume_osnt_10g_interface_1/areset]
    connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/txusrclk_out] [get_bd_pins sume_osnt_10g_interface_1/txusrclk]
    connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/txusrclk2_out] [get_bd_pins sume_osnt_10g_interface_1/txusrclk2]
    connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/txuserrdy_out] [get_bd_pins sume_osnt_10g_interface_1/txuserrdy]
@@ -243,8 +243,8 @@ proc create_hier_cell_sume_osnt_10g_all_interface { parentCell coreName tdataWid
    connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/qplloutclk_out] [get_bd_pins sume_osnt_10g_interface_1/qplloutclk]
    connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/qplloutrefclk_out] [get_bd_pins sume_osnt_10g_interface_1/qplloutrefclk]
    
-   connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/clk156_out] [get_bd_pins sume_osnt_10g_interface_2/clk156]
-   connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/areset_clk156_out] [get_bd_pins sume_osnt_10g_interface_2/areset_clk156]
+   connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/coreclk_out] [get_bd_pins sume_osnt_10g_interface_2/coreclk]
+   connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/areset_datapathclk_out] [get_bd_pins sume_osnt_10g_interface_2/areset]
    connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/txusrclk_out] [get_bd_pins sume_osnt_10g_interface_2/txusrclk]
    connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/txusrclk2_out] [get_bd_pins sume_osnt_10g_interface_2/txusrclk2]
    connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/txuserrdy_out] [get_bd_pins sume_osnt_10g_interface_2/txuserrdy]
@@ -255,8 +255,8 @@ proc create_hier_cell_sume_osnt_10g_all_interface { parentCell coreName tdataWid
    connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/qplloutclk_out] [get_bd_pins sume_osnt_10g_interface_2/qplloutclk]
    connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/qplloutrefclk_out] [get_bd_pins sume_osnt_10g_interface_2/qplloutrefclk]
    
-   connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/clk156_out] [get_bd_pins sume_osnt_10g_interface_3/clk156]
-   connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/areset_clk156_out] [get_bd_pins sume_osnt_10g_interface_3/areset_clk156]
+   connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/coreclk_out] [get_bd_pins sume_osnt_10g_interface_3/coreclk]
+   connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/areset_datapathclk_out] [get_bd_pins sume_osnt_10g_interface_3/areset]
    connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/txusrclk_out] [get_bd_pins sume_osnt_10g_interface_3/txusrclk]
    connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/txusrclk2_out] [get_bd_pins sume_osnt_10g_interface_3/txusrclk2]
    connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/txuserrdy_out] [get_bd_pins sume_osnt_10g_interface_3/txuserrdy]

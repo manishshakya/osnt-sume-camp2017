@@ -86,14 +86,16 @@ end
 
 always @(posedge M_AXI_ACLK)
    if (~M_AXI_ARESETN) begin
-      IP2Bus_MstRd_Req  <= 0;
-      IP2Bus_MstWr_Req  <= 0;
-      IP2Bus_Mst_Addr   <= 0;
-      IP2Bus_Mst_BE     <= 0;
-      IP2Bus_MstWr_d    <= 0;
-      state             <= `ST_IDLE;
+      #0.5
+      IP2Bus_MstRd_Req  = 0;
+      IP2Bus_MstWr_Req  = 0;
+      IP2Bus_Mst_Addr   = 0;
+      IP2Bus_Mst_BE     = 0;
+      IP2Bus_MstWr_d    = 0;
+      state             = `ST_IDLE;
    end
    else begin
+      #0.5
       case (state)
          `ST_IDLE : begin
             $fgets(line, file);

@@ -29,6 +29,7 @@
 all:
 	$(MAKE) -C ./osnt_sume_axi_if_v1_00
 	$(MAKE) -C ./osnt_sume_axi_sim_transactor_v1_00
+	$(MAKE) -C ./osnt_sume_axi_sim_master_v1_00
 	$(MAKE) -C ./osnt_sume_axis_sim_record_v1_00
 	$(MAKE) -C ./osnt_sume_axis_sim_stim_v1_00
 	$(MAKE) -C ./osnt_sume_bram_output_queues_v1_00
@@ -41,6 +42,7 @@ all:
 clean:
 	$(MAKE) -C ./osnt_sume_axi_if_v1_00 clean
 	$(MAKE) -C ./osnt_sume_axi_sim_transactor_v1_00 clean
+	$(MAKE) -C ./osnt_sume_axi_sim_master_v1_00 clean
 	$(MAKE) -C ./osnt_sume_axis_sim_record_v1_00 clean
 	$(MAKE) -C ./osnt_sume_axis_sim_stim_v1_00 clean
 	$(MAKE) -C ./osnt_sume_bram_output_queues_v1_00 clean

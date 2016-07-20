@@ -175,10 +175,8 @@ set_property -dict [list CONFIG.OUTPUT_FILE {./stream_data_out_3.axi}] [get_bd_c
 create_bd_cell -type ip -vlnv OSNT-SUME-NetFPGA:OSNT-SUME-NetFPGA:osnt_sume_axis_sim_record:1.00 osnt_sume_axis_sim_record_4
 set_property -dict [list CONFIG.OUTPUT_FILE {./stream_data_out_4.axi}] [get_bd_cells osnt_sume_axis_sim_record_4]
 
-create_bd_cell -type ip -vlnv OSNT-SUME-NetFPGA:OSNT-SUME-NetFPGA:osnt_sume_axi_sim_transactor:1.00 osnt_sume_axi_sim_transactor_0
-set_property -dict [list CONFIG.EXPECT_FILE {../../../../tv/reg_expect.axi}] [get_bd_cells osnt_sume_axi_sim_transactor_0]
-set_property -dict [list CONFIG.STIM_FILE {../../../../tv/reg_stim.axi}] [get_bd_cells osnt_sume_axi_sim_transactor_0]
-set_property -dict [list CONFIG.LOG_FILE {../../../../tv/reg_stim.log}] [get_bd_cells osnt_sume_axi_sim_transactor_0]
+create_bd_cell -type ip -vlnv OSNT-SUME-NetFPGA:OSNT-SUME-NetFPGA:osnt_sume_axi_sim_master:1.00 osnt_sume_axi_sim_master_0
+set_property -dict [list CONFIG.REG_FILE {../../../../tv/reg_stim.axi}] [get_bd_cells osnt_sume_axi_sim_master_0]
 
 create_bd_cell -type ip -vlnv OSNT-SUME-NetFPGA:OSNT-SUME-NetFPGA:osnt_sume_axi_if:1.00 osnt_sume_axi_if_0
 
@@ -186,53 +184,53 @@ source ./tcl/osnt_sume_connection.tcl
 
 # Bus register map address configuration
 assign_bd_address [get_bd_addr_segs {osnt_sume_bram_pcap_replay_uengine_0/s_axi/reg0 }]
-set_property range 64K [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_osnt_sume_bram_pcap_replay_uengine_0_reg0}]
-set_property offset 0x76000000 [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_osnt_sume_bram_pcap_replay_uengine_0_reg0}]
+set_property range 64K [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_osnt_sume_bram_pcap_replay_uengine_0_reg0}]
+set_property offset 0x76000000 [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_osnt_sume_bram_pcap_replay_uengine_0_reg0}]
 
 assign_bd_address [get_bd_addr_segs {osnt_sume_extract_metadata_0/s_axi/reg0 }]
-set_property range 64K [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_osnt_sume_extract_metadata_0_reg0}]
-set_property offset 0x76e00000 [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_osnt_sume_extract_metadata_0_reg0}]
+set_property range 64K [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_osnt_sume_extract_metadata_0_reg0}]
+set_property offset 0x76e00000 [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_osnt_sume_extract_metadata_0_reg0}]
 
 assign_bd_address [get_bd_addr_segs {osnt_sume_rate_limiter_0/s_axi/reg0 }]
-set_property range 64K [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_osnt_sume_rate_limiter_0_reg0}]
-set_property offset 0x77e00000 [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_osnt_sume_rate_limiter_0_reg0}]
+set_property range 64K [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_osnt_sume_rate_limiter_0_reg0}]
+set_property offset 0x77e00000 [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_osnt_sume_rate_limiter_0_reg0}]
 
 assign_bd_address [get_bd_addr_segs {osnt_sume_inter_packet_delay_0/s_axi/reg0 }]
-set_property range 64K [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_osnt_sume_inter_packet_delay_0_reg0}]
-set_property offset 0x76600000 [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_osnt_sume_inter_packet_delay_0_reg0}]
+set_property range 64K [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_osnt_sume_inter_packet_delay_0_reg0}]
+set_property offset 0x76600000 [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_osnt_sume_inter_packet_delay_0_reg0}]
 
 assign_bd_address [get_bd_addr_segs {osnt_sume_packet_cutter_0/S_AXI/reg0 }]
-set_property range 64K [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_osnt_sume_packet_cutter_0_reg0}]
-set_property offset 0x77a00000 [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_osnt_sume_packet_cutter_0_reg0}]
+set_property range 64K [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_osnt_sume_packet_cutter_0_reg0}]
+set_property offset 0x77a00000 [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_osnt_sume_packet_cutter_0_reg0}]
 
 assign_bd_address [get_bd_addr_segs {osnt_sume_timestamp_0/S_AXI/reg0 }]
-set_property range 64K [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_osnt_sume_timestamp_0_reg0}]
-set_property offset 0x78a00000 [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_osnt_sume_timestamp_0_reg0}]
+set_property range 64K [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_osnt_sume_timestamp_0_reg0}]
+set_property offset 0x78a00000 [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_osnt_sume_timestamp_0_reg0}]
 
 assign_bd_address [get_bd_addr_segs {osnt_sume_monitoring_output_port_lookup_0/S_AXI/reg0 }]
-set_property range 64K [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_osnt_sume_monitoring_output_port_lookup_0_reg0}]
-set_property offset 0x75000000 [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_osnt_sume_monitoring_output_port_lookup_0_reg0}]
+set_property range 64K [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_osnt_sume_monitoring_output_port_lookup_0_reg0}]
+set_property offset 0x75000000 [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_osnt_sume_monitoring_output_port_lookup_0_reg0}]
 
 assign_bd_address [get_bd_addr_segs {axi_bram_ctrl_0/S_AXI/Mem0 }]
-set_property offset 0x7A000000 [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_axi_bram_ctrl_0_Mem0}]
-set_property range 128K [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_axi_bram_ctrl_0_Mem0}]
+set_property offset 0x7A000000 [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_axi_bram_ctrl_0_Mem0}]
+set_property range 128K [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_axi_bram_ctrl_0_Mem0}]
 
 assign_bd_address [get_bd_addr_segs {axi_bram_ctrl_1/S_AXI/Mem0 }]
-set_property offset 0x7A100000 [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_axi_bram_ctrl_1_Mem0}]
-set_property range 128K [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_axi_bram_ctrl_1_Mem0}]
+set_property offset 0x7A100000 [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_axi_bram_ctrl_1_Mem0}]
+set_property range 128K [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_axi_bram_ctrl_1_Mem0}]
 
 assign_bd_address [get_bd_addr_segs {axi_bram_ctrl_2/S_AXI/Mem0 }]
-set_property offset 0x7A200000 [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_axi_bram_ctrl_2_Mem0}]
-set_property range 128K [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_axi_bram_ctrl_2_Mem0}]
+set_property offset 0x7A200000 [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_axi_bram_ctrl_2_Mem0}]
+set_property range 128K [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_axi_bram_ctrl_2_Mem0}]
 
 assign_bd_address [get_bd_addr_segs {axi_bram_ctrl_3/S_AXI/Mem0 }]
-set_property offset 0x7A300000 [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_axi_bram_ctrl_3_Mem0}]
-set_property range 128K [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_axi_bram_ctrl_3_Mem0}]
+set_property offset 0x7A300000 [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_axi_bram_ctrl_3_Mem0}]
+set_property range 128K [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_axi_bram_ctrl_3_Mem0}]
 
 
 assign_bd_address [get_bd_addr_segs {osnt_sume_axi_if_0/S_AXI/reg0 }]
-set_property range 64K [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_osnt_sume_axi_if_0_reg0}]
-set_property offset 0x90000000 [get_bd_addr_segs {osnt_sume_axi_sim_transactor_0/M_AXI/SEG_osnt_sume_axi_if_0_reg0}]
+set_property range 64K [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_osnt_sume_axi_if_0_reg0}]
+set_property offset 0x90000000 [get_bd_addr_segs {osnt_sume_axi_sim_master_0/M_AXI/SEG_osnt_sume_axi_if_0_reg0}]
 
 # Create system block
 generate_target all [get_files ${project_dir}/system.srcs/sources_1/bd/system/system.bd]
