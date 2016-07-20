@@ -35,8 +35,8 @@ all:
 	$(MAKE) -C ./osnt_sume_input_arbiter_v1_00
 	$(MAKE) -C ./osnt_sume_nic_output_port_lookup_v1_00
 	$(MAKE) -C ./osnt_sume_output_queues_v1_00
-	$(MAKE) -C ./osnt_sume_riffa_dma_v1_00
 	$(MAKE) -C ./osnt_sume_endianess_manager_v1_00
+	$(MAKE) -C ./osnt_sume_riffa_dma_v1_00
 
 clean:
 	$(MAKE) -C ./osnt_sume_axi_if_v1_00 clean
@@ -47,5 +47,5 @@ clean:
 	$(MAKE) -C ./osnt_sume_input_arbiter_v1_00 clean
 	$(MAKE) -C ./osnt_sume_nic_output_port_lookup_v1_00 clean
 	$(MAKE) -C ./osnt_sume_output_queues_v1_00 clean
-	$(MAKE) -C ./osnt_sume_riffa_dma_v1_00 clean
 	$(MAKE) -C ./osnt_sume_endianess_manager_v1_00 clean
+	$(MAKE) -C ./osnt_sume_riffa_dma_v1_00 clean
