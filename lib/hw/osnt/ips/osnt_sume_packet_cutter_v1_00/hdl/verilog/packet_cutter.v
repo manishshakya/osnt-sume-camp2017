@@ -37,43 +37,44 @@
  */
 
 
-	module packet_cutter
-	#(
-    	//Master AXI Stream Data Width
-    		parameter C_M_AXIS_DATA_WIDTH=256,
-    		parameter C_S_AXIS_DATA_WIDTH=256,
-    		parameter C_M_AXIS_TUSER_WIDTH=128,
-    		parameter C_S_AXIS_TUSER_WIDTH=128,
-		parameter C_S_AXI_DATA_WIDTH=32,
-		parameter HASH_WIDTH=128
-	)
-	(
-    	// Global Ports
-    		input axi_aclk,
-    		input axi_resetn,
+   module packet_cutter
+   #(
+       //Master AXI Stream Data Width
+          parameter C_M_AXIS_DATA_WIDTH=256,
+          parameter C_S_AXIS_DATA_WIDTH=256,
+          parameter C_M_AXIS_TUSER_WIDTH=128,
+          parameter C_S_AXIS_TUSER_WIDTH=128,
+      parameter C_S_AXI_DATA_WIDTH=32,
+      parameter HASH_WIDTH=128
+   )
+   (
+       // Global Ports
+          input axi_aclk,
+          input axi_resetn,
 
-    	// Master Stream Ports (interface to data path)
-    		output reg [C_M_AXIS_DATA_WIDTH - 1:0] m_axis_tdata,
-    		output reg [((C_M_AXIS_DATA_WIDTH / 8)) - 1:0] m_axis_tstrb,
-    		output reg [C_M_AXIS_TUSER_WIDTH-1:0] m_axis_tuser,
-    		output reg m_axis_tvalid,
-    		input  m_axis_tready,
-    		output reg m_axis_tlast,
+       // Master Stream Ports (interface to data path)
+          output reg [C_M_AXIS_DATA_WIDTH - 1:0] m_axis_tdata,
+          output reg [((C_M_AXIS_DATA_WIDTH / 8)) - 1:0] m_axis_tstrb,
+          output reg [C_M_AXIS_TUSER_WIDTH-1:0] m_axis_tuser,
+          output reg m_axis_tvalid,
+          input  m_axis_tready,
+          output reg m_axis_tlast,
 
-    	// Slave Stream Ports (interface to RX queues)
-    		input [C_S_AXIS_DATA_WIDTH - 1:0] s_axis_tdata,
-    		input [((C_S_AXIS_DATA_WIDTH / 8)) - 1:0] s_axis_tstrb,
-    		input [C_S_AXIS_TUSER_WIDTH-1:0] s_axis_tuser,
-    		input  s_axis_tvalid,
-    		output s_axis_tready,
-    		input  s_axis_tlast,
+       // Slave Stream Ports (interface to RX queues)
+          input [C_S_AXIS_DATA_WIDTH - 1:0] s_axis_tdata,
+          input [((C_S_AXIS_DATA_WIDTH / 8)) - 1:0] s_axis_tstrb,
+          input [C_S_AXIS_TUSER_WIDTH-1:0] s_axis_tuser,
+          input  s_axis_tvalid,
+          output s_axis_tready,
+          input  s_axis_tlast,
  
-    	// pkt cut
-    		input cut_en,
-    		input [C_S_AXI_DATA_WIDTH-1:0] cut_offset,
-    		input [C_S_AXI_DATA_WIDTH-1:0] cut_words,
-                input [C_S_AXI_DATA_WIDTH-1:0] cut_bytes
-	);
+       // pkt cut
+          input cut_en,
+          input [C_S_AXI_DATA_WIDTH-1:0] cut_offset,
+          input [C_S_AXI_DATA_WIDTH-1:0] cut_words,
+                input [C_S_AXI_DATA_WIDTH-1:0] cut_bytes,
+                input hash_en
+   );
 
 
    function integer log2;
@@ -86,31 +87,35 @@
       end
    endfunction // log2
 
-	//--------------------- Internal Parameter-------------------------
+   //--------------------- Internal Parameter-------------------------
 
-   	localparam NUM_STATES               = 5;
-   	localparam WAIT_PKT    		    = 1;
-   	localparam IN_PACKET                = 2;
-   	localparam START_HASH               = 4;
-	localparam COMPLETE_PKT		    = 8;
-	localparam SEND_LAST_WORD	    = 16;
+      localparam NUM_STATES               = 7;
+      localparam WAIT_PKT              = 1;
+      localparam IN_PACKET                = 2;
+      localparam START_HASH               = 4;
+   localparam COMPLETE_PKT          = 8;
+   localparam SEND_LAST_WORD       = 16;
+   localparam CUT_PACKET       = 32;
+   localparam CUT_PACKET_WAIT       = 64;
 
-   	localparam MAX_WORDS_PKT            = 2048;
-	localparam HASH_BYTES		    = (HASH_WIDTH)>>3;
-	localparam ALL_VALID		    = 32'hffffffff; 
+      localparam MAX_WORDS_PKT            = 2048;
+   localparam HASH_BYTES          = (HASH_WIDTH)>>3;
+   localparam ALL_VALID          = 32'hffffffff; 
 
-	localparam BYTES_ONE_WORD           = C_M_AXIS_DATA_WIDTH >>3;   
-        localparam COUNT_BIT_WIDTH	    = log2(C_M_AXIS_DATA_WIDTH);
+   localparam BYTES_ONE_WORD           = C_M_AXIS_DATA_WIDTH >>3;   
+        localparam COUNT_BIT_WIDTH       = log2(C_M_AXIS_DATA_WIDTH);
         localparam COUNT_BYTE_WIDTH         = COUNT_BIT_WIDTH-3;
 
-	//---------------------- Wires and regs---------------------------
+   //---------------------- Wires and regs---------------------------
 
-   	reg [C_S_AXI_DATA_WIDTH-1:0]            cut_counter, cut_counter_next;
-	reg [C_S_AXI_DATA_WIDTH-1:0]		tstrb_cut,tstrb_cut_next; 
+      reg [C_S_AXI_DATA_WIDTH-1:0]            pkt_cut_count, pkt_cut_count_next;
 
-   	reg [NUM_STATES-1:0]			state,state_next;
+      reg [C_S_AXI_DATA_WIDTH-1:0]            cut_counter, cut_counter_next;
+   reg [C_S_AXI_DATA_WIDTH-1:0]      tstrb_cut,tstrb_cut_next; 
 
-	wire [C_S_AXIS_TUSER_WIDTH-1:0]         tuser_fifo;
+      reg [NUM_STATES-1:0]         state,state_next;
+
+   wire [C_S_AXIS_TUSER_WIDTH-1:0]         tuser_fifo;
         wire [((C_M_AXIS_DATA_WIDTH/8))-1:0]    tstrb_fifo;
         wire                                    tlast_fifo;
         wire [C_M_AXIS_DATA_WIDTH-1:0]          tdata_fifo;
@@ -119,32 +124,32 @@
         wire                                    in_fifo_nearly_full;
         wire                                    in_fifo_empty;
 
-   	wire [C_S_AXI_DATA_WIDTH-1:0]		counter;
+      wire [C_S_AXI_DATA_WIDTH-1:0]      counter;
 
-	reg					pkt_short,pkt_short_next;
+   reg               pkt_short,pkt_short_next;
 
-	wire[C_S_AXIS_DATA_WIDTH-1:0]		first_word_hash;
-	wire[C_S_AXIS_DATA_WIDTH-1:0]		last_word_hash;
-	wire[C_S_AXIS_DATA_WIDTH-1:0]           one_word_hash;
-	wire[C_S_AXIS_DATA_WIDTH-1:0]		final_hash;
-	
-	reg[COUNT_BYTE_WIDTH-1:0]		last_word_bytes_free;
-	reg[COUNT_BIT_WIDTH-1:0]		pkt_boundaries_bits_free;			
+   wire[C_S_AXIS_DATA_WIDTH-1:0]      first_word_hash;
+   wire[C_S_AXIS_DATA_WIDTH-1:0]      last_word_hash;
+   wire[C_S_AXIS_DATA_WIDTH-1:0]           one_word_hash;
+   wire[C_S_AXIS_DATA_WIDTH-1:0]      final_hash;
+   
+   reg[COUNT_BYTE_WIDTH-1:0]      last_word_bytes_free;
+   reg[COUNT_BIT_WIDTH-1:0]      pkt_boundaries_bits_free;         
 
-	reg[COUNT_BYTE_WIDTH-1:0]	        bytes_free,bytes_free_next;
+   reg[COUNT_BYTE_WIDTH-1:0]           bytes_free,bytes_free_next;
         reg[COUNT_BIT_WIDTH-1:0]                bits_free,bits_free_next;
-	reg[COUNT_BYTE_WIDTH-1:0]		hash_carry_bytes,hash_carry_bytes_next;
-	reg[COUNT_BIT_WIDTH-1:0]		hash_carry_bits,hash_carry_bits_next;
+   reg[COUNT_BYTE_WIDTH-1:0]      hash_carry_bytes,hash_carry_bytes_next;
+   reg[COUNT_BIT_WIDTH-1:0]      hash_carry_bits,hash_carry_bits_next;
 
-	reg [C_S_AXIS_DATA_WIDTH-1:0]		hash;
-	reg [C_S_AXIS_DATA_WIDTH-1:0]           hash_next;
+   reg [C_S_AXIS_DATA_WIDTH-1:0]      hash;
+   reg [C_S_AXIS_DATA_WIDTH-1:0]           hash_next;
 
-	reg [C_S_AXIS_DATA_WIDTH-1:0]		last_word_pkt_temp,last_word_pkt_temp_next;
-	wire[C_S_AXIS_DATA_WIDTH-1:0]		last_word_pkt_temp_cleaned;
+   reg [C_S_AXIS_DATA_WIDTH-1:0]      last_word_pkt_temp,last_word_pkt_temp_next;
+   wire[C_S_AXIS_DATA_WIDTH-1:0]      last_word_pkt_temp_cleaned;
 
-        wire[15:0]				len_pkt_cut;
-	wire					pkt_cuttable;
-        wire[15:0]				pkt_len;
+        wire[15:0]            len_pkt_cut;
+   wire               pkt_cuttable;
+        wire[15:0]            pkt_len;
 
    //------------------------- Modules-------------------------------
 
@@ -167,22 +172,22 @@
                 .clk (axi_aclk));
 
 
-        assign s_axis_tready = !in_fifo_nearly_full;
+   assign s_axis_tready = !in_fifo_nearly_full;
 
-	assign counter = (cut_en) ? cut_words : MAX_WORDS_PKT;
+   assign counter = (cut_en) ? cut_words : MAX_WORDS_PKT;
  
-        assign len_pkt_cut = cut_bytes + HASH_BYTES;
-	assign pkt_cuttable = (tuser_fifo[15:0] > len_pkt_cut);
-	assign pkt_len = (cut_en & pkt_cuttable) ? len_pkt_cut : tuser_fifo[15:0];
-	 
-	assign first_word_hash = (~(({C_S_AXIS_DATA_WIDTH{1'b1}}<<bits_free))&tdata_fifo);
+   assign len_pkt_cut = (hash_en) ? cut_bytes : cut_bytes + HASH_BYTES;
+   assign pkt_cuttable = (tuser_fifo[15:0] > len_pkt_cut && len_pkt_cut >= 64);
+   assign pkt_len = (cut_en & pkt_cuttable) ? len_pkt_cut : tuser_fifo[15:0];
+    
+   assign first_word_hash = (~(({C_S_AXIS_DATA_WIDTH{1'b1}}<<bits_free))&tdata_fifo);
         assign last_word_hash  = (({C_S_AXIS_DATA_WIDTH{1'b1}}<<pkt_boundaries_bits_free)&tdata_fifo);
 
-	assign last_word_pkt_temp_cleaned = (({C_S_AXIS_DATA_WIDTH{1'b1}}<<bits_free)&last_word_pkt_temp);
+   assign last_word_pkt_temp_cleaned = (({C_S_AXIS_DATA_WIDTH{1'b1}}<<bits_free)&last_word_pkt_temp);
 
-	assign one_word_hash   = ((~({C_S_AXIS_DATA_WIDTH{1'b1}}<<bits_free))&({C_S_AXIS_DATA_WIDTH{1'b1}}<<pkt_boundaries_bits_free)&tdata_fifo);
+   assign one_word_hash   = ((~({C_S_AXIS_DATA_WIDTH{1'b1}}<<bits_free))&({C_S_AXIS_DATA_WIDTH{1'b1}}<<pkt_boundaries_bits_free)&tdata_fifo);
         assign final_hash      = {{HASH_WIDTH{1'b0}},hash[HASH_WIDTH-1:0]^hash[(2*HASH_WIDTH)-1:HASH_WIDTH]};
-	//assign final_hash      = 128'hdeadbeefaccafeafddddeaeaccffadad; //DEBUG fixed value
+   //assign final_hash      = 128'hdeadbeefaccafeafddddeaeaccffadad; //DEBUG fixed value
 
         always @(*) begin
                 pkt_boundaries_bits_free = 0;
@@ -224,9 +229,9 @@
         end
 
         always @(*) begin
-        	last_word_bytes_free = 0;
-        	case(cut_offset)
-                	32'h8000_0000:   last_word_bytes_free = 5'd31;
+           last_word_bytes_free = 0;
+           case(cut_offset)
+                   32'h8000_0000:   last_word_bytes_free = 5'd31;
                         32'hc000_0000:   last_word_bytes_free = 5'd30;
                         32'he000_0000:   last_word_bytes_free = 5'd29;
                         32'hf000_0000:   last_word_bytes_free = 5'd28;
@@ -258,173 +263,343 @@
                         32'hffff_fffc:   last_word_bytes_free = 5'd2;
                         32'hffff_fffe:   last_word_bytes_free = 5'd1;
                         32'hffff_ffff:   last_word_bytes_free = 5'd0;
-                	default	     :   last_word_bytes_free = 5'd0;
-        	endcase
-   	end
+                   default        :   last_word_bytes_free = 5'd0;
+           endcase
+      end
 
-	always @(*) begin
-      		m_axis_tuser = tuser_fifo;
-      		m_axis_tstrb = tstrb_fifo;
-      		m_axis_tlast = tlast_fifo;
-      		m_axis_tdata = tdata_fifo;
-      		m_axis_tvalid = 0;
-   
-      		in_fifo_rd_en = 0;
+
+
+always @(*) begin
+   m_axis_tuser = tuser_fifo;
+   m_axis_tstrb = tstrb_fifo;
+   m_axis_tlast = tlast_fifo;
+   m_axis_tdata = tdata_fifo;
+   m_axis_tvalid = 0;
+   in_fifo_rd_en = 0;
+   state_next = state;
+   cut_counter_next = cut_counter;
+   pkt_cut_count_next = 1;
+   tstrb_cut_next = tstrb_cut;
+   bytes_free_next = bytes_free;
+   bits_free_next = bits_free;
+   hash_carry_bytes_next = hash_carry_bytes;
+   hash_carry_bits_next = hash_carry_bits;
+   pkt_short_next = pkt_short;
+   hash_next = hash;
+   last_word_pkt_temp_next = last_word_pkt_temp;
+
+   case(state)
+      WAIT_PKT: begin
+         cut_counter_next = counter;
+         tstrb_cut_next = cut_offset;
+         if(!in_fifo_empty) begin
+            m_axis_tvalid = 1;
+            m_axis_tuser[15:0] = pkt_len;
+            if(!pkt_cuttable)
+               pkt_short_next = 1;
+            else
+               pkt_short_next = 0;
+            bytes_free_next = last_word_bytes_free;
+            bits_free_next = (last_word_bytes_free<<3);
+            if(m_axis_tready) begin
+               in_fifo_rd_en = 1;
+               if (pkt_cuttable && hash_en) begin
+                  pkt_cut_count_next = pkt_cut_count + 1;
+                  state_next = CUT_PACKET;
+               end
+               else begin
+                  state_next = IN_PACKET;
+               end
+            end
+         end
+      end
       
-		state_next = state;
-      		
-		cut_counter_next = cut_counter;
-		tstrb_cut_next = tstrb_cut;
+      IN_PACKET: begin
+         if(!in_fifo_empty) begin
+            if(!cut_counter) begin
+               if(tlast_fifo) begin
+                  if(pkt_short) begin
+                     m_axis_tvalid = 1;
+                     if(m_axis_tready) begin
+                        in_fifo_rd_en = 1;
+                        state_next = WAIT_PKT;
+                     end
+                  end
+                  else begin
+                     last_word_pkt_temp_next = tdata_fifo;
+                     hash_next = one_word_hash;
+                     state_next = COMPLETE_PKT;
+                  end
+               end
+               else begin
+                  last_word_pkt_temp_next = tdata_fifo;
+                  hash_next = first_word_hash;
+                  in_fifo_rd_en = 1;
+                  state_next = START_HASH;   
+               end
+            end
+            else begin
+               m_axis_tvalid = 1;
+               if(m_axis_tready) begin
+                  in_fifo_rd_en = 1;
+                  if(tlast_fifo)
+                     state_next = WAIT_PKT;
+                  else
+                     cut_counter_next = cut_counter-1;
+               end
+            end
+         end
+      end
+      
+      START_HASH: begin
+         if(tlast_fifo) begin 
+            hash_next = hash ^ last_word_hash;
+            state_next = COMPLETE_PKT;
+         end
+         else begin
+            if(!in_fifo_empty) begin
+               in_fifo_rd_en = 1;
+               hash_next = hash ^ tdata_fifo;
+            end
+         end
+      end
+      
+      COMPLETE_PKT: begin
+         m_axis_tvalid = 1;
+         if(m_axis_tready) begin
+            in_fifo_rd_en = 1;
+            if(bytes_free < HASH_BYTES) begin
+               m_axis_tstrb = ALL_VALID;
+               hash_carry_bytes_next = HASH_BYTES[COUNT_BYTE_WIDTH-1:0] - bytes_free;
+               hash_carry_bits_next = (HASH_BYTES[COUNT_BYTE_WIDTH-1:0] - bytes_free)<<3;
+               m_axis_tlast = 0;
+               m_axis_tdata = (last_word_pkt_temp_cleaned | (final_hash >> (HASH_WIDTH-bits_free)));
+               state_next = SEND_LAST_WORD;
+            end
+            else begin
+               m_axis_tlast = 1;
+               m_axis_tdata = (last_word_pkt_temp_cleaned | (final_hash << (bits_free-HASH_WIDTH)));
+               m_axis_tstrb = (ALL_VALID<<(bytes_free-HASH_BYTES));
+               state_next = WAIT_PKT;
+            end
+         end
+      end
+         
+      SEND_LAST_WORD: begin
+         m_axis_tvalid = 1;
+         if(m_axis_tready) begin
+            m_axis_tlast = 1;
+            m_axis_tdata = (final_hash)<<(C_S_AXIS_DATA_WIDTH-hash_carry_bits);
+            m_axis_tstrb = (ALL_VALID<<(BYTES_ONE_WORD[COUNT_BYTE_WIDTH-1:0]-hash_carry_bytes));
+            state_next = WAIT_PKT;
+         end
+      end
 
-		bytes_free_next = bytes_free;
-		bits_free_next = bits_free;
-		hash_carry_bytes_next = hash_carry_bytes;
-                hash_carry_bits_next = hash_carry_bits;
+      CUT_PACKET: begin
+         m_axis_tvalid = 1;
+         m_axis_tuser = 0;
+         if (m_axis_tready && !in_fifo_empty) begin
+            in_fifo_rd_en = 1;
+            pkt_cut_count_next = pkt_cut_count + 1;
+            if ((len_pkt_cut[15:5] + |len_pkt_cut[4:0]) == pkt_cut_count) begin
+               m_axis_tlast = 1;
+               state_next = (tlast_fifo) ? WAIT_PKT : CUT_PACKET_WAIT;
+               case (len_pkt_cut[4:0])
+                  5'h00: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hffffffff;
+                  end
+                  5'h01: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'h80000000;
+                  end
+                  5'h02: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hc0000000;
+                  end
+                  5'h03: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'he0000000;
+                  end
+                  5'h04: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hf0000000;
+                  end
+                  5'h05: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hf8000000;
+                  end
+                  5'h06: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hfc00000;
+                  end
+                  5'h07: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hfe000000;
+                  end
+                  5'h08: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hff000000;
+                  end
+                  5'h09: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hff800000;
+                  end
+                  5'h0a: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hffc00000;
+                  end
+                  5'h0b: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hffe00000;
+                  end
+                  5'h0c: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hfff00000;
+                  end
+                  5'h0d: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hfff80000;
+                  end
+                  5'h0e: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hfffc0000;
+                  end
+                  5'h0f: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hfffe0000;
+                  end
+                  5'h10: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hffff0000;
+                  end
+                  5'h11: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hfff8000;
+                  end
+                  5'h12: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hffffc000;
+                  end
+                  5'h13: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hffffe000;
+                  end
+                  5'h14: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hfffff000;
+                  end
+                  5'h15: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hfffff800;
+                  end
+                  5'h16: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hfffffc00;
+                  end
+                  5'h17: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hfffffe00;
+                  end
+                  5'h18: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hffffff00;
+                  end
+                  5'h19: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hffffff80;
+                  end
+                  5'h1a: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hffffffc0;
+                  end
+                  5'h1b: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hffffffe0;
+                  end
+                  5'h1c: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hfffffff0;
+                  end
+                  5'h1d: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hfffffff8;
+                  end
+                  5'h1e: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hfffffffc;
+                  end
+                  5'h1f: begin
+                     m_axis_tdata = tdata_fifo;
+                     m_axis_tstrb = 32'hfffffffe;
+                  end
+               endcase
+            end
+            else begin
+               m_axis_tdata = tdata_fifo;
+               m_axis_tstrb = tstrb_fifo;
+               m_axis_tlast = 0;
+               pkt_cut_count_next = pkt_cut_count + 1;
+               state_next = CUT_PACKET;
+            end
+         end
+         else begin
+            pkt_cut_count_next = pkt_cut_count;
+            state_next = CUT_PACKET;
+         end
+      end
 
-		pkt_short_next = pkt_short;
+   CUT_PACKET_WAIT: begin
+      m_axis_tvalid = 0;
+      m_axis_tdata = 0;
+      m_axis_tstrb = 0;
+      m_axis_tuser = 0;
+      m_axis_tlast = 0;
+      if (!in_fifo_empty) begin
+         in_fifo_rd_en = 1;
+         state_next = (tlast_fifo) ? WAIT_PKT : CUT_PACKET_WAIT;
+      end
+      else begin
+         state_next = CUT_PACKET_WAIT;
+      end
+   end  
 
-		hash_next = hash;
-
-		last_word_pkt_temp_next = last_word_pkt_temp;
-
-      	case(state)
-        
-	WAIT_PKT: begin
-                cut_counter_next = counter;
-                tstrb_cut_next = cut_offset;
-        	if(!in_fifo_empty) begin
-                	m_axis_tvalid = 1;
-			m_axis_tuser[15:0] = pkt_len;
-			if(!pkt_cuttable)
-				pkt_short_next = 1;
-			else begin
-				pkt_short_next = 0;
-			end
-			bytes_free_next = last_word_bytes_free;
-			bits_free_next = (last_word_bytes_free<<3);
-			if(m_axis_tready) begin
-				in_fifo_rd_en = 1;
-				state_next = IN_PACKET;
-			end
-           	end
-        end
-
-        IN_PACKET: begin
-        	if(!in_fifo_empty) begin
-			if(!cut_counter) begin
-				if(tlast_fifo) begin
-					if(pkt_short) begin
-						m_axis_tvalid = 1;
-						if(m_axis_tready) begin
-							in_fifo_rd_en = 1;
-                                                	state_next = WAIT_PKT;
-						end
-					end
-					else begin
-						last_word_pkt_temp_next = tdata_fifo;
-						hash_next = one_word_hash;
-						state_next = COMPLETE_PKT;
-					end
-				end
-				else begin
-					last_word_pkt_temp_next = tdata_fifo;
-					hash_next = first_word_hash;
-					in_fifo_rd_en = 1;
-					state_next = START_HASH;	
-				end
-			end
-			else begin
-				m_axis_tvalid = 1;
-				if(m_axis_tready) begin
-					in_fifo_rd_en = 1;
-					if(tlast_fifo)
-						state_next = WAIT_PKT;
-					else
-						cut_counter_next = cut_counter-1;
-				end
-			end
-		end
-	end
-
-	
-	START_HASH: begin
-		if(tlast_fifo) begin 
-			hash_next = hash ^ last_word_hash;
-			state_next = COMPLETE_PKT;
-		end
-		else begin
-			if(!in_fifo_empty) begin
-				in_fifo_rd_en = 1;
-				hash_next = hash ^ tdata_fifo;
-			end
-		end
-	end
-
-	COMPLETE_PKT: begin
-		m_axis_tvalid = 1;
-		if(m_axis_tready) begin
-			in_fifo_rd_en = 1;
-			if(bytes_free < HASH_BYTES) begin
-				m_axis_tstrb = ALL_VALID;
-				hash_carry_bytes_next = HASH_BYTES[COUNT_BYTE_WIDTH-1:0] - bytes_free;
-                                hash_carry_bits_next = (HASH_BYTES[COUNT_BYTE_WIDTH-1:0] - bytes_free)<<3;
-				m_axis_tlast = 0;
-				m_axis_tdata = (last_word_pkt_temp_cleaned | (final_hash >> (HASH_WIDTH-bits_free)));
-				state_next = SEND_LAST_WORD;
-			end
-			else begin
-				m_axis_tlast = 1;
-				m_axis_tdata = (last_word_pkt_temp_cleaned | (final_hash << (bits_free-HASH_WIDTH)));
-				m_axis_tstrb = (ALL_VALID<<(bytes_free-HASH_BYTES));
-				state_next = WAIT_PKT;
-			end
-		end
-	end
-	
-	SEND_LAST_WORD: begin
-		m_axis_tvalid = 1;
-		if(m_axis_tready) begin
-			m_axis_tlast = 1;
-			m_axis_tdata = (final_hash)<<(C_S_AXIS_DATA_WIDTH-hash_carry_bits);
-			m_axis_tstrb = (ALL_VALID<<(BYTES_ONE_WORD[COUNT_BYTE_WIDTH-1:0]-hash_carry_bytes));
-			state_next = WAIT_PKT;
-		end
-	end
-
-	endcase // case(state)
-	end // always @ (*)
+   endcase // case(state)
+end // always @ (*)
 
 
-	always @(posedge axi_aclk) begin
-      		if(~axi_resetn) begin
-         		state 		<= WAIT_PKT;
-         		cut_counter	<= 0;
-			tstrb_cut	<= 0;
-                        bytes_free 	<= 0;
-                        bits_free 	<= 0;
+   always @(posedge axi_aclk) begin
+            if(~axi_resetn) begin
+               state       <= WAIT_PKT;
+               cut_counter   <= 0;
+               pkt_cut_count   <= 0;
+         tstrb_cut   <= 0;
+                        bytes_free    <= 0;
+                        bits_free    <= 0;
                         hash_carry_bytes<= 0;
                         hash_carry_bits <= 0;
-                        hash 		<= 0;
-			pkt_short       <= 0;
-			last_word_pkt_temp<=0;
-      		end
-      		else begin
-         		state <= state_next;
+                        hash       <= 0;
+            pkt_short       <= 0;
+         last_word_pkt_temp<=0;
+            end
+            else begin
+               state <= state_next;
 
-                	bytes_free <= bytes_free_next;
-                	bits_free <= bits_free_next;
-                	hash_carry_bytes <= hash_carry_bytes_next;
-                	hash_carry_bits <= hash_carry_bits_next;
+                   bytes_free <= bytes_free_next;
+                   bits_free <= bits_free_next;
+                   hash_carry_bytes <= hash_carry_bytes_next;
+                   hash_carry_bits <= hash_carry_bits_next;
 
-			pkt_short    <= pkt_short_next;
+         pkt_short    <= pkt_short_next;
 
-                	hash <= hash_next;
-			
-         		cut_counter <= cut_counter_next;
-			tstrb_cut <= tstrb_cut_next;
+                   hash <= hash_next;
+         
+               cut_counter <= cut_counter_next;
+               pkt_cut_count <= pkt_cut_count_next;
+         tstrb_cut <= tstrb_cut_next;
 
-			last_word_pkt_temp <= last_word_pkt_temp_next;
-      		end
-   	end
-	endmodule // output_port_lookup
+         last_word_pkt_temp <= last_word_pkt_temp_next;
+            end
+      end
+   endmodule // output_port_lookup
 

@@ -89,7 +89,7 @@ proc create_hier_cell_sume_osnt_dma_engine { parentCell coreName tdataWidth } {
    create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:axis_rtl:1.0 m_axis
 
    # pcie endpoint input clock buffer.
-   create_bd_cell -type ip -vlnv xilinx.com:ip:util_ds_buf:2.0 util_ds_buf_0
+   create_bd_cell -type ip -vlnv xilinx.com:ip:util_ds_buf:2.1 util_ds_buf_0
    set_property -dict [list CONFIG.C_BUF_TYPE {IBUFDSGTE}] [get_bd_cells util_ds_buf_0]
 
    # Main pcie reset is active low, but pcie endpoint needs active high reset.
@@ -103,7 +103,7 @@ proc create_hier_cell_sume_osnt_dma_engine { parentCell coreName tdataWidth } {
    set_property -dict [list CONFIG.C_OPERATION {not}] [get_bd_cells user_pcie_inverter_0]
 
    # load pcie endpoint.
-   create_bd_cell -type ip -vlnv xilinx.com:ip:pcie3_7x:3.0 pcie3_7x_1
+   create_bd_cell -type ip -vlnv xilinx.com:ip:pcie3_7x:4.2 pcie3_7x_1
    set_property -dict [list CONFIG.xlnx_ref_board {None}] [get_bd_cells pcie3_7x_1]
    set_property -dict [list CONFIG.pcie_blk_locn {X0Y1} CONFIG.PL_LINK_CAP_MAX_LINK_WIDTH {X8}] [get_bd_cells pcie3_7x_1]
    set_property -dict [list CONFIG.PL_LINK_CAP_MAX_LINK_SPEED {5.0_GT/s} CONFIG.axisten_if_width {128_bit}] [get_bd_cells pcie3_7x_1]

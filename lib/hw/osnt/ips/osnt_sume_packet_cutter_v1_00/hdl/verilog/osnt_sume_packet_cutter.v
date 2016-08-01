@@ -91,7 +91,7 @@ module osnt_sume_packet_cutter
   input                                     S_AXIS_TLAST
 );
 
-  localparam NUM_RW_REGS       = 4;
+  localparam NUM_RW_REGS       = 5;
 
   // -- Signals
 
@@ -112,8 +112,9 @@ module osnt_sume_packet_cutter
  
   wire                                      cut_en;
   wire [C_S_AXI_ADDR_WIDTH-1:0]             cut_words;
-  wire [C_S_AXI_ADDR_WIDTH-1:0]		    cut_offset;
+  wire [C_S_AXI_ADDR_WIDTH-1:0]		         cut_offset;
   wire [C_S_AXI_ADDR_WIDTH-1:0]             cut_bytes;
+  wire                                      hash_en;
 
  
   sume_axi_ipif#
@@ -189,6 +190,7 @@ module osnt_sume_packet_cutter
   assign cut_words = rw_regs[31+C_S_AXI_DATA_WIDTH*1:C_S_AXI_DATA_WIDTH*1];
   assign cut_offset = rw_regs[31+C_S_AXI_DATA_WIDTH*2:C_S_AXI_DATA_WIDTH*2];
   assign cut_bytes = rw_regs[31+C_S_AXI_DATA_WIDTH*3:C_S_AXI_DATA_WIDTH*3];
+  assign hash_en = rw_regs[C_S_AXI_DATA_WIDTH*4:C_S_AXI_DATA_WIDTH*4];
   
   
   // -- Packet cutter
@@ -226,7 +228,8 @@ module osnt_sume_packet_cutter
     .cut_en        (cut_en),
     .cut_words     (cut_words),
     .cut_offset    (cut_offset),
-    .cut_bytes     (cut_bytes)
+    .cut_bytes     (cut_bytes),
+    .hash_en     (hash_en)
   );
 
 

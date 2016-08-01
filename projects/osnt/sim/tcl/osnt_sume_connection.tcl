@@ -37,7 +37,7 @@ connect_bd_net [get_bd_pins sys_clock_0/clk_in1] [get_bd_pins sysclk_buf/IBUF_OU
 connect_bd_net [get_bd_pins sys_clock_0/locked] [get_bd_pins proc_sys_reset_0/dcm_locked]
 
 # 100MHz clock scheme - address mapped registers
-connect_bd_net [get_bd_pins sys_clock_0/clk_out1] [get_bd_pins osnt_sume_axi_sim_transactor_0/axi_aclk]
+connect_bd_net [get_bd_pins sys_clock_0/clk_out1] [get_bd_pins osnt_sume_axi_sim_master_0/M_AXI_ACLK]
 
 connect_bd_net [get_bd_pins sys_clock_0/clk_out1] [get_bd_pins proc_sys_reset_0/slowest_sync_clk]
 
@@ -138,7 +138,7 @@ connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins ax
 connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins axi_bram_ctrl_2/s_axi_aresetn]
 connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins axi_bram_ctrl_3/s_axi_aresetn]
 
-connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins osnt_sume_axi_sim_transactor_0/axi_resetn] 
+connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins osnt_sume_axi_sim_master_0/M_AXI_ARESETN] 
 
 connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins osnt_sume_axis_sim_stim_0/ARESETN] 
 connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins osnt_sume_axis_sim_stim_1/ARESETN] 
@@ -149,7 +149,7 @@ connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins os
 connect_bd_net [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins  osnt_sume_axi_if_0/S_AXI_ARESETN] 
 
 #Axi-Lite bus interface connection
-connect_bd_intf_net -boundary_type upper [get_bd_intf_pins axi_interconnect_0/S00_AXI] [get_bd_intf_pins osnt_sume_axi_sim_transactor_0/M_AXI] 
+connect_bd_intf_net -boundary_type upper [get_bd_intf_pins axi_interconnect_0/S00_AXI] [get_bd_intf_pins osnt_sume_axi_sim_master_0/M_AXI] 
 connect_bd_intf_net -boundary_type upper [get_bd_intf_pins axi_interconnect_0/M00_AXI] [get_bd_intf_pins osnt_sume_inter_packet_delay_0/s_axi] 
 connect_bd_intf_net -boundary_type upper [get_bd_intf_pins axi_interconnect_0/M01_AXI] [get_bd_intf_pins osnt_sume_rate_limiter_0/s_axi] 
 connect_bd_intf_net -boundary_type upper [get_bd_intf_pins axi_interconnect_0/M02_AXI] [get_bd_intf_pins osnt_sume_extract_metadata_0/s_axi] 
@@ -171,7 +171,7 @@ connect_bd_intf_net [get_bd_intf_pins osnt_sume_axis_sim_stim_3/M_AXIS] [get_bd_
 
 connect_bd_intf_net [get_bd_intf_pins osnt_sume_axis_sim_stim_4/M_AXIS] [get_bd_intf_pins osnt_sume_extract_metadata_0/s_axis]
 
-connect_bd_net [get_bd_pins osnt_sume_axi_sim_transactor_0/barrier_req_trans] [get_bd_pins osnt_sume_axi_sim_transactor_0/barrier_proceed]
+#connect_bd_net [get_bd_pins osnt_sume_axi_sim_transactor_0/barrier_req_trans] [get_bd_pins osnt_sume_axi_sim_transactor_0/barrier_proceed]
 
 connect_bd_net [get_bd_pins osnt_sume_axis_sim_stim_0/barrier_req] [get_bd_pins osnt_sume_axis_sim_stim_0/barrier_proceed]
 connect_bd_net [get_bd_pins osnt_sume_axis_sim_stim_1/barrier_req] [get_bd_pins osnt_sume_axis_sim_stim_1/barrier_proceed]

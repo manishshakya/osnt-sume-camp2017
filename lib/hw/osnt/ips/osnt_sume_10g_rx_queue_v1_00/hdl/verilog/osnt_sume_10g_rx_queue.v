@@ -369,7 +369,12 @@ always @(*) begin
                           (~rx1_stat_empty & ~rx1_fifo_empty & m_axis_tready            ) ? `HEAD : `IDLE;
       end
       `HEAD : begin
-         m_axis_tdata   = rx1_fifo_out_tdata;
+         if (rx_ts_pos != 0 && ts_cnt == rx_ts_pos) begin
+            m_axis_tdata   = r_ts_value;
+         end
+         else begin
+            m_axis_tdata   = rx1_fifo_out_tdata;
+         end
          m_axis_tkeep   = rx1_fifo_out_tkeep;
          m_axis_tuser   = w_m_axis_tuser;
          m_axis_tlast   = rx1_fifo_out_tlast;

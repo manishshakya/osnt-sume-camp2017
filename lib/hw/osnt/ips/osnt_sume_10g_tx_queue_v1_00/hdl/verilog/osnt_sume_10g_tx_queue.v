@@ -242,7 +242,12 @@ always @(*) begin
          next_st        = (~tx0_last_empty & ~tx0_fifo_empty) ? `HEAD : `IDLE;
       end
       `HEAD : begin
-         m_axis_tdata   = tx0_fifo_out_tdata;
+         if (tx_ts_pos != 0 && ts_cnt == tx_ts_pos) begin
+            m_axis_tdata   = r_ts_value;
+         end
+         else begin
+            m_axis_tdata   = tx0_fifo_out_tdata;
+         end
          m_axis_tkeep   = tx0_fifo_out_tkeep;
          m_axis_tuser   = 0;
          m_axis_tlast   = tx0_fifo_out_tlast;

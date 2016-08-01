@@ -159,8 +159,9 @@ library ieee;
 use     ieee.std_logic_1164.all;
 use     ieee.numeric_std.UNSIGNED;
 use     ieee.numeric_std.TO_INTEGER;
-library lib_pkg_v1_0;
-use     lib_pkg_v1_0.lib_pkg.clog2;
+
+library xil_defaultlib;
+use     xil_defaultlib.lib_pkg.all;
 
 entity dynshreg_f is
   generic (

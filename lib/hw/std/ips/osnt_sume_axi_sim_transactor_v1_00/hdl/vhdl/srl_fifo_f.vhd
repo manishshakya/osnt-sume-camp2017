@@ -162,9 +162,9 @@
 
 library ieee;
 use     ieee.std_logic_1164.all;
-library lib_srl_fifo_v1_0;
-library lib_pkg_v1_0;
-use     lib_pkg_v1_0.lib_pkg.clog2;
+
+library xil_defaultlib;
+use     xil_defaultlib.lib_pkg.all;
 --
 entity srl_fifo_f is
   generic (
@@ -197,7 +197,7 @@ attribute DowngradeIPIdentifiedWarnings of imp : architecture is "yes";
     constant ZEROES : std_logic_vector(0 to clog2(C_DEPTH)-1) := (others => '0');
 begin
 
-    I_SRL_FIFO_RBU_F : entity lib_srl_fifo_v1_0.srl_fifo_rbu_f
+    I_SRL_FIFO_RBU_F : entity xil_defaultlib.srl_fifo_rbu_f
     generic map (
                  C_DWIDTH => C_DWIDTH,
                  C_DEPTH  => C_DEPTH,

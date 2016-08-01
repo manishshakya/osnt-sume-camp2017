@@ -100,16 +100,17 @@ proc create_hier_cell_sume_osnt_10g_interface { parentCell coreName sharedLogic 
       create_bd_pin -dir O gttxreset_out 
       create_bd_pin -dir O gtrxreset_out
       create_bd_pin -dir O txuserrdy_out
-      create_bd_pin -dir O clk156_out
-      create_bd_pin -dir O areset_clk156_out 
-      create_bd_pin -dir O resetdone
+      create_bd_pin -dir O coreclk_out
+      create_bd_pin -dir O rxrecclk_out
+      create_bd_pin -dir O areset_datapathclk_out 
+      create_bd_pin -dir O resetdone_out
       create_bd_pin -dir O reset_counter_done_out 
       create_bd_pin -dir O qplllock_out 
       create_bd_pin -dir O qplloutclk_out 
       create_bd_pin -dir O qplloutrefclk_out 
    } else {
-      create_bd_pin -dir I areset_clk156
-      create_bd_pin -dir I -type clk clk156
+      create_bd_pin -dir I areset
+      create_bd_pin -dir I -type clk coreclk
       create_bd_pin -dir I txusrclk
       create_bd_pin -dir I txusrclk2
       create_bd_pin -dir I txuserrdy
@@ -130,7 +131,7 @@ proc create_hier_cell_sume_osnt_10g_interface { parentCell coreName sharedLogic 
    create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:axis_rtl:1.0 m_axis
 
 
-   create_bd_cell -type ip -vlnv xilinx.com:ip:axi_10g_ethernet:2.0 axi_10g_ethernet_0
+   create_bd_cell -type ip -vlnv xilinx.com:ip:axi_10g_ethernet:3.1 axi_10g_ethernet_0
    set_property -dict [list CONFIG.Management_Interface {false}] [get_bd_cells axi_10g_ethernet_0]
    set_property -dict [list CONFIG.base_kr {BASE-R}] [get_bd_cells axi_10g_ethernet_0]
    set_property -dict [list CONFIG.SupportLevel $supportLevel] [get_bd_cells axi_10g_ethernet_0]
@@ -242,34 +243,35 @@ proc create_hier_cell_sume_osnt_10g_interface { parentCell coreName sharedLogic 
       connect_bd_net [get_bd_pins gtrxreset_out] [get_bd_pins axi_10g_ethernet_0/gtrxreset_out]
       connect_bd_net [get_bd_pins txuserrdy_out] [get_bd_pins axi_10g_ethernet_0/txuserrdy_out]
 
-      connect_bd_net [get_bd_pins clk156_out] [get_bd_pins axi_10g_ethernet_0/clk156_out]
-      connect_bd_net [get_bd_pins areset_clk156_out] [get_bd_pins axi_10g_ethernet_0/areset_clk156_out]
-      connect_bd_net [get_bd_pins areset_clk156_out] [get_bd_pins areset_inverter_0/Op1]
+      connect_bd_net [get_bd_pins coreclk_out] [get_bd_pins axi_10g_ethernet_0/coreclk_out]
+      connect_bd_net [get_bd_pins rxrecclk_out] [get_bd_pins axi_10g_ethernet_0/rxrecclk_out]
+      connect_bd_net [get_bd_pins areset_datapathclk_out] [get_bd_pins axi_10g_ethernet_0/areset_datapathclk_out]
+      connect_bd_net [get_bd_pins areset_datapathclk_out] [get_bd_pins areset_inverter_0/Op1]
 
-      connect_bd_net [get_bd_pins axi_10g_ethernet_0/clk156_out] [get_bd_pins osnt_sume_10g_rx_queue_0/axis_aclk]
-      connect_bd_net [get_bd_pins axi_10g_ethernet_0/clk156_out] [get_bd_pins osnt_sume_10g_tx_queue_0/axis_aclk]
+      connect_bd_net [get_bd_pins axi_10g_ethernet_0/coreclk_out] [get_bd_pins osnt_sume_10g_rx_queue_0/axis_aclk]
+      connect_bd_net [get_bd_pins axi_10g_ethernet_0/coreclk_out] [get_bd_pins osnt_sume_10g_tx_queue_0/axis_aclk]
 
-      connect_bd_net [get_bd_pins resetdone] [get_bd_pins axi_10g_ethernet_0/resetdone]
+      connect_bd_net [get_bd_pins resetdone_out] [get_bd_pins axi_10g_ethernet_0/resetdone_out]
       connect_bd_net [get_bd_pins reset_counter_done_out] [get_bd_pins axi_10g_ethernet_0/reset_counter_done_out]
       connect_bd_net [get_bd_pins qplllock_out] [get_bd_pins axi_10g_ethernet_0/qplllock_out]
       connect_bd_net [get_bd_pins qplloutclk_out] [get_bd_pins axi_10g_ethernet_0/qplloutclk_out]
       connect_bd_net [get_bd_pins qplloutrefclk_out] [get_bd_pins axi_10g_ethernet_0/qplloutrefclk_out]
 
-      connect_bd_net [get_bd_pins axi_10g_ethernet_0/clk156_out] [get_bd_pins axi_10g_ethernet_0/dclk]
-      connect_bd_net [get_bd_pins axi_10g_ethernet_0/clk156_out] [get_bd_pins axis_data_fifo_0/s_axis_aclk]
-      connect_bd_net [get_bd_pins axi_10g_ethernet_0/clk156_out] [get_bd_pins axis_data_fifo_1/m_axis_aclk]
+      connect_bd_net [get_bd_pins axi_10g_ethernet_0/coreclk_out] [get_bd_pins axi_10g_ethernet_0/dclk]
+      connect_bd_net [get_bd_pins axi_10g_ethernet_0/coreclk_out] [get_bd_pins axis_data_fifo_0/s_axis_aclk]
+      connect_bd_net [get_bd_pins axi_10g_ethernet_0/coreclk_out] [get_bd_pins axis_data_fifo_1/m_axis_aclk]
 
 
    } else {
-      connect_bd_net [get_bd_pins areset_clk156] [get_bd_pins axi_10g_ethernet_0/areset_clk156]
+      connect_bd_net [get_bd_pins areset] [get_bd_pins axi_10g_ethernet_0/areset_coreclk]
+      connect_bd_net [get_bd_pins areset] [get_bd_pins axi_10g_ethernet_0/areset]
+      
+      connect_bd_net [get_bd_pins coreclk] [get_bd_pins axi_10g_ethernet_0/dclk]
+      connect_bd_net [get_bd_pins coreclk] [get_bd_pins axi_10g_ethernet_0/coreclk]
+      connect_bd_net [get_bd_pins areset] [get_bd_pins areset_inverter_0/Op1]
 
-      connect_bd_net [get_bd_pins clk156] [get_bd_pins axi_10g_ethernet_0/clk156]
-      connect_bd_net [get_bd_pins clk156] [get_bd_pins axi_10g_ethernet_0/dclk]
-      connect_bd_net [get_bd_pins areset_clk156] [get_bd_pins axi_10g_ethernet_0/areset]
-      connect_bd_net [get_bd_pins areset_clk156] [get_bd_pins areset_inverter_0/Op1]
-
-      connect_bd_net [get_bd_pins clk156] [get_bd_pins osnt_sume_10g_rx_queue_0/axis_aclk]
-      connect_bd_net [get_bd_pins clk156] [get_bd_pins osnt_sume_10g_tx_queue_0/axis_aclk]
+      connect_bd_net [get_bd_pins coreclk] [get_bd_pins osnt_sume_10g_rx_queue_0/axis_aclk]
+      connect_bd_net [get_bd_pins coreclk] [get_bd_pins osnt_sume_10g_tx_queue_0/axis_aclk]
 
       connect_bd_net [get_bd_pins txusrclk] [get_bd_pins axi_10g_ethernet_0/txusrclk]
       connect_bd_net [get_bd_pins txusrclk2] [get_bd_pins axi_10g_ethernet_0/txusrclk2]
@@ -284,8 +286,8 @@ proc create_hier_cell_sume_osnt_10g_interface { parentCell coreName sharedLogic 
       connect_bd_net [get_bd_pins tx_resetdone] [get_bd_pins axi_10g_ethernet_0/tx_resetdone]
       connect_bd_net [get_bd_pins rx_resetdone] [get_bd_pins axi_10g_ethernet_0/rx_resetdone]
 
-      connect_bd_net [get_bd_pins clk156] [get_bd_pins axis_data_fifo_0/s_axis_aclk]
-      connect_bd_net [get_bd_pins clk156] [get_bd_pins axis_data_fifo_1/m_axis_aclk]
+      connect_bd_net [get_bd_pins coreclk] [get_bd_pins axis_data_fifo_0/s_axis_aclk]
+      connect_bd_net [get_bd_pins coreclk] [get_bd_pins axis_data_fifo_1/m_axis_aclk]
   }
 
 
