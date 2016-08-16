@@ -341,7 +341,7 @@ reg   [TS_WIDTH-1:0] r_ts_value;
 always @(posedge axis_aclk)
    if (~axis_resetn)
       r_ts_value  <= 0;
-   else if (current_st == `HEAD && ~rx1_stat_empty && ~rx1_fifo_empty && m_axis_tready)
+   else if (next_st == `HEAD && ~rx1_stat_empty && ~rx1_fifo_empty && m_axis_tready)
       r_ts_value  <= rx1_stat_out[30+:64];
 
 

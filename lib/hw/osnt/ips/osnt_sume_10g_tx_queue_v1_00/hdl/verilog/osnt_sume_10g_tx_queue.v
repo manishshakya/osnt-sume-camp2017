@@ -80,6 +80,8 @@ endfunction//log2
 localparam  MAX_PKT_SIZE = 4000; // In bytes
 localparam  IN_FIFO_DEPTH_BIT = log2(MAX_PKT_SIZE/(C_S_AXIS_DATA_WIDTH/8));
 
+localparam  SIGNATURE = 32'hefbeadde;
+
 `define  IDLE     0
 `define  HEAD     1
 `define  SEND     2
@@ -127,6 +129,8 @@ wire  tx1_last_nearly_full;
 wire  tx1_last_empty;
 reg   tx1_last_rden;
 reg   tx1_last_wren;
+
+reg   [31:0]   pkt_cnt, pkt_cnt_next;
 
 assign tx0_last_wren = s_axis_tlast & s_axis_tvalid & ~tx0_fifo_nearly_full;
 
@@ -204,17 +208,19 @@ always @(posedge axis_aclk)
    if (~axis_resetn) begin
       current_st  <= `IDLE;
       ts_cnt      <= 1;
+      pkt_cnt     <= 0;
    end
    else begin
       current_st  <= next_st;
       ts_cnt      <= ts_cnt_next;
+      pkt_cnt     <= pkt_cnt_next;
    end
 
 reg   [TS_WIDTH-1:0] r_ts_value;
 always @(posedge axis_aclk)
    if (~axis_resetn)
       r_ts_value  <= 0;
-   else if (current_st == `HEAD)
+   else if (next_st == `HEAD)
       r_ts_value  <= timestamp_156;
 
 
@@ -224,10 +230,11 @@ always @(*) begin
    m_axis_tuser   = 0;
    m_axis_tlast   = 0;
    m_axis_tvalid  = 0;
+   pkt_cnt_next   = pkt_cnt;
    ts_cnt_next    = 1;
    tx0_fifo_rden  = 0;
    tx0_last_rden  = 0;
-   next_st        = 0;
+   next_st        = `IDLE;
    case (current_st)
       // IDLE makes a gap between packets.
       `IDLE : begin
@@ -236,6 +243,7 @@ always @(*) begin
          m_axis_tuser   = 0;
          m_axis_tlast   = 0;
          m_axis_tvalid  = 0;
+         pkt_cnt_next   = pkt_cnt;
          ts_cnt_next    = 1;
          tx0_fifo_rden  = 0;
          tx0_last_rden  = 0;
@@ -253,6 +261,7 @@ always @(*) begin
          m_axis_tlast   = tx0_fifo_out_tlast;
          // m_axis_tready wait until tvlaid is asserted.
          m_axis_tvalid  = (~tx0_last_empty & ~tx0_fifo_empty);
+         pkt_cnt_next   = (~tx0_last_empty & ~tx0_fifo_empty & m_axis_tready) ? pkt_cnt + 1 : pkt_cnt;
          ts_cnt_next    = (~tx0_last_empty & ~tx0_fifo_empty & m_axis_tready) ? ts_cnt + 1 : 1;
          tx0_fifo_rden  = (~tx0_last_empty & ~tx0_fifo_empty & m_axis_tready);
          tx0_last_rden  = (~tx0_last_empty & ~tx0_fifo_empty & m_axis_tready);
@@ -263,6 +272,9 @@ always @(*) begin
          if (tx_ts_pos != 0 && ts_cnt == tx_ts_pos) begin
             m_axis_tdata   = r_ts_value;
          end
+         else if (tx_ts_pos != 0 && ts_cnt == (tx_ts_pos + 1)) begin
+            m_axis_tdata   = {pkt_cnt, SIGNATURE};
+         end
          else begin
             m_axis_tdata   = tx0_fifo_out_tdata;
          end
@@ -270,6 +282,7 @@ always @(*) begin
          m_axis_tuser   = 0;
          m_axis_tlast   = tx0_fifo_out_tlast;
          m_axis_tvalid  =  ~tx0_fifo_empty;
+         pkt_cnt_next   = pkt_cnt;
          ts_cnt_next    = (~tx0_fifo_empty & m_axis_tready) ? ts_cnt + 1 : ts_cnt;
          tx0_fifo_rden  = (~tx0_fifo_empty & m_axis_tready);
          next_st        = (~tx0_fifo_empty & m_axis_tready & tx0_fifo_out_tlast) ? `IDLE : `SEND;
