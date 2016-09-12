@@ -25,7 +25,7 @@
 #
 # @NETFPGA_LICENSE_HEADER_END@
 
-xililin_tool_path='which vivao'
+xilinx_tool_path=`which vivado`
 bitimage=$1
 
 if [ -z $1 ]; then
@@ -34,7 +34,7 @@ if [ -z $1 ]; then
 	exit 1
 fi
 
-if [ "$xililin_tool_path" == "" ]; then
+if [ "$xilinx_tool_path" == "" ]; then
 	echo
 	echo Source Xilinx tool to run xmd command for programming a bit file. 
 	echo
