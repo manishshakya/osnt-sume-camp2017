@@ -81,6 +81,8 @@ proc create_hier_cell_sume_osnt_10g_interface { parentCell coreName sharedLogic 
    create_bd_pin -dir I -from 31 -to 0 rx_ts_pos 
    create_bd_pin -dir I -from 31 -to 0 tx_ts_pos
 
+   create_bd_pin -dir I -from 31 -to 0 rx_drop
+
    create_bd_pin -dir I -from 63 -to 0 timestamp_156
 
    create_bd_pin -dir I -from 79 -to 0 mac_rx_config
@@ -330,6 +332,7 @@ proc create_hier_cell_sume_osnt_10g_interface { parentCell coreName sharedLogic 
    connect_bd_net [get_bd_pins axi_10g_ethernet_0/rx_statistics_vector] [get_bd_pins osnt_sume_10g_rx_queue_0/rx_stat_vector]
    connect_bd_net [get_bd_pins rx_ts_pos] [get_bd_pins osnt_sume_10g_rx_queue_0/rx_ts_pos]
    connect_bd_net [get_bd_pins timestamp_156] [get_bd_pins osnt_sume_10g_rx_queue_0/timestamp_156]
+   connect_bd_net [get_bd_pins rx_drop] [get_bd_pins osnt_sume_10g_rx_queue_0/rx_drop]
    
    # tx data path 
    if { $tdataWidth ne "64" } {

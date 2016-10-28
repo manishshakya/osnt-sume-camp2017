@@ -62,6 +62,9 @@ proc create_hier_cell_sume_osnt_10g_all_interface { parentCell coreName tdataWid
    create_bd_pin -dir I -type clk refclk_p
    create_bd_pin -dir I -type clk refclk_n
 
+   create_bd_pin -dir O -type clk coreclk_out 
+   
+
    create_bd_pin -dir I -from 31 -to 0 rx_ts_pos 
    create_bd_pin -dir I -from 31 -to 0 tx_ts_pos
 
@@ -153,6 +156,11 @@ proc create_hier_cell_sume_osnt_10g_all_interface { parentCell coreName tdataWid
    connect_bd_net [get_bd_pins osnt_sume_10g_axi_if_0/tx_ts_pos_2] [get_bd_pins sume_osnt_10g_interface_2/tx_ts_pos]
    connect_bd_net [get_bd_pins osnt_sume_10g_axi_if_0/tx_ts_pos_3] [get_bd_pins sume_osnt_10g_interface_3/tx_ts_pos]
 
+   connect_bd_net [get_bd_pins osnt_sume_10g_axi_if_0/rx_drop_0] [get_bd_pins sume_osnt_10g_interface_0/rx_drop]
+   connect_bd_net [get_bd_pins osnt_sume_10g_axi_if_0/rx_drop_1] [get_bd_pins sume_osnt_10g_interface_1/rx_drop]
+   connect_bd_net [get_bd_pins osnt_sume_10g_axi_if_0/rx_drop_2] [get_bd_pins sume_osnt_10g_interface_2/rx_drop]
+   connect_bd_net [get_bd_pins osnt_sume_10g_axi_if_0/rx_drop_3] [get_bd_pins sume_osnt_10g_interface_3/rx_drop]
+
    connect_bd_net [get_bd_pins timestamp_156] [get_bd_pins sume_osnt_10g_interface_0/timestamp_156]
    connect_bd_net [get_bd_pins timestamp_156] [get_bd_pins sume_osnt_10g_interface_1/timestamp_156]
    connect_bd_net [get_bd_pins timestamp_156] [get_bd_pins sume_osnt_10g_interface_2/timestamp_156]
@@ -221,7 +229,9 @@ proc create_hier_cell_sume_osnt_10g_all_interface { parentCell coreName tdataWid
    connect_bd_net [get_bd_pins tx_disable_3] [get_bd_pins sume_osnt_10g_interface_3/tx_disable]
    connect_bd_intf_net [get_bd_intf_pins m3_axis] [get_bd_intf_pins sume_osnt_10g_interface_3/m_axis]
 
+   connect_bd_net [get_bd_pins coreclk_out] [get_bd_pins sume_osnt_10g_interface_0/coreclk_out]
    connect_bd_net [get_bd_pins clk156_out] [get_bd_pins sume_osnt_10g_interface_0/coreclk_out]
+
    create_bd_cell -type ip -vlnv xilinx.com:ip:util_vector_logic:2.0 util_vector_logic_0
    set_property -dict [list CONFIG.C_SIZE {1} CONFIG.C_OPERATION {not}] [get_bd_cells util_vector_logic_0]
    connect_bd_net [get_bd_pins sume_osnt_10g_interface_0/areset_datapathclk_out] [get_bd_pins util_vector_logic_0/Op1] 
