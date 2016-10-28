@@ -71,12 +71,13 @@ reg      [C_M_AXI_DATA_WIDTH-1:0]      IP2Bus_MstWr_d;
 `define  ST_IDLE  0
 `define  ST_WAIT  1
 
-integer  file, wr, rd;
+integer  file, wr, rd, cnt;
 reg   [8*64-1:0]  line;
 
 reg   [3:0] state;
 
-reg   [C_M_AXI_ADDR_WIDTH-1:0]      wr_addr, rd_addr;
+reg   [C_M_AXI_ADDR_WIDTH-1:0]      wr_addr, rd_addr, counter;
+reg   [C_M_AXI_ADDR_WIDTH-1:0]      wait_cycle = 0;
 reg   [(C_M_AXI_DATA_WIDTH/8)-1:0]  wr_be;
 reg   [C_M_AXI_DATA_WIDTH-1:0]      wr_data;
 
@@ -92,35 +93,44 @@ always @(posedge M_AXI_ACLK)
       IP2Bus_Mst_Addr   = 0;
       IP2Bus_Mst_BE     = 0;
       IP2Bus_MstWr_d    = 0;
+      counter           = 0;
       state             = `ST_IDLE;
    end
    else begin
+      counter           = counter + 1;
       #0.5
       case (state)
          `ST_IDLE : begin
-            $fgets(line, file);
-            state = `ST_IDLE;
-            if (line != 0) begin
-               wr = $sscanf(line, "%h, %h, %h, -.", wr_addr, wr_data, wr_be);
-               rd = $sscanf(line, "-, -, -, %h.", rd_addr);
+            if (counter > wait_cycle) begin
+               $fgets(line, file);
+               state = `ST_IDLE;
+               if (line != 0) begin
+                  wr = $sscanf(line, "%h, %h, %h, -.", wr_addr, wr_data, wr_be);
+                  rd = $sscanf(line, "-, -, -, %h.", rd_addr);
+                  cnt = $sscanf(line, "#, %d", wait_cycle);
 
-               $display("%h, %h, %h, %h", wr_addr, wr_data, wr_be, rd_addr);
+                  $display("%h, %h, %h, %h", wr_addr, wr_data, wr_be, rd_addr);
 
-               if (wr == 3) begin
-                  IP2Bus_MstWr_Req = 1;
-                  IP2Bus_MstRd_Req = 0;
-                  IP2Bus_Mst_Addr  = wr_addr;
-                  IP2Bus_MstWr_d   = wr_data;
-                  IP2Bus_Mst_BE    = wr_be;
+                  if (wr == 3) begin
+                     IP2Bus_MstWr_Req = 1;
+                     IP2Bus_MstRd_Req = 0;
+                     IP2Bus_Mst_Addr  = wr_addr;
+                     IP2Bus_MstWr_d   = wr_data;
+                     IP2Bus_Mst_BE    = wr_be;
+                     state            = `ST_WAIT;
+                  end
+                  else if(rd == 1) begin
+                     IP2Bus_MstWr_Req = 0;
+                     IP2Bus_MstRd_Req = 1;
+                     IP2Bus_Mst_Addr  = rd_addr;
+                     IP2Bus_MstWr_d   = 0;
+                     IP2Bus_Mst_BE    = 0;
+                     state            = `ST_WAIT;
+                  end
+                  else if(cnt == 1) begin
+                     state = `ST_IDLE;
+                  end
                end
-               else if(rd == 1) begin
-                  IP2Bus_MstWr_Req = 0;
-                  IP2Bus_MstRd_Req = 1;
-                  IP2Bus_Mst_Addr  = rd_addr;
-                  IP2Bus_MstWr_d   = 0;
-                  IP2Bus_Mst_BE    = 0;
-               end
-               state = `ST_WAIT;
             end
          end
          `ST_WAIT : begin

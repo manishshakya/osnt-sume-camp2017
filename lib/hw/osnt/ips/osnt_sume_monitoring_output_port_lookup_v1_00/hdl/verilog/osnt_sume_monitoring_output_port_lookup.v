@@ -158,6 +158,7 @@ module osnt_sume_monitoring_output_port_lookup
   	wire rst_stats;
 	wire stats_freeze;
 	wire [3:0] debug_mode;
+	wire force_drop;
 
   	wire [C_S_AXI_DATA_WIDTH-1:0] bytes_cnt_0;
   	wire [C_S_AXI_DATA_WIDTH-1:0] bytes_cnt_1;
@@ -307,6 +308,7 @@ module osnt_sume_monitoring_output_port_lookup
 	assign rw_defaults = 0;
 	assign rst_stats = rw_regs[0];
 	assign debug_mode = rw_regs[7:4]; //0x1: nf0, 0x2: nf1, 0x4: nf2, 0x8: nf3
+	assign force_drop = rw_regs[8]; //0x1: nf0, 0x2: nf1, 0x4: nf2, 0x8: nf3
 	assign stats_freeze = rw_regs[32+0];
 
   	assign ro_regs = {stats_time_high,
@@ -488,6 +490,7 @@ module osnt_sume_monitoring_output_port_lookup
         	.stats_freeze (stats_freeze),
         	.rst_stats (rst_stats),
          .debug_mode (debug_mode),
+         .force_drop (force_drop),
 
 	// --- ref time
 		.stamp_counter (STAMP_COUNTER)

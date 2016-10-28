@@ -2,6 +2,7 @@
 // Copyright (C) 2010, 2011 The Board of Trustees of The Leland Stanford
 // Junior University
 // Copyright (c) 2016 University of Cambridge
+// Copyright (c) 2016 Jong Hun Han
 // All rights reserved.
 //
 // This software was developed by University of Cambridge Computer Laboratory
@@ -276,7 +277,7 @@ always @(*) begin
    m_axis_tdata = tdata_fifo;
    m_axis_tvalid = 0;
    in_fifo_rd_en = 0;
-   state_next = state;
+   state_next = WAIT_PKT;
    cut_counter_next = cut_counter;
    pkt_cut_count_next = 1;
    tstrb_cut_next = tstrb_cut;
@@ -315,6 +316,7 @@ always @(*) begin
       end
       
       IN_PACKET: begin
+          state_next = IN_PACKET;
          if(!in_fifo_empty) begin
             if(!cut_counter) begin
                if(tlast_fifo) begin
@@ -352,6 +354,7 @@ always @(*) begin
       end
       
       START_HASH: begin
+            state_next = START_HASH;
          if(tlast_fifo) begin 
             hash_next = hash ^ last_word_hash;
             state_next = COMPLETE_PKT;
@@ -365,6 +368,7 @@ always @(*) begin
       end
       
       COMPLETE_PKT: begin
+               state_next = COMPLETE_PKT;
          m_axis_tvalid = 1;
          if(m_axis_tready) begin
             in_fifo_rd_en = 1;
@@ -387,6 +391,7 @@ always @(*) begin
          
       SEND_LAST_WORD: begin
          m_axis_tvalid = 1;
+            state_next = SEND_LAST_WORD;
          if(m_axis_tready) begin
             m_axis_tlast = 1;
             m_axis_tdata = (final_hash)<<(C_S_AXIS_DATA_WIDTH-hash_carry_bits);
@@ -396,6 +401,7 @@ always @(*) begin
       end
 
       CUT_PACKET: begin
+         state_next = CUT_PACKET;
          m_axis_tvalid = 1;
          m_axis_tuser = 0;
          if (m_axis_tready && !in_fifo_empty) begin

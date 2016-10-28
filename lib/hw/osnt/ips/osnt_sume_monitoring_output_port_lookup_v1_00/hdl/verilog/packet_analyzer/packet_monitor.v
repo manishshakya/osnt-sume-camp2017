@@ -2,6 +2,7 @@
 // Copyright (C) 2010, 2011 The Board of Trustees of The Leland Stanford
 // Junior University
 // Copyright (c) 2016 University of Cambridge
+// Copyright (c) 2016 Jong Hun Han
 // All rights reserved.
 //
 // This software was developed by University of Cambridge Computer Laboratory
@@ -108,7 +109,7 @@
 	
 	 
 	always @(*) begin
-		nxt_state = cur_state;
+		nxt_state = IDLE;
 		out_eoh_w = 1'b0;
 
 		case (cur_state)
@@ -119,6 +120,7 @@
 		end
 	 		
 	 	PKT_WAIT_HDR: begin
+		 	nxt_state = PKT_WAIT_HDR;
 	 		if (in_wr_d0) begin
 		 		if (in_eop_d0) begin /*small pkt*/
 		 			out_eoh_w = 1'b1;
@@ -132,6 +134,7 @@
 	 	end
 	 		
 	 	PKT_WAIT_EOP: begin
+	 		nxt_state = PKT_WAIT_EOP;
 			if (in_wr_d0 && in_eop_d0) begin
 	 			nxt_state = IDLE;
 	 		end

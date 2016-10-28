@@ -2,6 +2,7 @@
 // Copyright (C) 2010, 2011 The Board of Trustees of The Leland Stanford
 // Junior University
 // Copyright (c) 2016 University of Cambridge
+// Copyright (c) 2016 Jong Hun Han
 // All rights reserved.
 //
 // This software was developed by University of Cambridge Computer Laboratory
@@ -130,7 +131,8 @@ module core_monitoring
 	// stats misc
 		input				stats_freeze,
 		input				rst_stats,
-      input [3:0]           debug_mode
+      input [3:0]           debug_mode,
+      input                force_drop
 	);
 
 
@@ -310,7 +312,7 @@ process_pkt
 fallthrough_small_fifo
 #(
    .WIDTH(C_M_AXIS_DATA_WIDTH+C_M_AXIS_TUSER_WIDTH+C_M_AXIS_DATA_WIDTH/8+1),
-   .MAX_DEPTH_BITS(4)
+   .MAX_DEPTH_BITS(8)
 )
 pkt_fifo
 (
@@ -330,7 +332,7 @@ pkt_fifo
 	fallthrough_small_fifo
 	#(
 		.WIDTH(NUM_QUEUES),
-		.MAX_DEPTH_BITS(3))
+		.MAX_DEPTH_BITS(8))
       	hit_fifo
         (
 		.din (dst_ports),     // Data in
@@ -358,11 +360,12 @@ always @(*) begin
    m_axis_tvalid = 0;
    in_fifo_rd_en = 0;
    hit_fifo_rd_en = 0;
-   state_next = state;
+   state_next = WAIT_TILL_DONE_DECODE;
    case(state)
       WAIT_TILL_DONE_DECODE: begin
+         state_next = WAIT_TILL_DONE_DECODE;
          if(!hit_fifo_empty) begin
-            if(|fifo_dst_ports) begin
+            if(|fifo_dst_ports && ~force_drop) begin
 				   m_axis_tvalid = 1;
                m_axis_tuser[DST_PORT_POS+7:DST_PORT_POS] = (debug_mode == 0) ? fifo_dst_ports :
                                                            {debug_mode[3],1'b0,debug_mode[2],1'b0,debug_mode[1],1'b0,debug_mode[0],1'b0} & fifo_dst_ports;
@@ -378,8 +381,14 @@ always @(*) begin
 						hit_fifo_rd_en = 1;
 				end
 			end
+         else if (in_fifo_nearly_full) begin
+            in_fifo_rd_en = 1;
+            if (tlast_fifo & ~hit_fifo_empty)
+               hit_fifo_rd_en = 1;
+         end
 		end
       IN_PACKET: begin
+         state_next = IN_PACKET;
 		   if(!in_fifo_empty) begin
 				m_axis_tvalid = 1;
 				if(m_axis_tready) begin

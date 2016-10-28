@@ -2,6 +2,7 @@
 // Copyright (C) 2010, 2011 The Board of Trustees of The Leland Stanford
 // Junior University
 // Copyright (c) 2016 University of Cambridge
+// Copyright (c) 2016 Jong Hun Han
 // All rights reserved.
 //
 // This software was developed by University of Cambridge Computer Laboratory
@@ -153,7 +154,7 @@
 	end
 	 
 	always @ (*) begin
-		nxt_state = cur_state;
+		nxt_state = WAIT_PKT;
 		pkt_valid_w = 1'b0;
 	 	pkt_ip_hdr_len_w = pkt_ip_hdr_len;
 	 	pkt_src_ip_w = pkt_src_ip;
@@ -198,6 +199,7 @@
 		end
 
 		PKT_WORD1: begin
+			nxt_state = PKT_WORD1;
 			if(in_valid_d0) begin
 				pkt_dst_ip_w = {pkt_dst_ip[31:16], in_tdata_d0[255:240]};
 				if (pkt_flags[`PKT_FLG_TCP] || pkt_flags[`PKT_FLG_UDP]) begin
@@ -232,6 +234,7 @@
 		end
 
 		PKT_WAIT_HDR: begin
+		 	nxt_state = PKT_WAIT_HDR;
 	 		if (in_valid_d0) begin
 		 		if (in_tlast_d0) begin /*small pkt*/
 		 			pkt_valid_w = 1'b1;
@@ -245,6 +248,7 @@
 	 	end
 	 	
 	 	PKT_WAIT_EOP: begin
+	 		nxt_state = PKT_WAIT_EOP;
 	 		if (in_valid_d0 && in_tlast_d0)
 	 			nxt_state = WAIT_PKT;
 	 	end

@@ -2,6 +2,7 @@
 // Copyright (C) 2010, 2011 The Board of Trustees of The Leland Stanford
 // Junior University
 // Copyright (c) 2016 University of Cambridge
+// Copyright (c) 2016 Jong Hun Han
 // All rights reserved.
 //
 // This software was developed by University of Cambridge Computer Laboratory
@@ -202,7 +203,7 @@ module osnt_sume_bram_output_queues
 
    always @(metadata_state[i], rd_en[i], fifo_out_tlast[i]) begin
         metadata_rd_en[i] = 1'b0;
-        metadata_state_next[i] = metadata_state[i];
+        metadata_state_next[i] = WAIT_HEADER;
       	case(metadata_state[i])
       		WAIT_HEADER: begin
       			if(rd_en[i]) begin
@@ -211,6 +212,7 @@ module osnt_sume_bram_output_queues
       			end
       		end
       		WAIT_EOP: begin
+      			metadata_state_next[i] = WAIT_EOP;
       			if(rd_en[i] & fifo_out_tlast[i]) begin
       				metadata_state_next[i] = WAIT_HEADER;
       			end
@@ -238,7 +240,7 @@ module osnt_sume_bram_output_queues
    			   ((s_axis_tuser[DST_POS + 1] | s_axis_tuser[DST_POS + 3] | s_axis_tuser[DST_POS + 5] | s_axis_tuser[DST_POS + 7]) << 4);
 
    always @(*) begin
-      state_next     = state;
+      state_next     = IDLE;
       cur_queue_next = cur_queue;
       wr_en          = 0;
       metadata_wr_en = 0;
@@ -263,6 +265,7 @@ module osnt_sume_bram_output_queues
 
         /* wait until eop */
         WR_PKT: begin
+			   state_next = WR_PKT;
            s_axis_tready = 1;
            if(s_axis_tvalid) begin
            		first_word_next = 1'b0;
@@ -277,6 +280,7 @@ module osnt_sume_bram_output_queues
         end // case: WR_PKT
 
         DROP: begin
+           	state_next = DROP;
            s_axis_tready = 1;
            if(s_axis_tvalid & s_axis_tlast) begin
            	  state_next = IDLE;

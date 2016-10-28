@@ -71,7 +71,9 @@ module osnt_sume_10g_rx_queue
 
    // rx timestamp position 
    input          [C_S_AXI_DATA_WIDTH-1:0]         rx_ts_pos,
-   input          [TS_WIDTH-1:0]                   timestamp_156
+   input          [TS_WIDTH-1:0]                   timestamp_156,
+
+   input          [C_S_AXI_DATA_WIDTH-1:0]         rx_drop
 );
 
 function integer log2;
@@ -335,7 +337,7 @@ wire  [15:0]   pkt_length = {1'b0,rx1_stat_out[5+:15]} - 4;
 //
 wire  [C_M_AXIS_TUSER_WIDTH-1:0]    w_m_axis_tuser = {96'b0, 8'h0, SRC_PORT_VAL, pkt_length};
 
-wire  pkt_error = (pkt_length == 0) || rx1_stat_out[META_TS_WIDTH];
+wire  pkt_error =(rx1_stat_out[5+:15] == 0) || (pkt_length == 0) || rx1_stat_out[META_TS_WIDTH] || rx1_stat_out[1];
 
 reg   [TS_WIDTH-1:0] r_ts_value;
 always @(posedge axis_aclk)
@@ -366,7 +368,7 @@ always @(*) begin
          rx1_fifo_rden  = 0;
          rx1_stat_rden  = (~rx1_stat_empty & ~rx1_fifo_empty & m_axis_tready & pkt_error) ? 1 : 0;
          next_st        = (~rx1_stat_empty & ~rx1_fifo_empty & m_axis_tready & pkt_error) ? `DROP :
-                          (~rx1_stat_empty & ~rx1_fifo_empty & m_axis_tready            ) ? `HEAD : `IDLE;
+                          (~rx1_stat_empty & ~rx1_fifo_empty & m_axis_tready            ) ? (rx_drop == 1) ? `DROP : `HEAD : `IDLE;
       end
       `HEAD : begin
          if (rx_ts_pos != 0 && ts_cnt == rx_ts_pos) begin

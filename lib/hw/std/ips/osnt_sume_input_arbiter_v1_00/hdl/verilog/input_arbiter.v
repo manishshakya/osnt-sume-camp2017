@@ -2,6 +2,7 @@
 // Copyright (C) 2010, 2011 The Board of Trustees of The Leland Stanford
 // Junior University
 // Copyright (C) 2016 University of Cambridge
+// Copyright (c) 2016 Jong Hun Han
 // All rights reserved.
 //
 // This software was developed by University of Cambridge Computer Laboratory
@@ -137,7 +138,6 @@ reg   [NUM_QUEUES_WIDTH-1:0]           cur_queue;
 reg   [NUM_QUEUES_WIDTH-1:0]           cur_queue_next;
 reg   [NUM_STATES-1:0]                 state;
 reg   [NUM_STATES-1:0]                 state_next;
-reg				                        pkt_fwd_next;
 
 
 // ------------ Modules -------------
@@ -212,10 +212,9 @@ assign m_axis_tstrb     = fifo_out_tstrb[cur_queue];
 assign m_axis_tvalid    = ~empty[cur_queue];
 
 always @(*) begin
-   state_next      = state;
+   state_next      = IDLE;
    cur_queue_next  = cur_queue;
    rd_en           = 0;
-   pkt_fwd_next    = 0;
    case(state)
       /* cycle between input queues until one is not empty */
       IDLE: begin
@@ -223,7 +222,6 @@ always @(*) begin
             if(m_axis_tready) begin
                state_next        = WR_PKT;
                rd_en[cur_queue]  = 1;
-	            pkt_fwd_next      = 1;
             end
          end
          else begin
@@ -232,6 +230,7 @@ always @(*) begin
       end
       /* wait until eop */
       WR_PKT: begin
+         state_next        = WR_PKT;
          /* if this is the last word then write it and get out */
          if(m_axis_tready & m_axis_tlast) begin
             state_next        = IDLE;

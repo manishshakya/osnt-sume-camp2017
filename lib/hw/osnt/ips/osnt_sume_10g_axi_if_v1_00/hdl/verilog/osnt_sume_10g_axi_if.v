@@ -176,7 +176,12 @@ module osnt_sume_10g_axi_if
    input          [1:0]                            tx_rd_ready_3,
    input          [C_S_AXI_DATA_WIDTH-1:0]         tx_rd_data_3_0,
    input          [C_S_AXI_DATA_WIDTH-1:0]         tx_rd_data_3_1,
-   input          [C_S_AXI_DATA_WIDTH-1:0]         tx_rd_data_3_2
+   input          [C_S_AXI_DATA_WIDTH-1:0]         tx_rd_data_3_2,
+
+   output   reg   [C_S_AXI_DATA_WIDTH-1:0]         rx_drop_0,
+   output   reg   [C_S_AXI_DATA_WIDTH-1:0]         rx_drop_1,
+   output   reg   [C_S_AXI_DATA_WIDTH-1:0]         rx_drop_2,
+   output   reg   [C_S_AXI_DATA_WIDTH-1:0]         rx_drop_3
 );
 
 wire                                            Bus2IP_Clk;
@@ -375,8 +380,9 @@ always @(posedge S_AXI_ACLK)
          16'h1028 : reg_pcspma_config_0[(C_S_AXI_DATA_WIDTH*14)+:C_S_AXI_DATA_WIDTH]   <= Bus2IP_Data;
          16'h102c : reg_pcspma_config_0[(C_S_AXI_DATA_WIDTH*15)+:C_S_AXI_DATA_WIDTH]   <= Bus2IP_Data;
          16'h1030 : reg_pcspma_config_0[(C_S_AXI_DATA_WIDTH*16)+:C_S_AXI_DATA_WIDTH]   <= Bus2IP_Data;
-         16'h1050 : rx_ts_pos_0   <= Bus2IP_Data;
-         16'h1054 : tx_ts_pos_0   <= Bus2IP_Data;
+         16'h1050 : rx_ts_pos_0     <= Bus2IP_Data;
+         16'h1054 : tx_ts_pos_0     <= Bus2IP_Data;
+         16'h1060 : rx_drop_0       <= Bus2IP_Data;
 
          16'h2010 : reg_mac_rx_config_1[0+:C_S_AXI_DATA_WIDTH]                         <= Bus2IP_Data;
          16'h2014 : reg_mac_rx_config_1[C_S_AXI_DATA_WIDTH+:C_S_AXI_DATA_WIDTH]        <= Bus2IP_Data;
@@ -403,6 +409,7 @@ always @(posedge S_AXI_ACLK)
          16'h3030 : reg_pcspma_config_1[(C_S_AXI_DATA_WIDTH*16)+:C_S_AXI_DATA_WIDTH]   <= Bus2IP_Data;
          16'h3050 : rx_ts_pos_1   <= Bus2IP_Data;
          16'h3054 : tx_ts_pos_1   <= Bus2IP_Data;
+         16'h3060 : rx_drop_1       <= Bus2IP_Data;
 
          16'h4010 : reg_mac_rx_config_2[0+:C_S_AXI_DATA_WIDTH]                         <= Bus2IP_Data;
          16'h4014 : reg_mac_rx_config_2[C_S_AXI_DATA_WIDTH+:C_S_AXI_DATA_WIDTH]        <= Bus2IP_Data;
@@ -428,6 +435,7 @@ always @(posedge S_AXI_ACLK)
          16'h5030 : reg_pcspma_config_2[(C_S_AXI_DATA_WIDTH*16)+:C_S_AXI_DATA_WIDTH]   <= Bus2IP_Data;
          16'h5050 : rx_ts_pos_2   <= Bus2IP_Data;
          16'h5054 : tx_ts_pos_2   <= Bus2IP_Data;
+         16'h5060 : rx_drop_2       <= Bus2IP_Data;
 
          16'h6010 : reg_mac_rx_config_3[0+:C_S_AXI_DATA_WIDTH]                         <= Bus2IP_Data;
          16'h6014 : reg_mac_rx_config_3[C_S_AXI_DATA_WIDTH+:C_S_AXI_DATA_WIDTH]        <= Bus2IP_Data;
@@ -454,6 +462,7 @@ always @(posedge S_AXI_ACLK)
          16'h7030 : reg_pcspma_config_3[(C_S_AXI_DATA_WIDTH*16)+:C_S_AXI_DATA_WIDTH]   <= Bus2IP_Data;
          16'h7050 : rx_ts_pos_3   <= Bus2IP_Data;
          16'h7054 : tx_ts_pos_3   <= Bus2IP_Data;
+         16'h7060 : rx_drop_3       <= Bus2IP_Data;
 
          16'ha010 : rx_addr_rd_0                                                       <= Bus2IP_Data;
          16'ha014 : cfg_ts_0                                                           <= Bus2IP_Data;
@@ -502,6 +511,7 @@ always @(posedge S_AXI_ACLK)
          16'h1040 : IP2Bus_Data     <= {8'b0,r_pcspma_status_0[7:0],14'b0,r_mac_status_0[1:0]};
          16'h1050 : IP2Bus_Data     <= rx_ts_pos_0;
          16'h1054 : IP2Bus_Data     <= tx_ts_pos_0;
+         16'h1060 : IP2Bus_Data     <= rx_drop_0;
 
          16'h2008 : IP2Bus_Data     <= rx_pkt_count_1;
          16'h200c : IP2Bus_Data     <= tx_pkt_count_1;
@@ -531,6 +541,7 @@ always @(posedge S_AXI_ACLK)
          16'h3040 : IP2Bus_Data     <= {8'b0,r_pcspma_status_1[7:0],14'b0,r_mac_status_1[1:0]};
          16'h3050 : IP2Bus_Data     <= rx_ts_pos_1;
          16'h3054 : IP2Bus_Data     <= tx_ts_pos_1;
+         16'h3060 : IP2Bus_Data     <= rx_drop_1;
 
          16'h4008 : IP2Bus_Data     <= rx_pkt_count_2;
          16'h400c : IP2Bus_Data     <= tx_pkt_count_2;
@@ -560,6 +571,7 @@ always @(posedge S_AXI_ACLK)
          16'h5040 : IP2Bus_Data     <= {8'b0,r_pcspma_status_2[7:0],14'b0,r_mac_status_2[1:0]};
          16'h5050 : IP2Bus_Data     <= rx_ts_pos_2;
          16'h5054 : IP2Bus_Data     <= tx_ts_pos_2;
+         16'h5060 : IP2Bus_Data     <= rx_drop_2;
 
 
          16'h6008 : IP2Bus_Data     <= rx_pkt_count_3;
@@ -590,6 +602,7 @@ always @(posedge S_AXI_ACLK)
          16'h7040 : IP2Bus_Data     <= {8'b0,r_pcspma_status_3[7:0],14'b0,r_mac_status_3[1:0]};
          16'h7050 : IP2Bus_Data     <= rx_ts_pos_3;
          16'h7054 : IP2Bus_Data     <= tx_ts_pos_3;
+         16'h7060 : IP2Bus_Data     <= rx_drop_3;
 
          16'ha010 : IP2Bus_Data     <= rx_rd_data_0;
          16'ha014 : IP2Bus_Data     <= cfg_ts_0;

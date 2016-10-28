@@ -2,6 +2,7 @@
 // Copyright (C) 2010, 2011 The Board of Trustees of The Leland Stanford
 // Junior University
 // Copyright (c) 2016 University of Cambridge
+// Copyright (c) 2016 Jong Hun Han
 // All rights reserved.
 //
 // This software was developed by University of Cambridge Computer Laboratory
@@ -131,7 +132,7 @@
         end
 	
 	always @ (*) begin  
-		nxt_state = cur_state;
+		nxt_state = WAIT_PKT;
 		pkt_valid_w = 1'b0;
                 pkt_flags_w = pkt_flags;
 		pkt_input_if_w = pkt_input_if;
@@ -160,6 +161,7 @@
 	 		
 	
                 PKT_WAIT_HDR: begin
+                        nxt_state = PKT_WAIT_HDR;
                         if (in_valid_d0) begin
                                 if (in_tlast_d0) begin /*small pkt*/
                                         pkt_valid_w = 1'b1;
@@ -173,6 +175,7 @@
                 end
 
                 PKT_WAIT_EOP: begin
+                        nxt_state = PKT_WAIT_EOP;
                         if (in_valid_d0 && in_tlast_d0)
                                 nxt_state = WAIT_PKT;
                 end

@@ -2,6 +2,7 @@
 // Copyright (C) 2010, 2011 The Board of Trustees of The Leland Stanford
 // Junior University
 // Copyright (c) 2016 University of Cambridge
+// Copyright (c) 2016 Jong Hun Han
 // All rights reserved.
 //
 // This software was developed by University of Cambridge Computer Laboratory
@@ -126,7 +127,7 @@ module inter_packet_delay
 
   // ---- Primary State Machine [Combinational]
   always @ * begin
-    next_state = state;
+    next_state = IN_PKT_HEADER;
 
     in_fifo_rd_en = 0;
     in_fifo_wr_en = 0;
@@ -176,6 +177,7 @@ module inter_packet_delay
         end
 		
         IN_PKT_BODY: begin
+          next_state   = IN_PKT_BODY;
           if (!in_fifo_empty) begin
             m_axis_tvalid = 1;
 
