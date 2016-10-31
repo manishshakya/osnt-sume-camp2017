@@ -172,13 +172,14 @@ class MainWindow(wx.Frame):
         cutter_timer_panel.SetSizer(cutter_timer_sizer)
         self.cut_to_length = wx.StaticText(cutter_timer_panel, wx.ID_ANY, label="", style=wx.ALIGN_CENTER)
         self.current_time = wx.StaticText(cutter_timer_panel, wx.ID_ANY, label="", style=wx.ALIGN_CENTER)
+        self.hash_time = wx.ToggleButton(cutter_timer_panel, wx.ID_ANY, label="Hash", style=wx.ALIGN_CENTER)
 
-        cutter_timer_sizer.Add(wx.StaticText(cutter_timer_panel, wx.ID_ANY, label="Cut to Length:", style=wx.ALIGN_CENTER),
-            1, wx.EXPAND)
+        cutter_timer_sizer.Add(wx.StaticText(cutter_timer_panel, wx.ID_ANY, label="Cut to Length:", style=wx.ALIGN_CENTER), 1, wx.EXPAND)
         cutter_timer_sizer.Add(self.cut_to_length, 1, wx.EXPAND)
-        cutter_timer_sizer.Add(wx.StaticText(cutter_timer_panel, wx.ID_ANY, label="FPGA Timer:", style=wx.ALIGN_CENTER),
-            1, wx.EXPAND)
+        cutter_timer_sizer.Add(wx.StaticText(cutter_timer_panel, wx.ID_ANY, label="FPGA Timer:", style=wx.ALIGN_CENTER), 1, wx.EXPAND)
         cutter_timer_sizer.Add(self.current_time, 1, wx.EXPAND)
+        cutter_timer_sizer.Add(wx.StaticText(cutter_timer_panel, wx.ID_ANY, label="", style=wx.ALIGN_CENTER), 1, wx.EXPAND)
+        cutter_timer_sizer.Add(self.hash_time, 1, wx.EXPAND)
 
         # Logger
         logger_title = wx.StaticText(self, label="CONSOLE LOG", style=wx.ALIGN_CENTER)
