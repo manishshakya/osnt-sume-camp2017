@@ -207,7 +207,7 @@ module osnt_sume_bram_output_queues
       	case(metadata_state[i])
       		WAIT_HEADER: begin
       			if(rd_en[i]) begin
-      				metadata_state_next[i] = WAIT_EOP;
+      				metadata_state_next[i] = (fifo_out_tlast[i]) ? WAIT_HEADER : WAIT_EOP;
       				metadata_rd_en[i] = 1'b1;
       			end
       		end

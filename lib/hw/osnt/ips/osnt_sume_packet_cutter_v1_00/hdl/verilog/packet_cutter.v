@@ -309,7 +309,7 @@ always @(*) begin
                   state_next = CUT_PACKET;
                end
                else begin
-                  state_next = IN_PACKET;
+                  state_next = (tlast_fifo) ? WAIT_PKT : IN_PACKET;
                end
             end
          end

@@ -92,6 +92,7 @@ module osnt_sume_packet_cutter
 );
 
   localparam NUM_RW_REGS       = 5;
+  localparam NUM_RO_REGS       = 2;
 
   // -- Signals
 
@@ -109,12 +110,16 @@ module osnt_sume_packet_cutter
   
   wire [NUM_RW_REGS*C_S_AXI_DATA_WIDTH-1:0] rw_regs;
   wire [NUM_RW_REGS*C_S_AXI_DATA_WIDTH-1:0] rw_defaults;
+  wire [NUM_RO_REGS*C_S_AXI_DATA_WIDTH-1:0] ro_regs;
  
   wire                                      cut_en;
   wire [C_S_AXI_ADDR_WIDTH-1:0]             cut_words;
   wire [C_S_AXI_ADDR_WIDTH-1:0]		         cut_offset;
   wire [C_S_AXI_ADDR_WIDTH-1:0]             cut_bytes;
   wire                                      hash_en;
+
+  reg [C_S_AXI_ADDR_WIDTH-1:0]             s_axis_cnt;
+  reg [C_S_AXI_ADDR_WIDTH-1:0]             m_axis_cnt;
 
  
   sume_axi_ipif#
@@ -164,7 +169,8 @@ module osnt_sume_packet_cutter
   (
     .C_S_AXI_DATA_WIDTH (C_S_AXI_DATA_WIDTH),          
     .C_S_AXI_ADDR_WIDTH (C_S_AXI_ADDR_WIDTH),   
-    .NUM_RW_REGS        (NUM_RW_REGS)
+    .NUM_RW_REGS        (NUM_RW_REGS),
+    .NUM_RO_REGS        (NUM_RO_REGS)
   ) ipif_regs_inst
   (   
     .Bus2IP_Clk     ( Bus2IP_Clk     ),
@@ -180,8 +186,33 @@ module osnt_sume_packet_cutter
     .IP2Bus_Error   ( IP2Bus_Error   ),
     
     .rw_regs        ( rw_regs ),
-    .rw_defaults    ( rw_defaults )
+    .rw_defaults    ( rw_defaults ),
+   .ro_regs          (  ro_regs     )
   );
+
+   assign ro_regs = {s_axis_cnt, m_axis_cnt};
+
+always @(posedge Bus2IP_Clk)
+   if (~Bus2IP_Resetn) begin
+      s_axis_cnt  <= 0;
+   end
+   else if (cut_en) begin
+      s_axis_cnt  <= 0;
+   end
+   else begin
+      s_axis_cnt  <= (S_AXIS_TVALID & S_AXIS_TREADY & S_AXIS_TLAST) ? s_axis_cnt + 1 : s_axis_cnt;
+   end
+
+always @(posedge Bus2IP_Clk)
+   if (~Bus2IP_Resetn) begin
+      m_axis_cnt  <= 0;
+   end
+   else if (cut_en) begin
+      m_axis_cnt  <= 0;
+   end
+   else begin
+      m_axis_cnt  <= (M_AXIS_TVALID & M_AXIS_TREADY & M_AXIS_TLAST) ? m_axis_cnt + 1 : m_axis_cnt;
+   end
   
   // -- Register assignments
   

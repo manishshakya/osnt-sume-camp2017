@@ -58,6 +58,9 @@ source ../../../lib/osnt_ip_property_common.tcl
 
 ipx::add_bus_parameter FREQ_HZ [ipx::get_bus_interfaces S_AXI -of_objects [ipx::current_core]]
 
+ipx::remove_bus_interface S_AXI_ARESETN [ipx::current_core]
+ipx::remove_bus_interface S_AXI_ACLK [ipx::current_core]
+
 ipx::infer_user_parameters [ipx::current_core]
 ipx::check_integrity [ipx::current_core]
 ipx::save_core [ipx::current_core]
