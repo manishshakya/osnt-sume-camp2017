@@ -140,6 +140,8 @@ class OSNTMonitorFilter:
             self.get_rule(i)
 
     def set_rules(self):
+        rd_value = int(rdaxi(self.reg_addr(self.module_base_addr)), 16) & 0xffffffff
+        wraxi(OSNT_MON_STATS_BASE_ADDR, hex(rd_value & 0xfffffeff))
 
         for i in range(OSNT_MON_FILTER_NUM_ENTRIES):
             self.set_rule(i)
@@ -154,19 +156,22 @@ class OSNTMonitorFilter:
         if entry < 0 or entry >= OSNT_MON_FILTER_NUM_ENTRIES:
             return
 
-        self.src_ip_table[entry] = "0x0"
+        self.src_ip_table[entry] = "0xffffffff"
         self.src_ip_mask_table[entry] = "0xffffffff"
-        self.dst_ip_table[entry] = "0x0"
+        self.dst_ip_table[entry] = "0xffffffff"
         self.dst_ip_mask_table[entry] = "0xffffffff"
-        self.l4ports_table[entry] = "0x0"
+        self.l4ports_table[entry] = "0xffffffff"
         self.l4ports_mask_table[entry] = "0xffffffff"
-        self.proto_table[entry] = "0x0"
+        self.proto_table[entry] = "0xff"
         self.proto_mask_table[entry] = "0xff"
 
         self.set_rule(entry)
         self.get_rule(entry)
 
     def clear_rules(self):
+        # Makesure to drop packets as rules are not updated.
+        rd_value = int(rdaxi(self.reg_addr(self.module_base_addr)), 16) & 0xffffffff
+        wraxi(OSNT_MON_STATS_BASE_ADDR, hex(rd_value | 0x00000100))
 
         for i in range(OSNT_MON_FILTER_NUM_ENTRIES):
             self.clear_rule(i)

@@ -228,13 +228,13 @@ class MainWindow(wx.Frame):
 
     def display_filter_rules(self):
         for i in range(OSNT_MON_FILTER_NUM_ENTRIES):
-            if (int(self.osnt_monitor_filter.src_ip_table[i], 16) != 0 or
+            if (int(self.osnt_monitor_filter.src_ip_table[i], 16) != int("0xffffffff", 16) or
                     int(self.osnt_monitor_filter.src_ip_mask_table[i], 16) != int("0xffffffff", 16) or
-                    int(self.osnt_monitor_filter.dst_ip_table[i], 16) != 0 or
+                    int(self.osnt_monitor_filter.dst_ip_table[i], 16) != int("0xffffffff", 16) or
                     int(self.osnt_monitor_filter.dst_ip_mask_table[i], 16) != int("0xffffffff", 16) or
-                    int(self.osnt_monitor_filter.l4ports_table[i], 16) != 0 or
+                    int(self.osnt_monitor_filter.l4ports_table[i], 16) != int("0xffffffff", 16) or
                     int(self.osnt_monitor_filter.l4ports_mask_table[i], 16) != int("0xffffffff", 16) or
-                    int(self.osnt_monitor_filter.proto_table[i], 16) != 0 or
+                    int(self.osnt_monitor_filter.proto_table[i], 16) != int("0xff", 16) or
                     int(self.osnt_monitor_filter.proto_mask_table[i], 16) != int("0xff", 16)):
                 self.src_ip_txt[i].SetLabel(hex2ip(self.osnt_monitor_filter.src_ip_table[i]))
                 self.src_ip_mask_txt[i].SetLabel(hex2ip(self.osnt_monitor_filter.src_ip_mask_table[i]))
