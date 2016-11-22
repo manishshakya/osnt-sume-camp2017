@@ -47,6 +47,8 @@
                 .in_eoh         (pkt_eoh),
                 .in_tuser       (pkt_tuser),
 
+               .tuple_pkt_en     (  tuple_pkt_en),
+
                 .pkt_valid      (DECLARATIONS_W[`PRIORITY_ETH_IPv4_TCPnUDP].pkt_valid_int),
                 .pkt_attributes (DECLARATIONS_W[`PRIORITY_ETH_IPv4_TCPnUDP].pkt_attributes_int),
 
@@ -76,6 +78,8 @@
                 .in_tlast       (pkt_tlast),
                 .in_eoh         (pkt_eoh),
                 .in_tuser       (pkt_tuser),
+
+               .tuple_pkt_en     (  tuple_pkt_en),
 
                 .pkt_valid      (DECLARATIONS_W[`PRIORITY_ETH_VLAN_IPv4_TCPnUDP].pkt_valid_int),
                 .pkt_attributes (DECLARATIONS_W[`PRIORITY_ETH_VLAN_IPv4_TCPnUDP].pkt_attributes_int),

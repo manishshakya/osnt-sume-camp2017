@@ -40,25 +40,27 @@
 
 `include "defines.vh"
 
-	module packet_analyzer
-	#(
-    		parameter C_S_AXIS_DATA_WIDTH = 256,
-		parameter C_S_AXIS_TUSER_WIDTH = 128,
-    		parameter NETWORK_PROTOCOL_COMBINATIONS = 4,
-		parameter MAX_HDR_WORDS = 6,
-		parameter DIVISION_FACTOR = 2,
-		parameter PRTCL_ID_WIDTH = log2(NETWORK_PROTOCOL_COMBINATIONS),
-		parameter NUM_INPUT_QUEUES = 8,
-		parameter BYTES_COUNT_WIDTH = 16,
-		parameter TUPLE_WIDTH = 104,
-		parameter ATTRIBUTE_DATA_WIDTH = 135
-	)
+module packet_analyzer
+#(
+   parameter C_S_AXIS_DATA_WIDTH = 256,
+   parameter C_S_AXIS_TUSER_WIDTH = 128,
+   parameter NETWORK_PROTOCOL_COMBINATIONS = 4,
+   parameter MAX_HDR_WORDS = 6,
+   parameter DIVISION_FACTOR = 2,
+   parameter PRTCL_ID_WIDTH = log2(NETWORK_PROTOCOL_COMBINATIONS),
+   parameter NUM_INPUT_QUEUES = 8,
+   parameter BYTES_COUNT_WIDTH = 16,
+   parameter TUPLE_WIDTH = 104,
+   parameter ATTRIBUTE_DATA_WIDTH = 135
+)
    	(// --- Interface to the previous stage
     		input  	[C_S_AXIS_DATA_WIDTH-1:0]	tdata,
 		input	[C_S_AXIS_TUSER_WIDTH-1:0]	tuser,
 		input					valid,
         	input					tlast,
-    
+ 
+      input                tuple_pkt_en,
+   
     	// --- Results 
 		output 					pkt_valid,
     		output	[ATTRIBUTE_DATA_WIDTH-1:0]	pkt_attributes,
@@ -162,6 +164,8 @@
     		.in_tlast 	(pkt_tlast),
     		.in_eoh 	(pkt_eoh),
 		.in_tuser	(pkt_tuser),
+
+      .tuple_pkt_en     (tuple_pkt_en),
  
     		.pkt_valid 	(DECLARATIONS_W[`PRIORITY_WHEN_NO_HIT].pkt_valid_int),
     		.pkt_attributes (DECLARATIONS_W[`PRIORITY_WHEN_NO_HIT].pkt_attributes_int),

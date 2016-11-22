@@ -2,7 +2,7 @@
 // Copyright (C) 2010, 2011 The Board of Trustees of The Leland Stanford
 // Junior University
 // Copyright (c) 2016 University of Cambridge
-// Copyright (c) 2016 Jong Hun Han
+// Copyright (c) 2016 Jong Hun Han, Gianni Antichi
 // All rights reserved.
 //
 // This software was developed by University of Cambridge Computer Laboratory
@@ -40,27 +40,27 @@
 module core_monitoring
 #(
    //Master AXI Stream Data Width
-   parameter C_M_AXIS_DATA_WIDTH=256,
-   parameter C_S_AXIS_DATA_WIDTH=256,
-   parameter C_M_AXIS_TUSER_WIDTH=128,
-   parameter C_S_AXIS_TUSER_WIDTH=128,
-   parameter C_S_AXI_DATA_WIDTH = 32,
-   parameter SRC_PORT_POS=16,
-   parameter DST_PORT_POS=24,
-   parameter NUM_QUEUES=8,
-   parameter MON_LUT_DEPTH_BITS=5,
-   parameter TUPLE_WIDTH = 104,
-   parameter NETWORK_PROTOCOL_COMBINATIONS = 4,
+   parameter C_M_AXIS_DATA_WIDTH    =256,
+   parameter C_S_AXIS_DATA_WIDTH             = 256,
+   parameter C_M_AXIS_TUSER_WIDTH            = 128,
+   parameter C_S_AXIS_TUSER_WIDTH            = 128,
+   parameter C_S_AXI_DATA_WIDTH              = 32,
+   parameter SRC_PORT_POS                    = 16,
+   parameter DST_PORT_POS                    = 24,
+   parameter NUM_QUEUES                      = 8,
+   parameter MON_LUT_DEPTH_BITS              = 5,
+   parameter TUPLE_WIDTH                     = 104,
+   parameter NETWORK_PROTOCOL_COMBINATIONS   = 4,
    parameter MAX_HDR_WORDS = 6,
    parameter DIVISION_FACTOR = 2,
    parameter BYTES_COUNT_WIDTH = 16,
-	parameter TIMESTAMP_WIDTH = 64,
+   parameter TIMESTAMP_WIDTH = 64,
    parameter ATTRIBUTE_DATA_WIDTH = 135
 )
 (
-    	// Global Ports
-    		input axi_aclk,
-    		input axi_resetn,
+    // Global Ports
+    input axi_aclk,
+    input axi_resetn,
 
     	// Master Stream Ports (interface to data path)
     		output reg [C_M_AXIS_DATA_WIDTH - 1:0] m_axis_tdata,
@@ -132,15 +132,18 @@ module core_monitoring
 		input				stats_freeze,
 		input				rst_stats,
       input [3:0]           debug_mode,
-      input                force_drop
+      input                force_drop,
+      input               tuple_pkt_en 
 	);
 
 
 	//--------------------- Internal Parameter-------------------------
 
-   	localparam NUM_STATES               = 2;
+   	localparam NUM_STATES               = 4;
    	localparam WAIT_TILL_DONE_DECODE    = 1;
    	localparam IN_PACKET                = 2;
+   	localparam SM_PACKET                = 3;
+   	localparam FLUSH                    = 4;
 
    	localparam METADATA_TUSER	    = 32;
        
@@ -148,6 +151,8 @@ module core_monitoring
 
 	wire [ATTRIBUTE_DATA_WIDTH-1:0]		pkt_attributes;
 	wire					pkt_valid;
+	wire [192-1:0]		tuple_pkt_attributes;
+	wire					tuple_pkt_valid;
         wire [ATTRIBUTE_DATA_WIDTH-1:0]         pkt_attributes_w;
         wire                                    pkt_valid_w;
         reg [ATTRIBUTE_DATA_WIDTH-1:0]          pkt_attributes_reg;
@@ -201,6 +206,8 @@ packet_analyzer
    .valid(s_axis_tvalid & ~in_fifo_nearly_full),
    .tlast(s_axis_tlast),
 
+   .tuple_pkt_en  (  tuple_pkt_en),
+
    // --- output 
    .pkt_valid(pkt_valid),
    .pkt_attributes(pkt_attributes),
@@ -208,6 +215,70 @@ packet_analyzer
 	// --- misc
    .reset(~axi_resetn),
    .clk(axi_aclk)
+);
+
+tuple_packet_analyzer
+#(
+   .C_S_AXIS_DATA_WIDTH(C_S_AXIS_DATA_WIDTH),
+	.C_S_AXIS_TUSER_WIDTH(C_S_AXIS_TUSER_WIDTH),
+   .NETWORK_PROTOCOL_COMBINATIONS(NETWORK_PROTOCOL_COMBINATIONS),
+   .MAX_HDR_WORDS(MAX_HDR_WORDS),
+   .DIVISION_FACTOR(DIVISION_FACTOR),
+   .NUM_INPUT_QUEUES(NUM_QUEUES),
+   .BYTES_COUNT_WIDTH(BYTES_COUNT_WIDTH),
+   .TUPLE_WIDTH(TUPLE_WIDTH),
+   .ATTRIBUTE_DATA_WIDTH(192)
+) tuple_packet_analyzer
+(
+   // --- input
+   .tdata(s_axis_tdata),
+   .tuser(s_axis_tuser),
+   .valid(s_axis_tvalid & ~in_fifo_nearly_full),
+   .tlast(s_axis_tlast),
+
+   .tuple_pkt_en  (  tuple_pkt_en),
+
+   // --- output 
+   .pkt_valid(tuple_pkt_valid),
+   .pkt_attributes(tuple_pkt_attributes),
+        
+	// --- misc
+   .reset(~axi_resetn),
+   .clk(axi_aclk)
+);
+
+reg tuple_pkt_valid_r;
+
+always @(posedge axi_aclk)
+   if (~axi_resetn)
+      tuple_pkt_valid_r    <= 0;
+   else
+      tuple_pkt_valid_r    <= tuple_pkt_valid;
+
+wire  tuple_pkt_valid_w = tuple_pkt_valid & ~tuple_pkt_valid_r;
+
+
+wire  [191:0] tuple_pkt_attributes_out;
+wire  tuple_pkt_nearly_full, tuple_pkt_empty;
+reg   tuple_pkt_rd_en;
+
+fallthrough_small_fifo
+#(
+   .WIDTH(192),
+   .MAX_DEPTH_BITS(8)
+)
+tuple_pkt_fifo
+(
+   .din        (tuple_pkt_attributes),  // Data in
+   .wr_en      (tuple_pkt_valid_w),               // Write enable
+   .rd_en      (tuple_pkt_rd_en),       // Read the next word
+   .dout       (tuple_pkt_attributes_out),
+   .full       (),
+   .prog_full  (),
+   .nearly_full (tuple_pkt_nearly_full),
+   .empty (tuple_pkt_empty),
+   .reset (~axi_resetn),
+   .clk (axi_aclk)
 );
 
 
@@ -354,37 +425,49 @@ pkt_fifo
 
 always @(*) begin
    m_axis_tuser = tuser_fifo;
-   m_axis_tstrb = tstrb_fifo;
+   m_axis_tstrb = (tuple_pkt_en) ? 32'hffff_ff00 : tstrb_fifo;
    m_axis_tlast = tlast_fifo;
-   m_axis_tdata = tdata_fifo;
+   m_axis_tdata = (tuple_pkt_en) ? {tuple_pkt_attributes_out, {(256-192){1'b0}}} : tdata_fifo;
    m_axis_tvalid = 0;
    in_fifo_rd_en = 0;
    hit_fifo_rd_en = 0;
+   tuple_pkt_rd_en = 0;
    state_next = WAIT_TILL_DONE_DECODE;
    case(state)
       WAIT_TILL_DONE_DECODE: begin
          state_next = WAIT_TILL_DONE_DECODE;
-         if(!hit_fifo_empty) begin
+         if(!hit_fifo_empty & ~tuple_pkt_empty) begin
             if(|fifo_dst_ports && ~force_drop) begin
+				   m_axis_tlast = (tuple_pkt_en) ? 1 : 0;
 				   m_axis_tvalid = 1;
                m_axis_tuser[DST_PORT_POS+7:DST_PORT_POS] = (debug_mode == 0) ? fifo_dst_ports :
                                                            {debug_mode[3],1'b0,debug_mode[2],1'b0,debug_mode[1],1'b0,debug_mode[0],1'b0} & fifo_dst_ports;
+               m_axis_tuser[0+:16] = (tuple_pkt_en) ? 16'h0018 : tuser_fifo[0+:16];
 					if(m_axis_tready) begin
 					   in_fifo_rd_en = 1;
 						hit_fifo_rd_en = 1;
-						state_next = IN_PACKET;
+                  tuple_pkt_rd_en = 1;
+						state_next = (tuple_pkt_en) ? SM_PACKET : IN_PACKET;
 					end
 				end
 				else begin
 					in_fifo_rd_en = 1;
-					if(tlast_fifo)
+					if(tlast_fifo) begin
+                  tuple_pkt_rd_en = 1;
 						hit_fifo_rd_en = 1;
+               end
 				end
 			end
          else if (in_fifo_nearly_full) begin
             in_fifo_rd_en = 1;
-            if (tlast_fifo & ~hit_fifo_empty)
-               hit_fifo_rd_en = 1;
+            if (tlast_fifo) begin
+               hit_fifo_rd_en = ~hit_fifo_empty;
+               tuple_pkt_rd_en = ~tuple_pkt_empty;
+               state_next = WAIT_TILL_DONE_DECODE;
+            end
+            else begin
+               state_next = FLUSH;
+            end
          end
 		end
       IN_PACKET: begin
@@ -396,6 +479,23 @@ always @(*) begin
 					if(tlast_fifo)
                   state_next = WAIT_TILL_DONE_DECODE;
 				end
+			end
+		end
+      SM_PACKET: begin
+         state_next = SM_PACKET;
+		   if(!in_fifo_empty) begin
+					in_fifo_rd_en = 1;
+					if(tlast_fifo)
+                  state_next = WAIT_TILL_DONE_DECODE;
+			end
+		end
+      FLUSH: begin
+         state_next = FLUSH;
+		   in_fifo_rd_en = 1;
+			if(tlast_fifo) begin
+               hit_fifo_rd_en = ~hit_fifo_empty;
+               tuple_pkt_rd_en = ~tuple_pkt_empty;
+               state_next = WAIT_TILL_DONE_DECODE;
 			end
 		end
    endcase // case(state)

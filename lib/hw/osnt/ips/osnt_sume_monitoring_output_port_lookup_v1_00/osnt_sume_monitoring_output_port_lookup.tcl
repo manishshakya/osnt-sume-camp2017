@@ -46,9 +46,11 @@ read_verilog "./hdl/verilog/core_monitoring.v"
 
 read_verilog "./hdl/verilog/packet_analyzer/multistage_priority_mux.v"
 read_verilog "./hdl/verilog/packet_analyzer/packet_analyzer.v"
+read_verilog "./hdl/verilog/packet_analyzer/tuple_packet_analyzer.v"
 read_verilog "./hdl/verilog/packet_analyzer/packet_monitor.v"
 
 read_verilog "./hdl/verilog/packet_analyzer/network_protocol_combinations/ETH_IPv4_TCPnUDP.v"
+read_verilog "./hdl/verilog/packet_analyzer/network_protocol_combinations/tuple_ETH_IPv4_TCPnUDP.v"
 read_verilog "./hdl/verilog/packet_analyzer/network_protocol_combinations/ETH_VLAN_IPv4_TCPnUDP.v"
 read_verilog "./hdl/verilog/packet_analyzer/network_protocol_combinations/WHEN_NO_HIT.v"
 
@@ -64,7 +66,6 @@ read_verilog "./../../../std/ips/osnt_sume_common/hdl/verilog/axi_lite_regs.v"
 read_verilog "./../../../std/ips/osnt_sume_common/hdl/verilog/ipif_regs.v"
 read_verilog "./../../../std/ips/osnt_sume_common/hdl/verilog/ipif_table_regs.v"
 read_verilog "./../../../std/ips/osnt_sume_common/hdl/verilog/sume_axi_ipif.v"
-
 
 read_vhdl "./xapp1151_cam_v1_1/src/vhdl/cam_init_file_pack_xst.vhd"
 read_vhdl "./xapp1151_cam_v1_1/src/vhdl/cam_pkg.vhd"
