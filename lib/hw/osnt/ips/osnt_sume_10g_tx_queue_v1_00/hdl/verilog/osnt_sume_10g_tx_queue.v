@@ -272,6 +272,9 @@ always @(*) begin
          if (tx_ts_pos != 0 && ts_cnt == tx_ts_pos) begin
             m_axis_tdata   = r_ts_value;
          end
+         else if (tx_ts_pos != 0 && ts_cnt == (tx_ts_pos + 1)) begin
+            m_axis_tdata   = {pkt_cnt, SIGNATURE};
+         end
          else begin
             m_axis_tdata   = tx0_fifo_out_tdata;
          end
