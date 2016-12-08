@@ -376,16 +376,6 @@ class MainWindow(wx.Frame):
         self.logger.AppendText("Completed reseting timer.\n")
         return
 
-def translateRate(rate):
-
-    if rate >= 1000000000:
-        return str(round(rate/1000000000.0, 3)) + 'G';
-    elif rate >= 1000000:
-        return str(round(rate/1000000.0, 3)) + 'M';
-    elif rate >= 1000:
-        return str(round(rate/1000.0, 3)) + 'K';
-    else:
-        return str(round(rate, 3));
 
 app = wx.App(False)
 frame = MainWindow()

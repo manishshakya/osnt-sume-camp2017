@@ -55,14 +55,6 @@ class MainWindow(wx.Frame):
         rx_pos_addr = ["0x79001050", "0x79003050", "0x79005050", "0x79007050"]
         tx_pos_addr = ["0x79001054", "0x79003054", "0x79005054", "0x79007054"]
 
-        #rx_pos_addr[0] = "0x79001050"
-        #tx_pos_addr[0] = "0x79001054"
-        #rx_pos_addr[1] = "0x79003050"
-        #tx_pos_addr[1] = "0x79003054"
-        #rx_pos_addr[2] = "0x79005050"
-        #tx_pos_addr[2] = "0x79005054"
-        #rx_pos_addr[3] = "0x79007050"
-        #tx_pos_addr[3] = "0x79007054"
         self.rx_pos_rd = [None]*4 
         self.tx_pos_rd = [None]*4
         self.rx_pos_wr = [None]*4
@@ -73,8 +65,6 @@ class MainWindow(wx.Frame):
             self.rx_pos_wr[i] = rx_pos_addr[i]
             self.tx_pos_wr[i] = tx_pos_addr[i] 
         
-        #self.rx_pos_rd = rdaxi("0x78a00010")
-        #self.tx_pos_rd = rdaxi("0x78a00014")
         for i in range(4):
             iface = 'nf' + str(i)
             self.rate_limiters[i] = OSNTRateLimiter(iface)
@@ -186,7 +176,7 @@ class MainWindow(wx.Frame):
                 (self.delay_reset_button[i], 0, wx.EXPAND)])
 
         # Timestamp panel
-        ts_title = wx.StaticText(self, label="Timestamp", style=wx.ALIGN_CENTER)
+        ts_title = wx.StaticText(self, label="Timestamp Rx and Tx Position", style=wx.ALIGN_CENTER)
         ts_title.SetFont(wx.Font(15, wx.DECORATIVE, wx.NORMAL, wx.BOLD))
         ts_title.SetBackgroundColour('GRAY')
         ts_panel = wx.Panel(self)
@@ -274,7 +264,7 @@ class MainWindow(wx.Frame):
             if self.delays[i].use_reg == True:
                 self.use_reg_toggle[i].SetLabel('Using register')
             else:
-                self.use_reg_toggle[i].SetLabel('Using timestamp')
+                self.use_reg_toggle[i].SetLabel('Set IPG')
             #self.log(self.delay_header_extractor.get_status())
             self.rx_pos[i].SetValue(int(self.rx_pos_rd[i], 16))
             self.tx_pos[i].SetValue(int(self.tx_pos_rd[i], 16))
@@ -419,7 +409,7 @@ class MainWindow(wx.Frame):
         if self.delays[iface].use_reg == True:
             self.use_reg_toggle[iface].SetLabel('Using register')
         else:
-            self.use_reg_toggle[iface].SetLabel('Using timestamp')
+            self.use_reg_toggle[iface].SetLabel('Set IPG')
         self.log('Delay use reg changed for port '+str(iface))
 
 

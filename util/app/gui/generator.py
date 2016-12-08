@@ -42,7 +42,7 @@ from math import ceil
 #from packet_generator_nic import Poisson_Engine
 from subprocess import Popen, PIPE
 
-DATAPATH_FREQUENCY = 156250000
+DATAPATH_FREQUENCY = 160000000
 MEM_HIGH_ADDR = 512*1024
 PCAP_ENGINE_BASE_ADDR = "0x76000000"
 INTER_PKT_DELAY_BASE_ADDR = {"nf0" : "0x76600000",
