@@ -300,3 +300,14 @@ class OSNTMonitorTimer:
 
     def reg_addr(self, offset):
         return add_hex(self.module_base_addr, offset)
+
+def translateRate(rate):
+
+    if rate >= 1000000000:
+        return str(round(rate/1000000000.0, 3)) + 'G';
+    elif rate >= 1000000:
+        return str(round(rate/1000000.0, 3)) + 'M';
+    elif rate >= 1000:
+        return str(round(rate/1000.0, 3)) + 'K';
+    else:
+        return str(round(rate, 3));
