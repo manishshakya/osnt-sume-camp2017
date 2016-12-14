@@ -216,7 +216,7 @@ always @ (*) begin
                   default: begin
                      pkt_src_port_w    = {PORT_WIDTH{1'b0}};
                      pkt_dst_port_w    = {PORT_WIDTH{1'b0}};
-						   pkt_tcp_flags_w   = {TCP_FLAGS_WIDTH{1'b0}};;
+						   pkt_tcp_flags_w   = {TCP_FLAGS_WIDTH{1'b0}};
                      if (in_tlast_d0) /*small pkt*/
                         nxt_state   = WAIT_PKT;
                      else
