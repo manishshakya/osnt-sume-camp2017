@@ -1,6 +1,6 @@
 #
-# Copyright (c) 2016 University of Cambridge
-# Copyright (c) 2016 Jong Hun Han
+# Copyright (c) 2016-2017 University of Cambridge
+# Copyright (c) 2016-2017 Jong Hun Han
 # All rights reserved.
 #
 # This software was developed by University of Cambridge Computer Laboratory
@@ -29,6 +29,8 @@
 import socket, struct, os, array, sys, time, argparse
 from scapy.all import ETH_P_ALL
 from scapy.all import select
+from generator import *
+from generator_cli_lib import *
 
 s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(ETH_P_ALL))
 
@@ -38,13 +40,13 @@ input_arg.add_argument("--rx_ts_pos", help="Rx timestamp position in packet (Num
 input_arg.add_argument("--sample_no", help="Number of packet for timestamp capturing (Number).")
 input_arg.add_argument("--file_name", type=str, help="File name to store the results. Default <test.dat>")
 input_arg.add_argument("--if_name", type=str, help="Network interface name, nf0-nf3")
-input_arg.add_argument("--verbose", type=str, help="--Show rx and tx timestamp values - On (Default: Off).")
+input_arg.add_argument("--verbose", type=str, help="Show rx and tx timestamp values - On (Default: Off).")
+input_arg.add_argument("--send", action="store_true", help="Start OSNT packet generator.")
 args = input_arg.parse_args()
 
 if (args.if_name):
     if_name = args.if_name
 else:
-    print 'Provide an interface name to capture, nf0-nf3\n'
     sys.exit(1)
 
 s.bind((if_name, ETH_P_ALL))
@@ -99,6 +101,10 @@ tx_ts_enum = float(0)
 rx_ts_enum = float(0)
 tx_ts_1st = float(0)
 rx_ts_1st = float(0)
+
+if (args.send):
+   initcli.pcap_engine.run()
+   print "Start packet generator...!\n"
 
 while True:
 

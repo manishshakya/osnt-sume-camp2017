@@ -1,8 +1,8 @@
 #
 # Copyright (C) 2010, 2011 The Board of Trustees of The Leland Stanford
 # Junior University
-# Copyright (c) 2016 University of Cambridge
-# Copyright (c) 2016 Jong Hun Han 
+# Copyright (c) 2016-2017 University of Cambridge
+# Copyright (c) 2016-2017 Jong Hun Han 
 # All rights reserved.
 #
 # This software was developed by University of Cambridge Computer Laboratory
@@ -206,6 +206,33 @@ class OSNTGeneratorPcapEngine:
         self.set_replay_cnt()
 
         self.set_reset(False)
+
+    def load_pcap_only(self, pcaps):
+        # reset
+        self.set_reset(True)
+        sleep(0.1)
+        # load packets
+        for iface in pcaps:
+            pkt = rdpcap(pcaps[iface])
+            sendp(pkt, iface=iface, verbose=False)
+
+            sleep(1)
+            if iface == 'nf0':
+                print iface
+                wraxi("0x76000054", 0x1)
+                wraxi("0x76000054", 0x0)
+            if iface == 'nf1':
+                print iface
+                wraxi("0x76000058", 0x1)
+                wraxi("0x76000058", 0x0)
+            if iface == 'nf2':
+                print iface
+                wraxi("0x7600005c", 0x1)
+                wraxi("0x7600005c", 0x0)
+            if iface == 'nf3':
+                print iface
+                wraxi("0x76000060", 0x1)
+                wraxi("0x76000060", 0x0)
 
     def load_pcap(self, pcaps):
 
@@ -621,4 +648,3 @@ if __name__=="__main__":
     #sleep(1)
     #pcap_engine.replay_cnt = [1, 2, 3, 4]
     #pcap_engine.load_pcap(pcaps)
-
