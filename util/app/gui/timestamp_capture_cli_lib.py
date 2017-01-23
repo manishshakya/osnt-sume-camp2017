@@ -1,6 +1,6 @@
 #
-# Copyright (c) 2016-2017 University of Cambridge
-# Copyright (c) 2016-2017 Jong Hun Han
+# Copyright (c) 2017 University of Cambridge
+# Copyright (c) 2017 Jong Hun Han
 # All rights reserved.
 #
 # This software was developed by University of Cambridge Computer Laboratory
@@ -170,8 +170,8 @@ def timestamp_capture(interface, tx_ts_pkt_pos, rx_ts_pkt_pos, pkt_no, log_file,
        total_bw = float(total_bw/1000)
 
    avg_ts = float(avg_ts/(pkt_no_count+1))
-   print '\nAverage time : %f usec %f %sbps' % (float(avg_ts), total_bw, bw_unit)
+   print '\n => Average latency : %f usec     %f %sbps\n' % (float(avg_ts), total_bw, bw_unit)
    # add bandwidth
-   f.write("\nAverage time : " + str(float(avg_ts)) + " nsec\n" + str(float(total_bw)) + str(bw_unit) +"bps");
+   f.write("\nAverage latency : " + str(float(avg_ts)) + " nsec\n" + str(float(total_bw)) + str(bw_unit) +"bps");
    f.close()
    sys.exit(1)
