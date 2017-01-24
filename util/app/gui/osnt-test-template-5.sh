@@ -32,23 +32,36 @@
 # Open a new terminal and run below before run the scripts.
 # python osnt-tool-cmd.py -ds
 
+# Two ports tests
 if [ $1 == "2" ];then
    python osnt-tool-cmd.py -ifp0 ../../sample_traces/64.cap
+   sleep 1
    python osnt-tool-cmd.py -ifp1 ../../sample_traces/64.cap
+   sleep 1
+   #python osnt-tool-cmd.py -rpn0 <replay no> -ipg0 <inter packet gap nsec> -rpn1 <replay no> -ipg1 <inter packet gap nsec> -run
    python osnt-tool-cmd.py -rpn0 2000000 -ipg0 10000 -rpn1 2000000 -ipg1 10000 -run
 fi
 
+# Three ports tests
 if [ $1 == "3" ];then
    python osnt-tool-cmd.py -ifp0 ../../sample_traces/64.cap
+   sleep 1
    python osnt-tool-cmd.py -ifp1 ../../sample_traces/64.cap
+   sleep 1
    python osnt-tool-cmd.py -ifp2 ../../sample_traces/64.cap
+   sleep 1
    python osnt-tool-cmd.py -rpn0 2000000 -ipg0 10000 -rpn1 2000000 -ipg1 10000 -rpn2 2000000 -ipg2 10000 -run
 fi
 
+# Four ports tests
 if [ $1 == "4" ];then
    python osnt-tool-cmd.py -ifp0 ../../sample_traces/64.cap
+   sleep 1
    python osnt-tool-cmd.py -ifp1 ../../sample_traces/64.cap
+   sleep 1
    python osnt-tool-cmd.py -ifp2 ../../sample_traces/64.cap
+   sleep 1
    python osnt-tool-cmd.py -ifp3 ../../sample_traces/64.cap
+   sleep 1
    python osnt-tool-cmd.py -rpn0 2000000 -ipg0 10000 -rpn1 2000000 -ipg1 10000 -rpn2 2000000 -ipg2 10000 -rpn3 2000000 -ipg3 10000 -run
 fi

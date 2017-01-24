@@ -35,6 +35,7 @@
 # python osnt-tool-cmd.py -ifp2 ../../sample_traces/128.cap -txs2 6 -rxs2 7 -rpn2 10 -lty2
 # python osnt-tool-cmd.py -ifp3 ../../sample_traces/128.cap -txs3 6 -rxs3 7 -rpn3 10 -lty3
 
+#python osnt-tool-cmd.py -txs0 <tx timestamp position> -rxs0 <rx timestamp position> -rpn0 <replay no> -ipg0 <inter packet gap nsec> -txs1 <tx timestamp position> -rxs1 <rx timestamp position> -rpn1 <replay no> -ipg1 <inter packet gap nsec> -txs2 <tx timestamp position> -rxs2 <rx timestamp position> -rpn2 <replay no> -ipg2 <inter packet gap nsec> -txs3 <tx timestamp position> -rxs3 <rx timestamp position> -rpn3 <replay no> -ipg3 <inter packet gap nsec> -flt <filter rule> -run
 python osnt-tool-cmd.py -txs0 6 -rxs0 7 -rpn0 10 -ipg0 2000 -txs1 6 -rxs1 7 -rpn1 10 -ipg1 2000 -txs2 6 -rxs2 7 -rpn2 10 -ipg2 2000 -txs3 6 -rxs3 7 -rpn3 10 -ipg3 2000 -flt filter.cfg -run
 
 

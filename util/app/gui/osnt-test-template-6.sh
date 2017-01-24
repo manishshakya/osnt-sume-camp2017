@@ -27,28 +27,41 @@
 # @NETFPGA_LICENSE_HEADER_END@
 ################################################################################
 
-# 6) The same as #3 but at full rate.
+# 6) The same as #3 but at full rate without setting the inter packet gap.
 
 # Open a new terminal and run below before run the scripts.
 # python osnt-tool-cmd.py -ds
 
+# Two ports tests at full rate.
 if [ $1 == "2" ];then
    python osnt-tool-cmd.py -ifp0 ../../sample_traces/1500.cap
+   sleep 1
    python osnt-tool-cmd.py -ifp1 ../../sample_traces/1500.cap
+   sleep 1
+   #python osnt-tool-cmd.py -rpn0 <replay no> -rpn1 <replay no> -run
    python osnt-tool-cmd.py -rpn0 10000000 -rpn1 10000000 -run
 fi
 
+# Three ports tests at full rate.
 if [ $1 == "3" ];then
    python osnt-tool-cmd.py -ifp0 ../../sample_traces/1500.cap
+   sleep 1
    python osnt-tool-cmd.py -ifp1 ../../sample_traces/1500.cap
+   sleep 1
    python osnt-tool-cmd.py -ifp2 ../../sample_traces/1500.cap
+   sleep 1
    python osnt-tool-cmd.py -rpn0 10000000 -rpn1 10000000 -rpn2 10000000 -run
 fi
 
+# Four ports tests at full rate.
 if [ $1 == "4" ];then
    python osnt-tool-cmd.py -ifp0 ../../sample_traces/1500.cap
+   sleep 1
    python osnt-tool-cmd.py -ifp1 ../../sample_traces/1500.cap
+   sleep 1
    python osnt-tool-cmd.py -ifp2 ../../sample_traces/1500.cap
+   sleep 1
    python osnt-tool-cmd.py -ifp3 ../../sample_traces/1500.cap
+   sleep 1
    python osnt-tool-cmd.py -rpn0 10000000 -rpn1 10000000 -rpn2 10000000 -rpn3 10000000 -run
 fi
