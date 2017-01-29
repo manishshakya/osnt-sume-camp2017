@@ -41,16 +41,19 @@ if [ "$xilinx_tool_path" == "" ]; then
 	exit 1
 fi
 
-rmmod sume_riffa
-
+sleep 0.5
 xmd -tcl run_xmd.tcl -tclargs $bitimage
 
+sleep 0.5
 bash ../../../scripts/pci_rescan_run.sh
 
+sleep 0.5
 rmmod sume_riffa
 
+sleep 0.5
 insmod ../../../lib/sw/driver/osnt_sume_riffa_v1_00/sume_riffa.ko
 
+sleep 0.5
 ifconfig nf0 up
 ifconfig nf1 up
 ifconfig nf2 up

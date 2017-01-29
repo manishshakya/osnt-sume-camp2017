@@ -1036,8 +1036,8 @@ sume_rx_build_skb(struct sume_adapter *adapter, int i, unsigned int len)
 	struct net_device *netdev;
 	struct sume_port *sume_port;
 	int np;
-	uint32_t t1, t2, *p32, d1, d2;
-	uint16_t sport, dport, dp, plen, magic, *p16, of_type;
+	uint32_t t1, t2, *p32;
+	uint16_t sport, dport, dp, plen, magic, *p16;
 
 	/* The metadata header is 16 bytes. */
 	if (len < 16) {
@@ -1051,22 +1051,13 @@ sume_rx_build_skb(struct sume_adapter *adapter, int i, unsigned int len)
 
 	p32 = (uint32_t *)adapter->recv[i]->bouncebuf;
 	p16 = (uint16_t *)adapter->recv[i]->bouncebuf;
-	sport = (le32_to_cpu(*(p32 + 0)) >> 16) & 0xff;
-	dport = (le32_to_cpu(*(p32 + 0)) >> 24) & 0xff;
-	plen =  le32_to_cpu(*(p32 + 1)) & 0xffff;
-	magic = (le32_to_cpu(*(p32 + 1))>>16) & 0xffff;
+	sport = le16_to_cpu(*(p16 + 0));
+	dport = le16_to_cpu(*(p16 + 1));
+	plen =  le16_to_cpu(*(p16 + 2));
+	magic = le16_to_cpu(*(p16 + 3));
 
-	d1 = le32_to_cpu(*(p32 + 0));
-	d2 = le32_to_cpu(*(p32 + 1));
 	t1 = le32_to_cpu(*(p32 + 2));
 	t2 = le32_to_cpu(*(p32 + 3));
-
-   of_type = d1 & 0xff;
-
-   if (t1 != 0 || t2 != 0) {
-      printk(KERN_INFO "of type : 0x%02x\n", of_type);
-      printk(KERN_INFO "Timestamp : 0x%08x%08x\n", t2, t1);
-   }
 
 	if ((16 + sume_16boff * sizeof(uint16_t) + plen) > len ||
 	    magic != SUME_RIFFA_MAGIC) {

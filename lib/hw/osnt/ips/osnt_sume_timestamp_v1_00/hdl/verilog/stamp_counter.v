@@ -63,6 +63,9 @@ localparam OVERFLOW  = 32'hffffffff;
 localparam CNT_INIT  = 32'h1312d000;
 localparam DDS_WIDTH = 32;
 
+	//localparam DDS_RATE_DEFAULT   = 32'h4c533c0; //1-28/27.xxx 80032704
+	//localparam DDS_RATE_DEFAULT   = 32'h4c533c0; //1-55/54.xxx 1907704 0x1D1BF8
+
    	//reg [TIMESTAMP_WIDTH-6:0]	temp;
    	reg [TIMESTAMP_WIDTH-1:0]	temp;
 	wire[TIMESTAMP_WIDTH-1:0]	stamp_cnt;
@@ -129,18 +132,23 @@ localparam DDS_WIDTH = 32;
 		end
 	end
 
+reg one_bit;
+wire  [DDS_WIDTH:0]  w_accumulator = accumulator + dds_rate;
 always @(posedge axi_aclk) begin
    if(~axi_resetn) begin
       temp     <= 0;
       accumulator <= 0;
+      one_bit  <= 0;
    end
 	else begin
 	   if(restart_time[0]) begin
          temp        <= ntp_timestamp;
+         one_bit  <= 0;
       end
 		else if (restart_time[1]) begin
 	      temp        <= 0;
          accumulator <= 0;
+         one_bit  <= 0;
       end
       else begin
          // 2^32/156.25Mhz
@@ -151,7 +159,9 @@ always @(posedge axi_aclk) begin
          end
          else begin
             accumulator    <= accumulator + dds_rate;
+            //temp           <= temp + 27 + one_bit;
             temp           <= temp + 28;
+            one_bit  <= ~one_bit;
          end
 		end
 	end

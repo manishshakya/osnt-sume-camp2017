@@ -62,8 +62,12 @@ module correction
      	localparam UPDATE_DDS 	      = 4;
 	localparam CORRECTION_WEIGHT  = 10;
 	//localparam DDS_RATE_DEFAULT   = 32'hd6bf94d6; 
-	//localparam DDS_RATE_DEFAULT   = 32'h4aedcca; //78568650.580673916
-	localparam DDS_RATE_DEFAULT   = 32'h4c533c0; //1-28/27.xxx 80032704
+	//localparam DDS_RATE_DEFAULT   = 32'h4aedcca; //78568650.580673916     0.018634066
+	localparam DDS_RATE_DEFAULT   = 32'h4c533c0; //1-28/27.xxx 80032704  1-27.xxx/28 = 78568650
+	//localparam DDS_RATE_DEFAULT   = 32'h4AEDCCB; //1-27.xxx/28 = 78568650
+	//localparam DDS_RATE_DEFAULT     = 32'h1D1BF8; //1-55/54.xxx 1907704 0x1D1BF8
+	//localparam DDS_RATE_DEFAULT     = 32'h1D1BF8; //1-54.xxx/55 1906857 0x1D18A9
+	//localparam DDS_RATE_DEFAULT     = 32'hE8DFC; //1-55/54.xxx 1907704 0x1D1BF8
 
 
 	reg [NUM_STATES-1:0]     state,state_next;

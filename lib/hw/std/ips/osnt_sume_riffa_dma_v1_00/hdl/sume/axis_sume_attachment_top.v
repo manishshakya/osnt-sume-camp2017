@@ -141,21 +141,21 @@ localparam C_S_AXIS_TUSER_WIDTH		    = C_AXIS_TUSER_WIDTH;
 // signals
 /////////////////////////////////////////////////////
 // 128b AXIS @ riffa_clk: -> 256b AXIS @ riffa_clk
-(* mark_debug = "true" *) wire [(C_M_AXIS_DATA_WIDTH_INTERNAL-1):0]   	    m_axis_tdata_128;
-(* mark_debug = "true" *) wire [(C_M_AXIS_DATA_WIDTH_INTERNAL/8)-1:0]   	m_axis_tkeep_128;
-(* mark_debug = "true" *) wire [(C_M_AXIS_TUSER_WIDTH-1):0]   		        m_axis_tuser_128;
-(* mark_debug = "true" *) wire		               			            m_axis_tvalid_128;
-(* mark_debug = "true" *) wire		               			            m_axis_tready_128;
-(* mark_debug = "true" *) wire  			       			                m_axis_tlast_128;
+wire [(C_M_AXIS_DATA_WIDTH_INTERNAL-1):0]   	    m_axis_tdata_128;
+wire [(C_M_AXIS_DATA_WIDTH_INTERNAL/8)-1:0]   	m_axis_tkeep_128;
+wire [(C_M_AXIS_TUSER_WIDTH-1):0]   		        m_axis_tuser_128;
+wire		               			            m_axis_tvalid_128;
+wire		               			            m_axis_tready_128;
+wire  			       			                m_axis_tlast_128;
 
 
 // 256b AXIS @ riffa_clk -> 128b AXIS @ riffa_clk
-(* mark_debug = "true" *) wire [(C_S_AXIS_DATA_WIDTH_INTERNAL-1):0]   	s_axis_tdata_128;
-(* mark_debug = "true" *) wire [((C_S_AXIS_DATA_WIDTH_INTERNAL/8)-1):0]   s_axis_tkeep_128;
-(* mark_debug = "true" *) wire [(C_S_AXIS_TUSER_WIDTH-1):0]   		    s_axis_tuser_128;
-(* mark_debug = "true" *) wire		               			            s_axis_tvalid_128;
-(* mark_debug = "true" *) wire		               		                s_axis_tready_128;
-(* mark_debug = "true" *) wire  			       		            	s_axis_tlast_128;
+wire [(C_S_AXIS_DATA_WIDTH_INTERNAL-1):0]   	s_axis_tdata_128;
+wire [((C_S_AXIS_DATA_WIDTH_INTERNAL/8)-1):0]   s_axis_tkeep_128;
+wire [(C_S_AXIS_TUSER_WIDTH-1):0]   		    s_axis_tuser_128;
+wire		               			            s_axis_tvalid_128;
+wire		               		                s_axis_tready_128;
+wire  			       		            	s_axis_tlast_128;
 
 /////////////////////////////////////////////////////
 // assignments

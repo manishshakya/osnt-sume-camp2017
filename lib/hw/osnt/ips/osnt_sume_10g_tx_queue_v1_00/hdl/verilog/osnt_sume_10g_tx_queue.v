@@ -220,7 +220,7 @@ reg   [TS_WIDTH-1:0] r_ts_value;
 always @(posedge axis_aclk)
    if (~axis_resetn)
       r_ts_value  <= 0;
-   else if (next_st == `HEAD)
+   else if (current_st == `IDLE && next_st == `SEND)
       r_ts_value  <= timestamp_156;
 
 
@@ -238,35 +238,37 @@ always @(*) begin
    case (current_st)
       // IDLE makes a gap between packets.
       `IDLE : begin
-         m_axis_tdata   = 0;
-         m_axis_tkeep   = 0;
-         m_axis_tuser   = 0;
-         m_axis_tlast   = 0;
-         m_axis_tvalid  = 0;
-         pkt_cnt_next   = pkt_cnt;
-         ts_cnt_next    = 1;
-         tx0_fifo_rden  = 0;
-         tx0_last_rden  = 0;
-         next_st        = (~tx0_last_empty & ~tx0_fifo_empty) ? `HEAD : `IDLE;
-      end
-      `HEAD : begin
-         if (tx_ts_pos != 0 && ts_cnt == tx_ts_pos) begin
-            m_axis_tdata   = r_ts_value;
+         if (~tx0_last_empty & ~tx0_fifo_empty) begin
+            if (tx_ts_pos != 0 && ts_cnt == tx_ts_pos) begin
+               m_axis_tdata   = r_ts_value;
+            end
+            else begin
+               m_axis_tdata   = tx0_fifo_out_tdata;
+            end
+            m_axis_tkeep   = tx0_fifo_out_tkeep;
+            m_axis_tuser   = 0;
+            m_axis_tlast   = tx0_fifo_out_tlast;
+            // m_axis_tready wait until tvlaid is asserted.
+            m_axis_tvalid  = 1;
+            pkt_cnt_next   = (m_axis_tready) ? pkt_cnt + 1 : pkt_cnt;
+            ts_cnt_next    = (m_axis_tready) ? ts_cnt + 1 : 1;
+            tx0_fifo_rden  = (m_axis_tready);
+            tx0_last_rden  = (m_axis_tready);
+            next_st        = (m_axis_tready & tx0_fifo_out_tlast) ? `IDLE :
+                             (m_axis_tready                     ) ? `SEND : `IDLE;
          end
          else begin
-            m_axis_tdata   = tx0_fifo_out_tdata;
+            m_axis_tdata   = 0;
+            m_axis_tkeep   = 0;
+            m_axis_tuser   = 0;
+            m_axis_tlast   = 0;
+            m_axis_tvalid  = 0;
+            pkt_cnt_next   = pkt_cnt;
+            ts_cnt_next    = 1;
+            tx0_fifo_rden  = 0;
+            tx0_last_rden  = 0;
+            next_st        = `IDLE;
          end
-         m_axis_tkeep   = tx0_fifo_out_tkeep;
-         m_axis_tuser   = 0;
-         m_axis_tlast   = tx0_fifo_out_tlast;
-         // m_axis_tready wait until tvlaid is asserted.
-         m_axis_tvalid  = (~tx0_last_empty & ~tx0_fifo_empty);
-         pkt_cnt_next   = (~tx0_last_empty & ~tx0_fifo_empty & m_axis_tready) ? pkt_cnt + 1 : pkt_cnt;
-         ts_cnt_next    = (~tx0_last_empty & ~tx0_fifo_empty & m_axis_tready) ? ts_cnt + 1 : 1;
-         tx0_fifo_rden  = (~tx0_last_empty & ~tx0_fifo_empty & m_axis_tready);
-         tx0_last_rden  = (~tx0_last_empty & ~tx0_fifo_empty & m_axis_tready);
-         next_st        = (~tx0_last_empty & ~tx0_fifo_empty & m_axis_tready & tx0_fifo_out_tlast) ? `IDLE :
-                          (~tx0_last_empty & ~tx0_fifo_empty & m_axis_tready                     ) ? `SEND : `HEAD;
       end
       `SEND : begin
          if (tx_ts_pos != 0 && ts_cnt == tx_ts_pos) begin

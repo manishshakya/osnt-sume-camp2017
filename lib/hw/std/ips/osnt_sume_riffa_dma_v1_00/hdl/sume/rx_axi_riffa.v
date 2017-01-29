@@ -54,7 +54,7 @@ module rx_axi_riffa #(
    input    wire  [127:0]                    tuser,
    input    wire                             tvalid,
    input    wire                             tlast,
-   output   reg                              tready
+   output                                    tready
 );
 
 function integer log2;
@@ -67,19 +67,52 @@ function integer log2;
    end
 endfunction
 
-`define  AXIS_IDLE      0
-`define  AXIS_WRITE     1
+`define  AXIS_FIRST     0
+`define  AXIS_PKT       1
 
 `define  RIFFA_IDLE     0
 `define  RIFFA_SEND     1
+`define  RIFFA_RESET    2
 
 localparam  MAX_PKT_SIZE = 2000; 
 localparam  IN_FIFO_DEPTH_BIT = log2(MAX_PKT_SIZE/(C_PCI_DATA_WIDTH/8));
 
-reg   [C_PCI_DATA_WIDTH:0]    fifo_in;
-wire  [C_PCI_DATA_WIDTH:0]    fifo_out;
+reg   [C_PCI_DATA_WIDTH:0]      fifo_in;
+wire  [C_PCI_DATA_WIDTH:0]      fifo_out;
+wire  [C_PCI_DATA_WIDTH:0]      fifo_first;
+
 reg   fifo_wren, fifo_rden;
-wire  fifo_full, fifo_empty;
+wire  fifo_nearly_full, fifo_empty;
+reg [31:0] rlen, rlen_next;
+
+wire [C_PCI_DATA_WIDTH-1:0]     tdata_fifo;
+wire [C_PCI_DATA_WIDTH/8-1:0]   tkeep_fifo;
+wire [C_PCI_DATA_WIDTH-1:0]     tuser_fifo;
+wire                            tlast_fifo;
+wire                            rx_riffa_nearly_full;
+wire                            rx_riffa_empty;
+reg                             rx_riffa_rd_en;
+
+reg   [2:0]    axis_current_state, axis_next_state;
+reg   [2:0]    riffa_current_state, riffa_next_state;
+
+fallthrough_small_fifo #(
+    .WIDTH            (2*C_PCI_DATA_WIDTH+1),
+    .MAX_DEPTH_BITS   (10)
+)
+rx_riffa_fifo
+(
+  .clk              (CLK),
+  .reset            (RST),
+  .din              ({tdata,tuser,tlast}),
+  .wr_en            (tvalid&~rx_riffa_nearly_full),
+  .rd_en            (rx_riffa_rd_en),
+  .dout             ({tdata_fifo,tuser_fifo,tlast_fifo}),
+  .nearly_full      (rx_riffa_nearly_full),
+  .empty            (rx_riffa_empty),
+  .full             (),
+  .prog_full        ()
+);  
 
 fallthrough_small_fifo #(
    .WIDTH            (  C_PCI_DATA_WIDTH+1   ),
@@ -87,70 +120,62 @@ fallthrough_small_fifo #(
 )
 axis_riffa_fifo
 (
-   .clk              (  CLK                  ),
-   .reset            (  RST                  ),
-   .din              (  fifo_in              ),
-   .wr_en            (  fifo_wren            ),
-   .rd_en            (  fifo_rden            ),
-   .dout             (  fifo_out             ),
-   .nearly_full      (  fifo_full            ),
-   .empty            (  fifo_empty           ),
+   .clk              (CLK),
+   .reset            (RST),
+   .din              (fifo_in),
+   .wr_en            (fifo_wren),
+   .rd_en            (fifo_rden),
+   .dout             (fifo_out),
+   .nearly_full      (fifo_nearly_full),
+   .empty            (fifo_empty),
    .full             (),
    .prog_full        ()
 );
 
-wire  [C_PCI_DATA_WIDTH+1-1:0]   fifo_first;
-
-//assign fifo_first = {1'b0, tuser[64+:64], C_PREAM_VALUE, tuser[0+:16], 8'b0, tuser[24+:8], 8'b0, tuser[16+:8]};
-assign fifo_first = {1'b0, tuser[64+:64], C_PREAM_VALUE, tuser[0+:16], tuser[24+:8], tuser[16+:8], tuser[32+:16]};
-
-reg   [2:0]    axis_current_state, axis_next_state;
+assign fifo_first = {1'b0, tuser_fifo[64+:64], C_PREAM_VALUE, tuser_fifo[0+:16], 8'b0, tuser_fifo[24+:8], 8'b0, tuser_fifo[16+:8]};
+assign tready = !rx_riffa_nearly_full;
 
 always @(posedge CLK)
    if (RST) begin
-      axis_current_state   <= 0;
+      axis_current_state   <= `AXIS_FIRST;
    end
    else begin
       axis_current_state   <= axis_next_state;
    end
 
 always @(*) begin
-   fifo_in           = 0;
+   fifo_in           = {tlast_fifo,tdata_fifo};
    fifo_wren         = 0;
-   tready            = 0;
-   axis_next_state   = `AXIS_IDLE;
+   rx_riffa_rd_en    = 0;
+   axis_next_state   = axis_current_state;
+
    case(axis_current_state)
-      `AXIS_IDLE : begin
-         fifo_in           = fifo_first;
-         fifo_wren         = (tvalid & ~fifo_full) ? 1 : 0;
-         axis_next_state   = (tvalid & ~fifo_full) ? `AXIS_WRITE : `AXIS_IDLE;
+      `AXIS_FIRST : begin
+        if(!rx_riffa_empty && !fifo_nearly_full) begin
+            fifo_in = fifo_first;
+            fifo_wren = 1;
+            axis_next_state = `AXIS_PKT;
+          end    
       end
-      `AXIS_WRITE : begin
-         fifo_in           = {tlast, tdata};
-         fifo_wren         = (tvalid & ~fifo_full) ? 1 : 0;
-         tready            = ~fifo_full;
-         axis_next_state   = (tvalid & ~fifo_full & tlast) ? `AXIS_IDLE : `AXIS_WRITE;
-      end
+      `AXIS_PKT : begin
+         if(!rx_riffa_empty && !fifo_nearly_full) begin
+            fifo_wren = 1;
+            rx_riffa_rd_en = 1;
+            if(tlast_fifo)
+                axis_next_state = `AXIS_FIRST;
+        end
+      end  
    endcase
 end
 
-reg   [30:0]   r_len;
-reg   [2:0]    riffa_current_state, riffa_next_state;
 
 always @(posedge CLK)
    if (RST) begin
-      r_len <= 0;
-   end
-   else if (riffa_current_state == `RIFFA_IDLE && ~fifo_empty) begin
-      r_len <= (fifo_out[34+:14] + (|fifo_out[32+:2]) + 4);
-   end
-
-
-always @(posedge CLK)
-   if (RST) begin
-      riffa_current_state  <= 0;
+      riffa_current_state  <= `RIFFA_IDLE;
+      rlen                 <= 0;
    end
    else begin
+      rlen                 <= rlen_next;
       riffa_current_state  <= riffa_next_state;
    end
 
@@ -162,28 +187,54 @@ always @(*) begin
    CHNL_TX_LEN          = 0;
    CHNL_TX_OFF          = 0;
    fifo_rden            = 0;
-   riffa_next_state     = `RIFFA_IDLE;
+   riffa_next_state     = riffa_current_state;
+   rlen_next            = rlen;
+
    case (riffa_current_state)
+
       `RIFFA_IDLE : begin
-         CHNL_TX              = 0;
-         CHNL_TX_LAST         = 0;
-         CHNL_TX_DATA         = 0;
-         CHNL_TX_DATA_VALID   = 0;
-         CHNL_TX_LEN          = 0;
-         CHNL_TX_OFF          = 0;
-         fifo_rden            = 0;
-         riffa_next_state     = (~fifo_empty) ? `RIFFA_SEND : `RIFFA_IDLE;
-      end
+        if(!fifo_empty) begin
+            CHNL_TX = 1;
+            CHNL_TX_LAST = 1;
+            rlen_next = (fifo_out[34+:14] + (|fifo_out[32+:2]) + 4);
+            CHNL_TX_LEN = (fifo_out[34+:14] + (|fifo_out[32+:2]) + 4);
+            if(CHNL_TX_ACK) begin
+                CHNL_TX_DATA_VALID = 1;
+                CHNL_TX_DATA = fifo_out[127:0];
+                if(CHNL_TX_DATA_REN) begin
+                  fifo_rden = 1;
+                end  
+                riffa_next_state = `RIFFA_SEND;
+            end 
+          end    
+        end
+
       `RIFFA_SEND : begin
-         CHNL_TX              = 1;
-         CHNL_TX_LAST         = 1;
-         CHNL_TX_DATA         = fifo_out[0+:128];
-         CHNL_TX_DATA_VALID   = ~fifo_empty & (CHNL_TX_ACK | CHNL_TX_DATA_REN);
-         CHNL_TX_LEN          = r_len;
-         CHNL_TX_OFF          = C_RIFFA_OFFSET;
-         fifo_rden            = ~fifo_empty & CHNL_TX_DATA_REN;
-         riffa_next_state     = (fifo_out[128]) ? `RIFFA_IDLE : `RIFFA_SEND;
-      end
+        CHNL_TX = 1;
+        CHNL_TX_LAST = 1;
+        CHNL_TX_LEN = rlen;
+        if(!fifo_empty) begin
+            CHNL_TX_DATA_VALID = 1;
+            CHNL_TX_DATA = fifo_out[127:0];
+            if(CHNL_TX_DATA_REN) begin
+                fifo_rden = 1;
+                if(fifo_out[128])
+                    riffa_next_state = `RIFFA_RESET;
+            end
+        end
+        end
+
+        `RIFFA_RESET : begin
+            CHNL_TX             = 0;
+            CHNL_TX_LAST        = 0;
+            CHNL_TX_DATA        = 0;
+            CHNL_TX_DATA_VALID  = 0;
+            CHNL_TX_LEN         = 0;
+            CHNL_TX_OFF         = 0;
+            riffa_next_state    = `RIFFA_IDLE;
+        end
+
+
    endcase
 end
 

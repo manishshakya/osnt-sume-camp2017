@@ -149,16 +149,29 @@ always @(posedge axis_aclk)
 
 assign rx0_stat_wren = rx_stat_valid & ~r_rx_stat_valid;
 
+wire  w_rx_timestamp_en;
+reg   [31:0]   r_timestamp_counter;
 reg   r_rx_timestamp_en;
 always @(posedge axis_aclk)
    if (~axis_resetn)
       r_rx_timestamp_en <= 0;
-   else if ((s_axis_tvalid & s_axis_tready & s_axis_tlast) || rx0_stat_wren)
+   //else if ((s_axis_tvalid & s_axis_tready & s_axis_tlast) || rx0_stat_wren)
+   else if ((s_axis_tvalid & s_axis_tready & s_axis_tlast) || (r_timestamp_counter >= 32'hefff_ffff))
       r_rx_timestamp_en <= 0;
    else if (s_axis_tvalid & s_axis_tready)
       r_rx_timestamp_en <= 1;
 
 assign w_rx_timestamp_en = (s_axis_tvalid & s_axis_tready) & ~r_rx_timestamp_en;
+
+always @(posedge axis_aclk)
+   if (~axis_resetn)
+      r_timestamp_counter  <= 0;
+   else if (r_rx_timestamp_en && (r_timestamp_counter < 32'hefff_ffff))
+      r_timestamp_counter  <= r_timestamp_counter + 1;
+   else
+      r_timestamp_counter  <= 0;
+
+
 
 reg   [TS_WIDTH-1:0]    r_timestamp_value;
 always @(posedge axis_aclk)
