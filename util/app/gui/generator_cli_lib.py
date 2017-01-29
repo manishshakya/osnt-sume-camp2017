@@ -30,7 +30,7 @@ import os, argparse, datetime, commands
 from lib.axi import *
 from generator import *
 
-class InitCli:
+class InitGCli:
     def __init__(self):
         self.average_pkt_len = {'nf0':1500, 'nf1':1500, 'nf2':1500, 'nf3':1500}
         self.average_word_cnt = {'nf0':47, 'nf1':47, 'nf2':47, 'nf3':47}
@@ -60,38 +60,38 @@ class InitCli:
         self.delay_header_extractor.set_enable(False)
 
 def clear():
-    initcli.pcap_engine.clear()
+    initgcli.pcap_engine.clear()
     print "Cleared pcap replay. Stop ..."
     #sys.exit(1)
 
 def set_load_pcap(interface, pcap_file):
-    initcli.pcaps[interface] = pcap_file
-    result = initcli.pcap_engine.load_pcap(initcli.pcaps)
+    initgcli.pcaps[interface] = pcap_file
+    result = initgcli.pcap_engine.load_pcap(initgcli.pcaps)
 
 def set_load_pcap_only(pcap_file):
-    result = initcli.pcap_engine.load_pcap_only(initcli.pcaps)
+    result = initgcli.pcap_engine.load_pcap_only(initgcli.pcaps)
 
 def set_tx_ts(interface, value):
-   wraxi(initcli.tx_pos_wr[interface], hex(value))
+   wraxi(initgcli.tx_pos_wr[interface], hex(value))
    print "Inter Tx Timestamp position setting..."
    print "=> nf%d_tx_ts_pos = %6d\n" %(interface, value)
    
 def set_rx_ts(interface, value):
-   wraxi(initcli.rx_pos_wr[interface], hex(value))
+   wraxi(initgcli.rx_pos_wr[interface], hex(value))
    print "Inter Rx Timestamp position setting..."
    print "=> nf%d_rx_ts_pos = %6d\n" %(interface, value)
 
 def set_ipg(interface, value):
-   initcli.delays[interface].set_delay(value)
-   initcli.delays[interface].set_enable(True)
-   initcli.delays[interface].set_use_reg(True)
+   initgcli.delays[interface].set_delay(value)
+   initgcli.delays[interface].set_enable(True)
+   initgcli.delays[interface].set_use_reg(True)
    print "Inter Packet Gap delay setting..."
    print "=> nf%d_ipg = %6d\n" %(interface, value)
 
 def set_replay_cnt(interface, value):
-   initcli.pcap_engine.replay_cnt[interface] = value
-   initcli.pcap_engine.set_replay_cnt()
+   initgcli.pcap_engine.replay_cnt[interface] = value
+   initgcli.pcap_engine.set_replay_cnt()
    print "Packet Replay counter setting ..."
    print "=> nf%d_replay = %6d\n" %(interface, value)
 
-initcli = InitCli()
+initgcli = InitGCli()

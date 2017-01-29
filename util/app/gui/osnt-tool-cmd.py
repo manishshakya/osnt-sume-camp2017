@@ -72,6 +72,7 @@ input_arg.add_argument("-lty1", action="store_true", help="OSNT SUME latency mea
 input_arg.add_argument("-lty2", action="store_true", help="OSNT SUME latency measurement on nf2. eg. -lty2")
 input_arg.add_argument("-lty3", action="store_true", help="OSNT SUME latency measurement on nf3. eg. -lty3")
 input_arg.add_argument("-llog", type=str, help="OSNT SUME latency measurement log file. eg. -lf <file name>")
+input_arg.add_argument("-skt", action="store_true", help="OSNT SUME generator trigger and latency measurement with python socket. eg. -skt")
 input_arg.add_argument("-rnm", action="store_true", help="OSNT SUME generator trigger and latency measurement. eg. -rnm")
 
 input_arg.add_argument("-reset", action="store_true", help="OSNT SUME reset. --reset")
@@ -107,6 +108,10 @@ if (args.lty2):
 if (args.lty3):
     lty_value[3]=1
     lty_if="nf3"
+
+if (sum(lty_value) == 1):
+    set_clear()
+    clear()
 
 if (sum(lty_value) > 1):
     print lty_value
@@ -214,7 +219,10 @@ elif (lty_if != ""):
 if (lty_if != ""):
     print "Set the interface ", lty_if
     load_rule("./filter.cfg")
-    timestamp_capture(lty_if, lty_tx_pos, lty_rx_pos, lty_pkt_no, log_file, args.rnm)
+    if (args.skt):   
+       timestamp_capture(lty_if, lty_tx_pos, lty_rx_pos, lty_pkt_no, log_file, args.rnm)
+    else:
+       timestamp_tcpdump(lty_if, lty_tx_pos, lty_rx_pos, lty_pkt_no, log_file, args.rnm)
 
 if (args.run):
    initcli.pcap_engine.run()

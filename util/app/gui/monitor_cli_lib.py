@@ -31,7 +31,7 @@ from lib.axi import *
 from time import gmtime, strftime, sleep
 from monitor import *
 
-class InitCli:
+class InitMCli:
     def __init__(self):
         self.osnt_monitor_filter = OSNTMonitorFilter()
         self.osnt_monitor_stats = OSNTMonitorStats()
@@ -54,75 +54,75 @@ class InitCli:
         self.byteps_old = [None]*4
 
 # Start program
-initcli = InitCli()
+initmcli = InitMCli()
 
 def cli_display_stats(value):
-    if (initcli.time_old == 0):
-        initcli.time_old = 0
-    initcli.osnt_monitor_stats.get_stats()
-    time_high = int(initcli.osnt_monitor_stats.time_high, 16)
-    time_low = int(initcli.osnt_monitor_stats.time_low, 16)
+    if (initmcli.time_old == 0):
+        initmcli.time_old = 0
+    initmcli.osnt_monitor_stats.get_stats()
+    time_high = int(initmcli.osnt_monitor_stats.time_high, 16)
+    time_low = int(initmcli.osnt_monitor_stats.time_low, 16)
     time_low = ((time_low * 1000000000) >> 32)/float(1000000000)
     time_new = time_high + time_low
-    time_elapsed = time_new - initcli.time_old
+    time_elapsed = time_new - initmcli.time_old
     if (value == "display"):
        os.system('clear')
 
     print "\n OSNT Monitor Stats (SUME-NetFPGA)\n"
     for i in range(4):
-        if (initcli.pkt_cnt_old[i] == 0):
-            initcli.pkt_cnt_old[i] = 0
-        initcli.pkt_cnt_old[i] = int(initcli.pkt_cnt_old[i])
-        pkt_cnt_new = int(initcli.osnt_monitor_stats.pkt_cnt[i], 16)
-        if pkt_cnt_new >= initcli.pkt_cnt_old[i]:
-            pkt_cnt = pkt_cnt_new - initcli.pkt_cnt_old[i];
+        if (initmcli.pkt_cnt_old[i] == 0):
+            initmcli.pkt_cnt_old[i] = 0
+        initmcli.pkt_cnt_old[i] = int(initmcli.pkt_cnt_old[i])
+        pkt_cnt_new = int(initmcli.osnt_monitor_stats.pkt_cnt[i], 16)
+        if pkt_cnt_new >= initmcli.pkt_cnt_old[i]:
+            pkt_cnt = pkt_cnt_new - initmcli.pkt_cnt_old[i];
         else:
-            pkt_cnt = pkt_cnt_new + ((1<<32) - initcli.pkt_cnt_old[i]);
+            pkt_cnt = pkt_cnt_new + ((1<<32) - initmcli.pkt_cnt_old[i]);
 
-        initcli.pktps_old[i] = translateRate(pkt_cnt/time_elapsed)
-        if (initcli.byte_cnt_old[i] == 0):
-            initcli.byte_cnt_old[i] = 0
-        initcli.byte_cnt_old[i] = int(initcli.byte_cnt_old[i])
-        byte_cnt_new = int(initcli.osnt_monitor_stats.byte_cnt[i], 16)
-        if byte_cnt_new >= initcli.byte_cnt_old[i]:
-            byte_cnt = byte_cnt_new - initcli.byte_cnt_old[i];
+        initmcli.pktps_old[i] = translateRate(pkt_cnt/time_elapsed)
+        if (initmcli.byte_cnt_old[i] == 0):
+            initmcli.byte_cnt_old[i] = 0
+        initmcli.byte_cnt_old[i] = int(initmcli.byte_cnt_old[i])
+        byte_cnt_new = int(initmcli.osnt_monitor_stats.byte_cnt[i], 16)
+        if byte_cnt_new >= initmcli.byte_cnt_old[i]:
+            byte_cnt = byte_cnt_new - initmcli.byte_cnt_old[i];
         else:
-            byte_cnt = byte_cnt_new + ((1<<32) - initcli.byte_cnt_old[i]);
+            byte_cnt = byte_cnt_new + ((1<<32) - initmcli.byte_cnt_old[i]);
 
-        initcli.byteps_old[i] = translateRate((8*byte_cnt+32*pkt_cnt)/time_elapsed)
-        initcli.pkt_cnt_old[i] = int(initcli.osnt_monitor_stats.pkt_cnt[i], 16)
-        initcli.byte_cnt_old[i] = int(initcli.osnt_monitor_stats.byte_cnt[i], 16)
-        initcli.vlan_cnt_old[i] = int(initcli.osnt_monitor_stats.vlan_cnt[i], 16)
-        initcli.ip_cnt_old[i] = int(initcli.osnt_monitor_stats.ip_cnt[i], 16)
-        initcli.udp_cnt_old[i] = int(initcli.osnt_monitor_stats.udp_cnt[i], 16)
-        initcli.tcp_cnt_old[i] = int(initcli.osnt_monitor_stats.tcp_cnt[i], 16)
+        initmcli.byteps_old[i] = translateRate((8*byte_cnt+32*pkt_cnt)/time_elapsed)
+        initmcli.pkt_cnt_old[i] = int(initmcli.osnt_monitor_stats.pkt_cnt[i], 16)
+        initmcli.byte_cnt_old[i] = int(initmcli.osnt_monitor_stats.byte_cnt[i], 16)
+        initmcli.vlan_cnt_old[i] = int(initmcli.osnt_monitor_stats.vlan_cnt[i], 16)
+        initmcli.ip_cnt_old[i] = int(initmcli.osnt_monitor_stats.ip_cnt[i], 16)
+        initmcli.udp_cnt_old[i] = int(initmcli.osnt_monitor_stats.udp_cnt[i], 16)
+        initmcli.tcp_cnt_old[i] = int(initmcli.osnt_monitor_stats.tcp_cnt[i], 16)
         print " nf%1d =>" %(i)
-        print "   Packet No :%8d       Byte No :%8d" %(initcli.pkt_cnt_old[i], initcli.byte_cnt_old[i])
+        print "   Packet No :%8d       Byte No :%8d" %(initmcli.pkt_cnt_old[i], initmcli.byte_cnt_old[i])
         print "   VLAN No   :%8d       IP No   :%8d       UDP No :%8d      TCP No :%8d"\
-            %(initcli.vlan_cnt_old[i], initcli.ip_cnt_old[i], initcli.udp_cnt_old[i], initcli.tcp_cnt_old[i])
+            %(initmcli.vlan_cnt_old[i], initmcli.ip_cnt_old[i], initmcli.udp_cnt_old[i], initmcli.tcp_cnt_old[i])
         if (value == "display"):
             print "   ================================="
-            print "   Pkt/Sec   :%s        Byte/Sec :%s\n" %(initcli.pktps_old[i], initcli.byteps_old[i])
+            print "   Pkt/Sec   :%s        Byte/Sec :%s\n" %(initmcli.pktps_old[i], initmcli.byteps_old[i])
         else:
             print "   =================================\n"
 
     if (value == "display"):
-      if (initcli.cut_size == 0):
+      if (initmcli.cut_size == 0):
          print "\n OSNT TimsStamp Counter: %10.6f sec.   Cutter size : Disabled" % (time_new)
       else:
-         print "\n OSNT TimsStamp Counter: %10.6f sec.   Cutter size : %d" % (time_new, initcli.cut_size)
+         print "\n OSNT TimsStamp Counter: %10.6f sec.   Cutter size : %d" % (time_new, initmcli.cut_size)
       print " Press Ctrl-C to exit..."
 
     if (value == "display"):
       sleep(1)
 
-    initcli.time_old = float(time_new)
+    initmcli.time_old = float(time_new)
 
 def set_clear():
-    initcli.osnt_monitor_filter.clear_rules()
-    initcli.osnt_monitor_stats.reset()
-    initcli.osnt_monitor_cutter.disable_cut()
-    initcli.osnt_monitor_timer.reset_time()
+    initmcli.osnt_monitor_filter.clear_rules()
+    initmcli.osnt_monitor_stats.reset()
+    initmcli.osnt_monitor_cutter.disable_cut()
+    initmcli.osnt_monitor_timer.reset_time()
     print "Cleared pcap replay. Stop ..."
 
 def load_rule(filter_file):
@@ -132,16 +132,16 @@ def load_rule(filter_file):
          if len(line) > 0 and line[0] != '#':
             rule = line.split()
             entry = int(rule[0])
-            initcli.osnt_monitor_filter.src_ip_table[entry] = ip2hex(rule[1])
-            initcli.osnt_monitor_filter.src_ip_mask_table[entry] = ip2hex(rule[2])
-            initcli.osnt_monitor_filter.dst_ip_table[entry] = ip2hex(rule[3])
-            initcli.osnt_monitor_filter.dst_ip_mask_table[entry] = ip2hex(rule[4])
-            initcli.osnt_monitor_filter.l4ports_table[entry] = rule[5]
-            initcli.osnt_monitor_filter.l4ports_mask_table[entry] = rule[6]
-            initcli.osnt_monitor_filter.proto_table[entry] = rule[7]
-            initcli.osnt_monitor_filter.proto_mask_table[entry] = rule[8]
+            initmcli.osnt_monitor_filter.src_ip_table[entry] = ip2hex(rule[1])
+            initmcli.osnt_monitor_filter.src_ip_mask_table[entry] = ip2hex(rule[2])
+            initmcli.osnt_monitor_filter.dst_ip_table[entry] = ip2hex(rule[3])
+            initmcli.osnt_monitor_filter.dst_ip_mask_table[entry] = ip2hex(rule[4])
+            initmcli.osnt_monitor_filter.l4ports_table[entry] = rule[5]
+            initmcli.osnt_monitor_filter.l4ports_mask_table[entry] = rule[6]
+            initmcli.osnt_monitor_filter.proto_table[entry] = rule[7]
+            initmcli.osnt_monitor_filter.proto_mask_table[entry] = rule[8]
 
-   initcli.osnt_monitor_filter.synch_rules()
+   initmcli.osnt_monitor_filter.synch_rules()
 
 def run_stats():
     while True :

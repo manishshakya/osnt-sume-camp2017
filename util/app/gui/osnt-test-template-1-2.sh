@@ -30,14 +30,14 @@
 # 1) Send a single packet through port <X> and measure the latency of a returning packet.
 # 2) Send <N> packets through port <X>, with IPG of <Y> and measure latency and bandwidth (not full rate).
 
-#python osnt-tool-cmd.py -ifp0 <pcap file> -flt <filter rule> -rpn0 <replay no> -ipg0 <inter packet gap nsec> -txs0 <tx timestamp pos> -rxs0 <rx timestamp pos> -lty0 (monitoring port) -rnm (run and monitoring)
-python osnt-tool-cmd.py -ifp0 ../../sample_traces/128.cap -flt filter.cfg -rpn0 10 -ipg0 800 -txs0 6 -rxs0 7 -lty0 -rnm
+python osnt-tool-cmd.py -ifp0 <pcap file> -flt <filter rule> -rpn0 <replay no> -ipg0 <inter packet gap nsec> -txs0 <tx timestamp pos> -rxs0 <rx timestamp pos> -lty0 (monitoring port) -rnm (run and monitoring)
+python osnt-tool-cmd.py -ifp0 ../../sample_traces/1500.cap -flt filter.cfg -rpn0 10000 -ipg0 8000 -txs0 6 -rxs0 7 -lty0 -rnm
 sleep 1
 
-python osnt-tool-cmd.py -ifp1 ../../sample_traces/128.cap -flt filter.cfg -rpn1 10 -ipg1 800 -txs1 6 -rxs1 7 -lty1 -rnm 
+python osnt-tool-cmd.py -ifp1 ../../sample_traces/1500.cap -flt filter.cfg -rpn1 10000 -ipg1 8000 -txs1 6 -rxs1 7 -lty1 -rnm 
 sleep 1
 
-python osnt-tool-cmd.py -ifp2 ../../sample_traces/128.cap -flt filter.cfg -rpn2 10 -ipg2 800 -txs2 6 -rxs2 7 -lty2 -rnm 
+python osnt-tool-cmd.py -ifp2 ../../sample_traces/1500.cap -flt filter.cfg -rpn2 10000 -ipg2 8000 -txs2 6 -rxs2 7 -lty2 -rnm 
 sleep 1
 
-python osnt-tool-cmd.py -ifp3 ../../sample_traces/128.cap -flt filter.cfg -rpn3 10 -ipg3 800 -txs3 6 -rxs3 7 -lty3 -rnm 
+python osnt-tool-cmd.py -ifp3 ../../sample_traces/1500.cap -flt filter.cfg -rpn3 10000 -ipg3 8000 -txs3 6 -rxs3 7 -lty3 -rnm
