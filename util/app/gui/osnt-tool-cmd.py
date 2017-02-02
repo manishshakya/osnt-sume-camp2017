@@ -225,7 +225,7 @@ if (lty_if != ""):
        timestamp_tcpdump(lty_if, lty_tx_pos, lty_rx_pos, lty_pkt_no, log_file, args.rnm)
 
 if (args.run):
-   initcli.pcap_engine.run()
+   initgcli.pcap_engine.run()
    print "Start packet generator...!\n"
 
 # Show the stats in monitor
