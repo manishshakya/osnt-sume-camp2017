@@ -321,7 +321,9 @@ def timestamp_tcpdump(interface, tx_ts_pkt_pos, rx_ts_pkt_pos, pkt_no, log_file,
       os.system("if [ "+find_pid+" != NULL ]; then kill -9 "+find_pid+"; fi > pid_out.log")
 
    sleep(0.5)
-   os.system("tcpdump -i"+interface+" -c "+str(pkt_no)+" -B 8192 -K -w latency_dump.pcap &")
+   os.system("rm -rf latency_dump*.pcap &")
+   os.system("tcpdump -i "+interface+" -c "+str(pkt_no)+" -K -w latency_dump.pcap &")
+   sleep(1)
    if (send):
       print "Start packet generator...!\n"
       initgcli.pcap_engine.run()
@@ -331,7 +333,6 @@ def timestamp_tcpdump(interface, tx_ts_pkt_pos, rx_ts_pkt_pos, pkt_no, log_file,
    while (pkt_count < pkt_no):
       initmcli.osnt_monitor_stats.get_stats()
       pkt_count = int(initmcli.osnt_monitor_stats.pkt_cnt[if_no[interface]], 16)
-      sleep(0.5)
 
    sleep(1)
    os.system("echo " " > latency_dump_conv.pcap")
