@@ -114,10 +114,6 @@ def make_UDP_pkt(pkt_len = 60, **kwargs):
         pkt = make_MAC_hdr(**kwargs)/make_IP_hdr(**kwargs)/make_UDP_hdr(**kwargs)/generate_load(pkt_len - 42)
         return pkt
 
-
-
-
-
 ############################
 # Function: generate_load
 # Keyword Arguments: length
@@ -130,15 +126,16 @@ def generate_load(length):
 	return load
 
 def usage():
-	print 'pcap_gen.py -o <outputfile> -n <number of packets>'
+	print 'pcap_gen.py -o <outputfile> -n <number of packets> -l <packet length>'
 
 
 def main(argv):
 	outputfile = ''
 	pkts_num = 1
+	pktlen = 60
 	found_option = False
        	try:
-		opts, args = getopt.getopt(sys.argv[1:], "ho:n:", ["help", "output=", "npkts="])
+		opts, args = getopt.getopt(sys.argv[1:], "ho:n:l:", ["help", "output=", "npkts=", "length="])
 	except getopt.GetoptError, err:
 		print str(err)
 		usage()
@@ -152,6 +149,8 @@ def main(argv):
                        	outputfile = arg
 		elif opt in ("-n", "--npkts"):
 			pkts_num = int(arg)
+		elif opt in ("-l", "--length"):
+                        pktlen = int(arg)
 	if not found_option:
 		print 'wrong options'
 		usage()
@@ -170,7 +169,6 @@ def main(argv):
 	l4s = 120
 	l4d = 121
 
-       	pktlen = 60
        	pkts_queue = []
 
        	for i in range(pkts_num):
@@ -179,41 +177,6 @@ def main(argv):
                	pkts_queue.append(pkt)
 
        	scapy.wrpcap(outputfile, pkts_queue)
-#def main(argv):
-#	outputfile = ''
-#	try:
-#		opts, args = getopt.getopt(argv,"ho:",["ofile="])
-#	except getopt.GetoptError:
-#		print 'pcap_gen.py -o <outputfile>'
-#		sys.exit(2)
-#	for opt, arg in opts:
-#		if opt == '-h':
-#			print 'pcap_gen.py -o <outputfile>'
-#			sys.exit()
-#		elif opt in ("-o", "--ofile"):
-#			outputfile = arg
-#	print 'Output file is ', outputfile
-#
-#
-#	# Packet parameters
-#	sMAC = "aa:bb:cc:dd:ee:ff"
-#	dMAC = "de:ad:be:ef:f0:01"
-#	
-#	sIP = "192.168.0.1"
-#	dIP = "192.168.1.1"
-#
-#	pktlen = 60
-#
-#	pkts_queue = []
-#	pkts_num = 1
-#
-#	for i in range(pkts_num):
-#		pkt = make_IP_pkt(dst_MAC=dMAC, src_MAC=sMAC, src_IP=sIP, dst_IP=dIP, pkt_len=pktlen)
-#		pkt.time = (i*(1e-8))
-#		pkts_queue.append(pkt)
-#
-#	scapy.all.wrpcap(outputfile, pkts_queue)
-
 
 
 if __name__ == "__main__":
