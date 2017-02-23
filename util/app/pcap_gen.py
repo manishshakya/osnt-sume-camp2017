@@ -126,7 +126,7 @@ def generate_load(length):
 	return load
 
 def usage():
-	print 'pcap_gen.py -o <outputfile> -n <number of packets> -l <packet length>'
+	print 'pcap_gen.py -o <outputfile> -n <number of packets> -l <packet length> -s <source MAC> -d <destination MAC>'
 
 
 def main(argv):
@@ -134,8 +134,10 @@ def main(argv):
 	pkts_num = 1
 	pktlen = 60
 	found_option = False
+	default_sMAC = True
+	default_dMAC = True
        	try:
-		opts, args = getopt.getopt(sys.argv[1:], "ho:n:l:", ["help", "output=", "npkts=", "length="])
+		opts, args = getopt.getopt(sys.argv[1:], "ho:n:l:s:d:", ["help", "output=", "npkts=", "length=", "srcMAC=", "dstMAC="])
 	except getopt.GetoptError, err:
 		print str(err)
 		usage()
@@ -151,6 +153,12 @@ def main(argv):
 			pkts_num = int(arg)
 		elif opt in ("-l", "--length"):
                         pktlen = int(arg)
+		elif opt in ("-s", "--srcMAC"):
+                        sMAC = arg
+			default_sMAC = False
+		elif opt in ("-d", "--dstMAC"):
+                        dMAC = arg
+			default_dMAC = False	
 	if not found_option:
 		print 'wrong options'
 		usage()
@@ -160,8 +168,10 @@ def main(argv):
 
 
        	# Packet parameters
-       	sMAC = "aa:bb:cc:dd:ee:ff"
-       	dMAC = "de:ad:be:ef:f0:01"
+	if default_sMAC:
+       		sMAC = "aa:bb:cc:dd:ee:ff"
+	if default_dMAC:
+       		dMAC = "de:ad:be:ef:f0:01"
        
        	sIP = "192.168.0.1"
        	dIP = "192.168.1.1"
