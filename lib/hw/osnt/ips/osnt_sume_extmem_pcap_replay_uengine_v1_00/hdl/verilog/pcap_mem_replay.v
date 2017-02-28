@@ -133,115 +133,67 @@ wire  [(C_M_AXIS_DATA_WIDTH/8)-1:0]    fifo_out_tkeep[0:NUM_QUEUES-1];
 wire  [C_M_AXIS_TUSER_WIDTH-1:0]       fifo_out_tuser[0:NUM_QUEUES-1];
 wire  [NUM_QUEUES-1:0]                 fifo_out_tlast;
 wire  [NUM_QUEUES-1:0]                 fifo_out_tready;
-reg   [NUM_QUEUES-1:0]                 fifo_out_tvalid;
-
-`define  M_IDLE   0
-`define  M_SEND   1
-`define  M_WAIT   2
-`define  M_DONE   3
 
 assign fifo_in_tdata[0]  = s0_axis_tdata;
 assign fifo_in_tkeep[0]  = s0_axis_tkeep;
 assign fifo_in_tuser[0]  = s0_axis_tuser;
 assign fifo_in_tvalid[0] = s0_axis_tvalid;
+assign fifo_in_tlast[0]  = s0_axis_tlast;
 assign s0_axis_tready    = ~fifo_full[0];
 
 assign fifo_in_tdata[1]  = s1_axis_tdata;
 assign fifo_in_tkeep[1]  = s1_axis_tkeep;
 assign fifo_in_tuser[1]  = s1_axis_tuser;
 assign fifo_in_tvalid[1] = s1_axis_tvalid;
+assign fifo_in_tlast[1]  = s1_axis_tlast;
 assign s1_axis_tready    = ~fifo_full[1];
 
 assign fifo_in_tdata[2]  = s2_axis_tdata;
 assign fifo_in_tkeep[2]  = s2_axis_tkeep;
 assign fifo_in_tuser[2]  = s2_axis_tuser;
 assign fifo_in_tvalid[2] = s2_axis_tvalid;
+assign fifo_in_tlast[2]  = s2_axis_tlast;
 assign s2_axis_tready    = ~fifo_full[2];
 
 assign fifo_in_tdata[3]  = s3_axis_tdata;
 assign fifo_in_tkeep[3]  = s3_axis_tkeep;
 assign fifo_in_tuser[3]  = s3_axis_tuser;
 assign fifo_in_tvalid[3] = s3_axis_tvalid;
+assign fifo_in_tlast[3]  = s3_axis_tlast;
 assign s3_axis_tready    = ~fifo_full[3];
 
 
 assign m0_axis_tdata       = fifo_out_tdata[0]; 
 assign m0_axis_tkeep       = fifo_out_tkeep[0]; 
 assign m0_axis_tuser       = fifo_out_tuser[0]; 
-assign m0_axis_tvalid      = fifo_out_tvalid[0]; 
+assign m0_axis_tvalid      = ~fifo_empty[0]; 
+assign m0_axis_tlast       = fifo_out_tlast[0]; 
 assign fifo_out_tready[0]  = m0_axis_tready;
 
 assign m1_axis_tdata       = fifo_out_tdata[1]; 
 assign m1_axis_tkeep       = fifo_out_tkeep[1]; 
 assign m1_axis_tuser       = fifo_out_tuser[1]; 
-assign m1_axis_tvalid      = fifo_out_tvalid[1]; 
+assign m1_axis_tvalid      = ~fifo_empty[1]; 
+assign m1_axis_tlast       = fifo_out_tlast[1]; 
 assign fifo_out_tready[1]  = m1_axis_tready; 
 
 assign m2_axis_tdata       = fifo_out_tdata[2];
 assign m2_axis_tkeep       = fifo_out_tkeep[2];
 assign m2_axis_tuser       = fifo_out_tuser[2];
-assign m2_axis_tvalid      = fifo_out_tvalid[2];
+assign m2_axis_tvalid      = ~fifo_empty[2];
+assign m2_axis_tlast       = fifo_out_tlast[2]; 
 assign fifo_out_tready[2]  = m2_axis_tready; 
 
 assign m3_axis_tdata       = fifo_out_tdata[3];
 assign m3_axis_tkeep       = fifo_out_tkeep[3];
 assign m3_axis_tuser       = fifo_out_tuser[3];
-assign m3_axis_tvalid      = fifo_out_tvalid[3];
+assign m3_axis_tvalid      = ~fifo_empty[3];
+assign m3_axis_tlast       = fifo_out_tlast[3]; 
 assign fifo_out_tready[3]  = m3_axis_tready;
-
-reg   [3:0] m_st_current[0:NUM_QUEUES-1], m_st_next[0:NUM_QUEUES-1];
 
 generate
    genvar i;
    for(i=0; i<NUM_QUEUES; i=i+1) begin: mem_ld_fifo
-      always @(posedge axis_aclk)
-         if (~axis_aresetn) begin
-            m_st_current[i]   <= 0;
-         end
-         else begin
-            m_st_current[i]  <= m_st_next[i];
-         end
-      
-      always @(*) begin
-         fifo_out_tvalid[i]   = 0;
-         fifo_rden[i]         = 0;
-         m_st_next[i]         = `M_IDLE;
-         case (m_st_current[i])
-            `M_IDLE : begin
-               fifo_out_tvalid[i]   = (fifo_out_tready[i] & ~fifo_empty[i]);
-               fifo_rden[i]         = (fifo_out_tready[i] & ~fifo_empty[i]);
-               m_st_next[i]         = (fifo_out_tready[i] & ~fifo_empty[i]) ? `M_SEND : `M_IDLE;
-            end
-            `M_SEND : begin
-               if (sw_rst) begin
-                  fifo_out_tvalid[i]   = (fifo_out_tready[i] & ~fifo_empty[i]);
-                  fifo_rden[i]         = (fifo_out_tready[i] & ~fifo_empty[i]);
-                  m_st_next[i]         = `M_WAIT;
-               end
-               else if (fifo_out_tready[i] & ~fifo_empty[i] & fifo_out_tlast[i] & (fifo_out_tuser[i] != 0)) begin
-                  fifo_out_tvalid[i]   = 0;
-                  fifo_rden[i]         = 1;
-                  m_st_next[i]         = `M_DONE;
-               end
-               else begin
-                  fifo_out_tvalid[i]   = (fifo_out_tready[i] & ~fifo_empty[i]);
-                  fifo_rden[i]         = (fifo_out_tready[i] & ~fifo_empty[i]);
-                  m_st_next[i]         = `M_SEND;
-               end
-            end
-            `M_WAIT : begin
-               fifo_out_tvalid[i]   = (fifo_out_tready[i] & ~fifo_empty[i]);
-               fifo_rden[i]         = (fifo_out_tready[i] & ~fifo_empty[i]);
-               m_st_next[i]         = (fifo_out_tready[i] & ~fifo_empty[i] & fifo_out_tlast[i]) ? `M_DONE : `M_WAIT;
-            end
-            `M_DONE : begin
-               fifo_out_tvalid[i]   = 0;
-               fifo_rden[i]         = 1;
-               m_st_next[i]         = (fifo_empty[i]) ? `M_IDLE : `M_DONE;
-            end
-         endcase
-      end
-
       fallthrough_small_fifo
       #(
          .WIDTH            (  1+C_M_AXIS_TUSER_WIDTH+(C_M_AXIS_DATA_WIDTH/8)+C_M_AXIS_DATA_WIDTH            ),
@@ -258,7 +210,7 @@ generate
          //Inputs
          .din              (  {fifo_in_tlast[i], fifo_in_tuser[i], fifo_in_tkeep[i], fifo_in_tdata[i]}      ),
          .wr_en            (  fifo_in_tvalid[i] & ~fifo_full[i]                                             ),
-         .rd_en            (  fifo_rden[i]                                                                  ),
+         .rd_en            (  fifo_out_tready[i] & ~fifo_empty[i]                                           ),
          .reset            (  ~axis_aresetn                                                                 ),
          .clk              (  axis_aclk                                                                     )
       );

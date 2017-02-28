@@ -28,7 +28,7 @@
 
 `timescale 1ns/1ps
 
-module osnt_sume_mem_pcap_replay_uengine
+module osnt_sume_extmem_pcap_replay_uengine
 #(
    parameter   C_S_AXI_DATA_WIDTH   = 32,
    parameter   C_S_AXI_ADDR_WIDTH   = 32,
@@ -71,33 +71,33 @@ module osnt_sume_mem_pcap_replay_uengine
    input                                                 axis_aclk,
    input                                                 axis_aresetn,
 
-   output   reg   [C_M_AXIS_DATA_WIDTH-1:0]              m0_axis_tdata,
-   output   reg   [((C_M_AXIS_DATA_WIDTH/8))-1:0]        m0_axis_tkeep,
-   output   reg   [C_M_AXIS_TUSER_WIDTH-1:0]             m0_axis_tuser,
-   output   reg                                          m0_axis_tvalid,
+   output         [C_M_AXIS_DATA_WIDTH-1:0]              m0_axis_tdata,
+   output         [((C_M_AXIS_DATA_WIDTH/8))-1:0]        m0_axis_tkeep,
+   output         [C_M_AXIS_TUSER_WIDTH-1:0]             m0_axis_tuser,
+   output                                                m0_axis_tvalid,
    input                                                 m0_axis_tready,
-   output   reg                                          m0_axis_tlast,
+   output                                                m0_axis_tlast,
 
-   output   reg   [C_M_AXIS_DATA_WIDTH-1:0]              m1_axis_tdata,
-   output   reg   [((C_M_AXIS_DATA_WIDTH/8))-1:0]        m1_axis_tkeep,
-   output   reg   [C_M_AXIS_TUSER_WIDTH-1:0]             m1_axis_tuser,
-   output   reg                                          m1_axis_tvalid,
+   output         [C_M_AXIS_DATA_WIDTH-1:0]              m1_axis_tdata,
+   output         [((C_M_AXIS_DATA_WIDTH/8))-1:0]        m1_axis_tkeep,
+   output         [C_M_AXIS_TUSER_WIDTH-1:0]             m1_axis_tuser,
+   output                                                m1_axis_tvalid,
    input                                                 m1_axis_tready,
-   output   reg                                          m1_axis_tlast,
+   output                                                m1_axis_tlast,
 
-   output   reg   [C_M_AXIS_DATA_WIDTH-1:0]              m2_axis_tdata,
-   output   reg   [((C_M_AXIS_DATA_WIDTH/8))-1:0]        m2_axis_tkeep,
-   output   reg   [C_M_AXIS_TUSER_WIDTH-1:0]             m2_axis_tuser,
-   output   reg                                          m2_axis_tvalid,
+   output         [C_M_AXIS_DATA_WIDTH-1:0]              m2_axis_tdata,
+   output         [((C_M_AXIS_DATA_WIDTH/8))-1:0]        m2_axis_tkeep,
+   output         [C_M_AXIS_TUSER_WIDTH-1:0]             m2_axis_tuser,
+   output                                                m2_axis_tvalid,
    input                                                 m2_axis_tready,
-   output   reg                                          m2_axis_tlast,
+   output                                                m2_axis_tlast,
 
-   output   reg   [C_M_AXIS_DATA_WIDTH-1:0]              m3_axis_tdata,
-   output   reg   [((C_M_AXIS_DATA_WIDTH/8))-1:0]        m3_axis_tkeep,
-   output   reg   [C_M_AXIS_TUSER_WIDTH-1:0]             m3_axis_tuser,
-   output   reg                                          m3_axis_tvalid,
+   output         [C_M_AXIS_DATA_WIDTH-1:0]              m3_axis_tdata,
+   output         [((C_M_AXIS_DATA_WIDTH/8))-1:0]        m3_axis_tkeep,
+   output         [C_M_AXIS_TUSER_WIDTH-1:0]             m3_axis_tuser,
+   output                                                m3_axis_tvalid,
    input                                                 m3_axis_tready,
-   output   reg                                          m3_axis_tlast,
+   output                                                m3_axis_tlast,
 
    // Slave Stream Ports (interface to RX queues)
    input          [C_S_AXIS_DATA_WIDTH-1:0]              s_axis_tdata,
@@ -108,12 +108,12 @@ module osnt_sume_mem_pcap_replay_uengine
    input                                                 s_axis_tlast,
 
    // External Memory Stream Ports (interface to RX queues)
-   output   reg   [C_M_AXIS_DATA_WIDTH-1:0]              m00_axis_tdata,
-   output   reg   [((C_M_AXIS_DATA_WIDTH/8))-1:0]        m00_axis_tkeep,
-   output   reg   [C_M_AXIS_TUSER_WIDTH-1:0]             m00_axis_tuser,
-   output   reg                                          m00_axis_tvalid,
+   output         [C_M_AXIS_DATA_WIDTH-1:0]              m00_axis_tdata,
+   output         [((C_M_AXIS_DATA_WIDTH/8))-1:0]        m00_axis_tkeep,
+   output         [C_M_AXIS_TUSER_WIDTH-1:0]             m00_axis_tuser,
+   output                                                m00_axis_tvalid,
    input                                                 m00_axis_tready,
-   output   reg                                          m00_axis_tlast,
+   output                                                m00_axis_tlast,
 
    input          [C_S_AXIS_DATA_WIDTH-1:0]              s00_axis_tdata,
    input          [((C_S_AXIS_DATA_WIDTH/8))-1:0]        s00_axis_tkeep,
@@ -122,12 +122,12 @@ module osnt_sume_mem_pcap_replay_uengine
    output                                                s00_axis_tready,
    input                                                 s00_axis_tlast,
 
-   output   reg   [C_M_AXIS_DATA_WIDTH-1:0]              m01_axis_tdata,
-   output   reg   [((C_M_AXIS_DATA_WIDTH/8))-1:0]        m01_axis_tkeep,
-   output   reg   [C_M_AXIS_TUSER_WIDTH-1:0]             m01_axis_tuser,
-   output   reg                                          m01_axis_tvalid,
+   output         [C_M_AXIS_DATA_WIDTH-1:0]              m01_axis_tdata,
+   output         [((C_M_AXIS_DATA_WIDTH/8))-1:0]        m01_axis_tkeep,
+   output         [C_M_AXIS_TUSER_WIDTH-1:0]             m01_axis_tuser,
+   output                                                m01_axis_tvalid,
    input                                                 m01_axis_tready,
-   output   reg                                          m01_axis_tlast,
+   output                                                m01_axis_tlast,
 
    input          [C_S_AXIS_DATA_WIDTH-1:0]              s01_axis_tdata,
    input          [((C_S_AXIS_DATA_WIDTH/8))-1:0]        s01_axis_tkeep,
@@ -136,12 +136,12 @@ module osnt_sume_mem_pcap_replay_uengine
    output                                                s01_axis_tready,
    input                                                 s01_axis_tlast,
 
-   output   reg   [C_M_AXIS_DATA_WIDTH-1:0]              m02_axis_tdata,
-   output   reg   [((C_M_AXIS_DATA_WIDTH/8))-1:0]        m02_axis_tkeep,
-   output   reg   [C_M_AXIS_TUSER_WIDTH-1:0]             m02_axis_tuser,
-   output   reg                                          m02_axis_tvalid,
+   output         [C_M_AXIS_DATA_WIDTH-1:0]              m02_axis_tdata,
+   output         [((C_M_AXIS_DATA_WIDTH/8))-1:0]        m02_axis_tkeep,
+   output         [C_M_AXIS_TUSER_WIDTH-1:0]             m02_axis_tuser,
+   output                                                m02_axis_tvalid,
    input                                                 m02_axis_tready,
-   output   reg                                          m02_axis_tlast,
+   output                                                m02_axis_tlast,
 
    input          [C_S_AXIS_DATA_WIDTH-1:0]              s02_axis_tdata,
    input          [((C_S_AXIS_DATA_WIDTH/8))-1:0]        s02_axis_tkeep,
@@ -150,12 +150,12 @@ module osnt_sume_mem_pcap_replay_uengine
    output                                                s02_axis_tready,
    input                                                 s02_axis_tlast,
 
-   output   reg   [C_M_AXIS_DATA_WIDTH-1:0]              m03_axis_tdata,
-   output   reg   [((C_M_AXIS_DATA_WIDTH/8))-1:0]        m03_axis_tkeep,
-   output   reg   [C_M_AXIS_TUSER_WIDTH-1:0]             m03_axis_tuser,
-   output   reg                                          m03_axis_tvalid,
+   output         [C_M_AXIS_DATA_WIDTH-1:0]              m03_axis_tdata,
+   output         [((C_M_AXIS_DATA_WIDTH/8))-1:0]        m03_axis_tkeep,
+   output         [C_M_AXIS_TUSER_WIDTH-1:0]             m03_axis_tuser,
+   output                                                m03_axis_tvalid,
    input                                                 m03_axis_tready,
-   output   reg                                          m03_axis_tlast,
+   output                                                m03_axis_tlast,
 
    input          [C_S_AXIS_DATA_WIDTH-1:0]              s03_axis_tdata,
    input          [((C_S_AXIS_DATA_WIDTH/8))-1:0]        s03_axis_tkeep,
@@ -174,7 +174,12 @@ module osnt_sume_mem_pcap_replay_uengine
    output         [C_S_AXI_DATA_WIDTH-1:0]               q0_replay_count,
    output         [C_S_AXI_DATA_WIDTH-1:0]               q1_replay_count,
    output         [C_S_AXI_DATA_WIDTH-1:0]               q2_replay_count,
-   output         [C_S_AXI_DATA_WIDTH-1:0]               q3_replay_count
+   output         [C_S_AXI_DATA_WIDTH-1:0]               q3_replay_count,
+
+   output                                                q0_wr_done,
+   output                                                q1_wr_done,
+   output                                                q2_wr_done,
+   output                                                q3_wr_done
 );
 
 // -- Internal Parameters
@@ -198,11 +203,6 @@ wire                                               q0_enable;
 wire                                               q1_enable;
 wire                                               q2_enable;
 wire                                               q3_enable;
-                                                  
-wire                                               q0_wr_done;
-wire                                               q1_wr_done;
-wire                                               q2_wr_done;
-wire                                               q3_wr_done;
                                                   
 wire  [C_S_AXI_DATA_WIDTH-1:0]                     conf_path;
 
@@ -376,13 +376,20 @@ axi_lite_regs
    .ro_regs                   () 
 );
 
+wire  start_replay_0, start_replay_1, start_replay_2, start_replay_3;
+
+assign q0_start_replay = (q0_replay_count != 0) ? start_replay_0 : 0;
+assign q1_start_replay = (q1_replay_count != 0) ? start_replay_1 : 0;
+assign q2_start_replay = (q2_replay_count != 0) ? start_replay_2 : 0;
+assign q3_start_replay = (q3_replay_count != 0) ? start_replay_3 : 0;
+
 // -- Register assignments
 assign sw_rst           = rw_regs[(C_S_AXI_DATA_WIDTH*0)+1-1:(C_S_AXI_DATA_WIDTH*0)]; //0x0000
 
-assign q0_start_replay  = rw_regs[(C_S_AXI_DATA_WIDTH*1)+1-1:(C_S_AXI_DATA_WIDTH*1)]; //0x0004
-assign q1_start_replay  = rw_regs[(C_S_AXI_DATA_WIDTH*2)+1-1:(C_S_AXI_DATA_WIDTH*2)]; //0x0008
-assign q2_start_replay  = rw_regs[(C_S_AXI_DATA_WIDTH*3)+1-1:(C_S_AXI_DATA_WIDTH*3)]; //0x000c
-assign q3_start_replay  = rw_regs[(C_S_AXI_DATA_WIDTH*4)+1-1:(C_S_AXI_DATA_WIDTH*4)]; //0x0010
+assign start_replay_0  = rw_regs[(C_S_AXI_DATA_WIDTH*1)+1-1:(C_S_AXI_DATA_WIDTH*1)]; //0x0004
+assign start_replay_1  = rw_regs[(C_S_AXI_DATA_WIDTH*2)+1-1:(C_S_AXI_DATA_WIDTH*2)]; //0x0008
+assign start_replay_2  = rw_regs[(C_S_AXI_DATA_WIDTH*3)+1-1:(C_S_AXI_DATA_WIDTH*3)]; //0x000c
+assign start_replay_3  = rw_regs[(C_S_AXI_DATA_WIDTH*4)+1-1:(C_S_AXI_DATA_WIDTH*4)]; //0x0010
 
 assign q0_replay_count  = rw_regs[(C_S_AXI_DATA_WIDTH*5)+C_S_AXI_DATA_WIDTH-1:(C_S_AXI_DATA_WIDTH*5)]; //0x0014
 assign q1_replay_count  = rw_regs[(C_S_AXI_DATA_WIDTH*6)+C_S_AXI_DATA_WIDTH-1:(C_S_AXI_DATA_WIDTH*6)]; //0x0018

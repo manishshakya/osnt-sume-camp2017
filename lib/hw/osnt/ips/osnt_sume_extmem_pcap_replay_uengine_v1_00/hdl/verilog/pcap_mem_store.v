@@ -92,11 +92,6 @@ endfunction//log2
 
 assign s_axis_tready = 1;
 
-reg   [3:0] m0_st_current, m0_st_next;
-reg   [3:0] m1_st_current, m1_st_next;
-reg   [3:0] m2_st_current, m2_st_next;
-reg   [3:0] m3_st_current, m3_st_next;
-
 // ------------ Internal Params --------
 localparam  MAX_PKT_SIZE      = 2000; //In bytes
 localparam  IN_FIFO_DEPTH_BIT = log2(MAX_PKT_SIZE/(C_M_AXIS_DATA_WIDTH/8));
@@ -108,7 +103,7 @@ wire  fifo_full;
 wire  [C_M_AXIS_DATA_WIDTH-1:0]        fifo_out_tdata;
 wire  [(C_M_AXIS_DATA_WIDTH/8)-1:0]    fifo_out_tkeep;
 wire  [C_M_AXIS_TUSER_WIDTH-1:0]       fifo_out_tuser;
-wire  [NUM_QUEUES-1:0]                 fifo_out_tlast;
+wire                                   fifo_out_tlast;
 
 wire  [7:0] tuser_src_port = fifo_out_tuser[16+:8];
 
