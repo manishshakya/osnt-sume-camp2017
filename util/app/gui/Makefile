@@ -1,6 +1,6 @@
 #
-# Copyright (c) 2016 University of Cambridge
-# Copyright (c) 2016 Jong Hun Han
+# Copyright (c) 2016-2017 University of Cambridge
+# Copyright (c) 2016-2017 Jong Hun Han
 # All rights reserved.
 #
 # This software was developed by University of Cambridge Computer Laboratory
@@ -26,8 +26,8 @@
 # @NETFPGA_LICENSE_HEADER_END@
 
 all:
-	$(MAKE) -C lib
+	$(MAKE) -C ../lib
 
 clean:
-	$(MAKE) -C lib  clean
+	$(MAKE) -C ../lib  clean
 

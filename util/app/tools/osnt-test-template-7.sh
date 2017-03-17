@@ -27,17 +27,39 @@
 # @NETFPGA_LICENSE_HEADER_END@
 ################################################################################
 
-# 1) Send a single packet through port <X> and measure the latency of a returning packet.
-# 2) Send <N> packets through port <X>, with IPG of <Y> and measure latency and bandwidth (not full rate).
+PKTLENGTH=64 #Packet length in byte
+FN=test_pcap_01
+PKTTYPE=UDP
+SRCMAC=ff:22:33:44:55:66
+DSCMAC=77:88:99:aa:bb:cc
+SRCIP=192.168.1.1
+DSCIP=192.168.1.2
+SPORT_NO=100
+DPORT_NO=101
 
-#python osnt-tool-cmd.py -ifp0 <pcap file> -flt <filter rule> -rpn0 <replay no> -ipg0 <inter packet gap nsec> -txs0 <tx timestamp pos> -rxs0 <rx timestamp pos> -lty0 (monitoring port) -rnm (run and monitoring)
-python osnt-tool-cmd.py -ifp0 ../../sample_traces/1500.cap -flt filter.cfg -rpn0 10000 -ipg0 8000 -txs0 6 -rxs0 7 -lty0 -rnm
-sleep 1
+./gen_pcap_pkts.py \
+--packet_length $PKTLENGTH --packet_type $PKTTYPE --file_name $FN \
+--src_mac $SRCMAC --dst_mac $DSCMAC \
+--src_ip $SRCIP --dst_ip $DSCIP \
+--sport_no $SPORT_NO --dport_no $DPORT_NO
 
-python osnt-tool-cmd.py -ifp1 ../../sample_traces/1500.cap -flt filter.cfg -rpn1 10000 -ipg1 8000 -txs1 6 -rxs1 7 -lty1 -rnm 
-sleep 1
+echo "2 $SRCIP 255.255.255.255 0.0.0.0 0.0.0.0 0x0 0x0 0x00 0x0" > packet_filter.cfg
 
-python osnt-tool-cmd.py -ifp2 ../../sample_traces/1500.cap -flt filter.cfg -rpn2 10000 -ipg2 8000 -txs2 6 -rxs2 7 -lty2 -rnm 
-sleep 1
+PKTLENGTH=64 #Packet length in byte
+FN=test_pcap_02
+PKTTYPE=UDP
+SRCMAC=ff:22:33:44:55:66
+DSCMAC=77:88:99:aa:bb:cc
+SRCIP=10.0.1.1
+DSCIP=10.0.1.2
+SPORT_NO=100
+DPORT_NO=101
 
-python osnt-tool-cmd.py -ifp3 ../../sample_traces/1500.cap -flt filter.cfg -rpn3 10000 -ipg3 8000 -txs3 6 -rxs3 7 -lty3 -rnm
+./gen_pcap_pkts.py \
+--packet_length $PKTLENGTH --packet_type $PKTTYPE --file_name $FN \
+--src_mac $SRCMAC --dst_mac $DSCMAC \
+--src_ip $SRCIP --dst_ip $DSCIP \
+--sport_no $SPORT_NO --dport_no $DPORT_NO
+
+python ../cli/osnt-tool-cmd.py -ifp0 ./test_pcap_01.cap 
+python ../cli/osnt-tool-cmd.py -ifp1 ./test_pcap_02.cap -ipg0 100000000 -rpn1 100000000 -rpn0 100 -flt packet_filter.cfg -txs0 6 -rxs1 7 -lpn 100 -lty1 -rnm

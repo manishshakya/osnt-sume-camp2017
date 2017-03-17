@@ -34,7 +34,7 @@
 #        Code to operate the OSNT Generator
 
 import os
-from lib.axi import *
+from axi import *
 from time import sleep
 from scapy import *
 from scapy.all import *
@@ -279,10 +279,10 @@ class OSNTGeneratorPcapEngine:
 
         self.set_mem_addr_low()
         self.set_mem_addr_high()
-        sleep(0.1)
+        sleep(0.5)
 
         self.set_enable()
-        sleep(0.1)
+        sleep(0.5)
         
         average_pkt_len = {}
         average_word_cnt = {}
@@ -300,18 +300,22 @@ class OSNTGeneratorPcapEngine:
                 sendp(pkt, iface=iface, verbose=False)
             average_pkt_len[iface] = float(average_pkt_len[iface])/len(pkts[iface])
             average_word_cnt[iface] = float(average_word_cnt[iface])/len(pkts[iface])
-        sleep(0.1)
+        sleep(1)
         if iface == 'nf0':
             wraxi("0x76000054", 0x1)
+            sleep(0.5)
             wraxi("0x76000054", 0x0)
         if iface == 'nf1':
             wraxi("0x76000058", 0x1)
+            sleep(0.5)
             wraxi("0x76000058", 0x0)
         if iface == 'nf2':
             wraxi("0x7600005c", 0x1)
+            sleep(0.5)
             wraxi("0x7600005c", 0x0)
         if iface == 'nf3':
             wraxi("0x76000060", 0x1)
+            sleep(0.5)
             wraxi("0x76000060", 0x0)
 
         return {'average_pkt_len':average_pkt_len, 'average_word_cnt':average_word_cnt, 'pkts_loaded':pkts_loaded}

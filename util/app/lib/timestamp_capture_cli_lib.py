@@ -320,10 +320,9 @@ def timestamp_tcpdump(interface, tx_ts_pkt_pos, rx_ts_pkt_pos, pkt_no, log_file,
    if (os.system("ps -e | pgrep tcpdump | awk '{print $0}'") != 0):
       os.system("if [ "+find_pid+" != NULL ]; then kill -9 "+find_pid+"; fi > pid_out.log")
 
-   sleep(0.5)
    os.system("rm -rf latency_dump*.pcap &")
    os.system("tcpdump -i "+interface+" -c "+str(pkt_no)+" -K -w latency_dump.pcap &")
-   sleep(1)
+   sleep(3)
    if (send):
       print "Start packet generator...!\n"
       initgcli.pcap_engine.run()
@@ -334,7 +333,7 @@ def timestamp_tcpdump(interface, tx_ts_pkt_pos, rx_ts_pkt_pos, pkt_no, log_file,
       initmcli.osnt_monitor_stats.get_stats()
       pkt_count = int(initmcli.osnt_monitor_stats.pkt_cnt[if_no[interface]], 16)
 
-   sleep(1)
+   sleep(2)
    os.system("echo " " > latency_dump_conv.pcap")
    os.system("tcpdump -r latency_dump.pcap -xx > latency_dump_conv.pcap")
 
@@ -361,5 +360,7 @@ def timestamp_tcpdump(interface, tx_ts_pkt_pos, rx_ts_pkt_pos, pkt_no, log_file,
    pkts.append(pkt_data)
   
    timestamp_calc(tx_ts_pkt_pos, rx_ts_pkt_pos, pkt_no, log_file, pkts)
+
+   find_pid = "$(ps -e | pgrep tcpdump | awk '{print $0}')"
    if (os.system("ps -e | pgrep tcpdump | awk '{print $0}'") != 0):
       os.system("if [ "+find_pid+" != NULL ]; then kill -9 "+find_pid+"; fi > pid_out.log")

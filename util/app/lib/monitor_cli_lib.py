@@ -27,7 +27,7 @@
 ################################################################################
 
 import os, sys, math, argparse
-from lib.axi import *
+from axi import *
 from time import gmtime, strftime, sleep
 from monitor import *
 
@@ -126,7 +126,7 @@ def set_clear():
     print "Cleared pcap replay. Stop ..."
 
 def load_rule(filter_file):
-   with open("./filter.cfg", 'r') as f:
+   with open(filter_file, 'r') as f:
       for line in f:
          line = line.lstrip()
          if len(line) > 0 and line[0] != '#':

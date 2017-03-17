@@ -27,7 +27,7 @@
 ################################################################################
 
 import os, argparse, datetime, commands
-from lib.axi import *
+from axi import *
 from generator import *
 
 class InitGCli:
@@ -62,7 +62,6 @@ class InitGCli:
 def clear():
     initgcli.pcap_engine.clear()
     print "Cleared pcap replay. Stop ..."
-    #sys.exit(1)
 
 def set_load_pcap(interface, pcap_file):
     initgcli.pcaps[interface] = pcap_file

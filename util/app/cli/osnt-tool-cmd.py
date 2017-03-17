@@ -27,7 +27,8 @@
 ################################################################################
 
 import os, sys, math, argparse
-from lib.axi import *
+sys.path.insert(0, "./../lib")
+from axi import *
 from time import gmtime, strftime, sleep
 from monitor import *
 from monitor_cli_lib import *
@@ -67,6 +68,7 @@ input_arg.add_argument("-flt", type=str, help="OSNT SUME monitor load filter fil
 input_arg.add_argument("-clear", action="store_true", help="OSNT SUME monitor clear stats and time. -clear")
 
 # Latency measurement flags
+input_arg.add_argument("-lpn", type=int, help="OSNT SUME latency measurement packet no on one of the nf interfaces. eg. -lpn <integer number>. This number should be the same with the rpn.")
 input_arg.add_argument("-lty0", action="store_true", help="OSNT SUME latency measurement on nf0. eg. -lty0")
 input_arg.add_argument("-lty1", action="store_true", help="OSNT SUME latency measurement on nf1. eg. -lty1")
 input_arg.add_argument("-lty2", action="store_true", help="OSNT SUME latency measurement on nf2. eg. -lty2")
@@ -75,7 +77,6 @@ input_arg.add_argument("-llog", type=str, help="OSNT SUME latency measurement lo
 input_arg.add_argument("-skt", action="store_true", help="OSNT SUME generator trigger and latency measurement with python socket. eg. -skt")
 input_arg.add_argument("-rnm", action="store_true", help="OSNT SUME generator trigger and latency measurement. eg. -rnm")
 
-input_arg.add_argument("-reset", action="store_true", help="OSNT SUME reset. --reset")
 
 args = input_arg.parse_args()
 
@@ -89,6 +90,12 @@ if (args.clear):
     set_clear()
     clear()
     sys.exit(1)
+
+# Set no packet for latency measure ment 
+if (args.lpn or args.lpn == 0):
+    lty_pkt_no=args.lpn
+else:
+    lty_pkt_no=0 
 
 # Set and chect latency measurement interface. 
 lty_value=[0, 0, 0, 0]
@@ -110,8 +117,10 @@ if (args.lty3):
     lty_if="nf3"
 
 if (sum(lty_value) == 1):
+    if (lty_pkt_no == 0):
+       print "Neet to set the number of packet to be captured."
+       sys.exit(1)
     set_clear()
-    clear()
 
 if (sum(lty_value) > 1):
     print lty_value
@@ -133,25 +142,21 @@ if (args.ifp3):
 # Set packet replay number
 if (args.rpn0 or args.rpn0 == 0):
     set_replay_cnt(0, args.rpn0)
-    lty_pkt_no=args.rpn0
 else:
     set_replay_cnt(0, 0)
 
 if (args.rpn1 or args.rpn1 == 0):
     set_replay_cnt(1, args.rpn1)
-    lty_pkt_no=args.rpn1
 else:
     set_replay_cnt(1, 0)
 
 if (args.rpn2 or args.rpn2 == 0):
     set_replay_cnt(2, args.rpn2)
-    lty_pkt_no=args.rpn2
 else:
     set_replay_cnt(2, 0)
 
 if (args.rpn3 or args.rpn3 == 0):
     set_replay_cnt(3, args.rpn3)
-    lty_pkt_no=args.rpn3
 else:
     set_replay_cnt(3, 0)
 
@@ -218,7 +223,11 @@ elif (lty_if != ""):
 
 if (lty_if != ""):
     print "Set the interface ", lty_if
-    load_rule("./filter.cfg")
+    if (args.flt):
+       load_rule(args.flt)
+    else:
+       load_rule("./filter.cfg")
+
     if (args.skt):   
        timestamp_capture(lty_if, lty_tx_pos, lty_rx_pos, lty_pkt_no, log_file, args.rnm)
     else:

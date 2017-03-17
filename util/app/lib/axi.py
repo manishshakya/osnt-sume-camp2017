@@ -1,6 +1,6 @@
 #
-# Copyright (c) 2016 University of Cambridge
-# Copyright (c) 2016 Jong Hun Han
+# Copyright (c) 2016-2017 University of Cambridge
+# Copyright (c) 2016-2017 Jong Hun Han
 # All rights reserved.
 #
 # This software was developed by University of Cambridge Computer Laboratory
@@ -69,13 +69,13 @@ NF10_IOCTL_CMD_READ_REG = SIOCDEVPRIVATE + 2
 NF10_IOCTL_CMD_WRITE_REG_PY = SIOCDEVPRIVATE + 9
 
 def rdaxi(addr):
-    value=commands.getoutput("./lib/rdaxi " + str(addr))
+    value=commands.getoutput("./../lib/rdaxi " + str(addr))
     read_data = int(value, 16);
     value = hex(read_data & int("0xffffffff", 16))
     return value
 
 def wraxi(addr, value):
-    os.system("./lib/wraxi "+str(addr)+" "+str(value))
+    os.system("./../lib/wraxi "+str(addr)+" "+str(value))
 
 def add_hex(hex1, hex2):
 

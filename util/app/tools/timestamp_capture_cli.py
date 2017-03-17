@@ -27,6 +27,7 @@
 ################################################################################
 
 import socket, struct, os, array, sys, time, argparse
+sys.path.insert(0,"../lib")
 from scapy.all import ETH_P_ALL
 from scapy.all import select
 from timestamp_capture_cli_lib import *
@@ -34,14 +35,15 @@ from timestamp_capture_cli_lib import *
 input_arg = argparse.ArgumentParser()
 input_arg.add_argument("--tx_ts_pos", type=int, help="Tx timestamp position in packet (Number).")
 input_arg.add_argument("--rx_ts_pos", type=int, help="Rx timestamp position in packet (Number).")
-input_arg.add_argument("--sample_no", type=int, help="Number of packet for timestamp capturing (Number).")
+input_arg.add_argument("--lpn", type=int, help="Number of packet for timestamp capturing (Number).")
 input_arg.add_argument("--file_name", type=str, help="File name to store the results. Default <test.dat>")
-input_arg.add_argument("--if_name", type=str, help="Network interface name, nf0-nf3")
-input_arg.add_argument("--send", action="store_true", help="Start OSNT packet generator.")
+input_arg.add_argument("--ifn", type=str, help="Network interface name, nf0-nf3")
+input_arg.add_argument("--run", action="store_true", help="Start OSNT packet generator.")
+input_arg.add_argument("--skt", action="store_true", help="Latency measurement with python socket.")
 args = input_arg.parse_args()
 
-if (args.sample_no):
-    pkt_no = args.sample_no 
+if (args.lpn):
+    pkt_no = args.lpn 
 else:
     print 'Default number of packet for timestamp capturing is 10!\n'
     pkt_no = 10 
@@ -68,10 +70,13 @@ else:
     log_file = "latency_data.dat"
     print 'Write a file name to store the results. Default <latency_data.dat>\n'
 
-if (args.if_name):
-   if_name = args.if_name
-   print "interface name ", if_name
-   timestamp_capture(if_name, tx_ts_pkt_pos, rx_ts_pkt_pos, pkt_no, log_file, args.send)
+if (args.ifn):
+   interface_name = args.ifn
+   print "interface name ", interface_name
+   if (args.skt):
+      timestamp_capture(interface_name, tx_ts_pkt_pos, rx_ts_pkt_pos, pkt_no, log_file, args.run)
+   else:
+      timestamp_tcpdump(interface_name, tx_ts_pkt_pos, rx_ts_pkt_pos, pkt_no, log_file, args.run)
 else:
    sys.exit(1)
 

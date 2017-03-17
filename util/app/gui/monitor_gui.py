@@ -1,8 +1,8 @@
 #
 # Copyright (C) 2010, 2011 The Board of Trustees of The Leland Stanford
 # Junior University
-# Copyright (c) 2016 University of Cambridge
-# Copyright (c) 2016 Jong Hun Han
+# Copyright (c) 2016-2017 University of Cambridge
+# Copyright (c) 2016-2017 Jong Hun Han
 # All rights reserved.
 #
 # This software was developed by University of Cambridge Computer Laboratory
@@ -34,10 +34,11 @@
 #        Code for the OSNT Monitor GUI
 
 import os, sys
+sys.path.insert(0, "./../lib")
 from monitor import *
 import wx
-import  wx.lib.scrolledpanel as scrolled
-from lib.axi import *
+import wx.lib.scrolledpanel as scrolled
+from axi import *
 from time import gmtime, strftime
 
 time_f = open("record_ts.txt", "w")

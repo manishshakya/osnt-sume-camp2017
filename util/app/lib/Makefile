@@ -1,6 +1,6 @@
 #
-# Copyright (c) 2016 University of Cambridge
-# Copyright (c) 2016 Jong Hun Han
+# Copyright (c) 2016-2017 University of Cambridge
+# Copyright (c) 2016-2017 Jong Hun Han
 # All rights reserved.
 #
 # This software was developed by University of Cambridge Computer Laboratory
@@ -29,9 +29,9 @@
 
 all: clean
 	$(CC) -Wall -Werror -o rdaxi osnt_sume_rdaxi.c \
-	-I./../../../../lib/sw/driver/osnt_sume_riffa_v1_00/
+	-I./../../../lib/sw/driver/osnt_sume_riffa_v1_00/
 	$(CC) -Wall -Werror -o wraxi osnt_sume_wraxi.c \
-	-I./../../../../lib/sw/driver/osnt_sume_riffa_v1_00/
+	-I./../../../lib/sw/driver/osnt_sume_riffa_v1_00/
 
 clean:
 	rm -f rdaxi wraxi 
