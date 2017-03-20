@@ -32,7 +32,7 @@ set ip_version          1.00
 set ip_version_display  v1_00
 
 # Call common setting for ips
-source ../../../lib/osnt_ip_set_common.tcl
+source ../lib/osnt_ip_set_common.tcl
 
 # Project setting.
 create_project -name ${design} -force -dir "./${project_dir}" -part ${device} -ip
@@ -60,13 +60,13 @@ read_verilog "./hdl/verilog/packet_filter/tcam_wrapper.v"
 
 read_verilog "./hdl/verilog/stats_handler/stats_handler.v"
 
-read_verilog "./../../../std/ips/osnt_sume_common/hdl/verilog/fallthrough_small_fifo.v"
-read_verilog "./../../../std/ips/osnt_sume_common/hdl/verilog/small_fifo.v"
+read_verilog "./../../../std/cores/osnt_sume_common/hdl/verilog/fallthrough_small_fifo.v"
+read_verilog "./../../../std/cores/osnt_sume_common/hdl/verilog/small_fifo.v"
 
-read_verilog "./../../../std/ips/osnt_sume_common/hdl/verilog/axi_lite_regs.v"
-read_verilog "./../../../std/ips/osnt_sume_common/hdl/verilog/ipif_regs.v"
-read_verilog "./../../../std/ips/osnt_sume_common/hdl/verilog/ipif_table_regs.v"
-read_verilog "./../../../std/ips/osnt_sume_common/hdl/verilog/sume_axi_ipif.v"
+read_verilog "./../../../std/cores/osnt_sume_common/hdl/verilog/axi_lite_regs.v"
+read_verilog "./../../../std/cores/osnt_sume_common/hdl/verilog/ipif_regs.v"
+read_verilog "./../../../std/cores/osnt_sume_common/hdl/verilog/ipif_table_regs.v"
+read_verilog "./../../../std/cores/osnt_sume_common/hdl/verilog/sume_axi_ipif.v"
 
 read_vhdl "./xapp1151_cam_v1_1/src/vhdl/cam_init_file_pack_xst.vhd"
 read_vhdl "./xapp1151_cam_v1_1/src/vhdl/cam_pkg.vhd"
@@ -96,7 +96,7 @@ update_compile_order -fileset sources_1
 ipx::package_project
 
 # Call common properties of ips
-source ../../../lib/osnt_ip_property_common.tcl
+source ../lib/osnt_ip_property_common.tcl
 
 ipx::add_bus_parameter FREQ_HZ [ipx::get_bus_interfaces S_AXI -of_objects [ipx::current_core]]
 ipx::add_bus_parameter FREQ_HZ [ipx::get_bus_interfaces M_AXIS -of_objects [ipx::current_core]]

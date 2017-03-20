@@ -32,7 +32,7 @@ set ip_version          1.00
 set ip_version_display  v1_00
 
 # Call common setting for ips
-source ./../../../lib/osnt_ip_set_common.tcl
+source ../lib/osnt_ip_set_common.tcl
 
 # Project setting.
 create_project -name ${design} -force -dir "./${project_dir}" -part ${device} -ip
@@ -62,9 +62,9 @@ generate_target all [get_files  ./${project_dir}/mig_qdrA/mig_qdrA.xci]
 
 # IP build.
 read_verilog "./hdl/verilog/osnt_sume_qdrA.v"
-read_verilog "./../../../std/ips/osnt_sume_common/hdl/verilog/fallthrough_small_fifo.v"
-read_verilog "./../../../std/ips/osnt_sume_common/hdl/verilog/small_fifo.v"
-read_verilog "./../../../std/ips/osnt_sume_common/hdl/verilog/sume_axi_ipif.v"
+read_verilog "./../../../std/cores/osnt_sume_common/hdl/verilog/fallthrough_small_fifo.v"
+read_verilog "./../../../std/cores/osnt_sume_common/hdl/verilog/small_fifo.v"
+read_verilog "./../../../std/cores/osnt_sume_common/hdl/verilog/sume_axi_ipif.v"
 
 update_compile_order -fileset sources_1
 update_compile_order -fileset sim_1
@@ -72,7 +72,7 @@ update_compile_order -fileset sim_1
 ipx::package_project
 
 # Call common properties of ips
-source ./../../../lib/osnt_ip_property_common.tcl
+source ../lib/osnt_ip_property_common.tcl
 
 ipx::add_bus_parameter FREQ_HZ [ipx::get_bus_interfaces S_AXI -of_objects [ipx::current_core]]
 
