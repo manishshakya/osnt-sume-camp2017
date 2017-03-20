@@ -27,11 +27,11 @@
 
 
 # Set variables.
-set   design               osnt_sume_axi_sim_master
+set   design               osnt_sume_nic_output_port_lookup
 set   ip_version           1.00
 set   ip_version_display   v1_00
 
-source ../../../lib/osnt_ip_set_common.tcl
+source ../lib/osnt_ip_set_common.tcl
 
 # Project setting.
 create_project -name ${design} -force -dir "./${project_dir}" -part ${device} -ip
@@ -40,17 +40,19 @@ set_property source_mgmt_mode All [current_project]
 set_property top ${design} [current_fileset]
 
 # IP build.
-read_verilog "./hdl/verilog/osnt_sume_axi_sim_master.v"
-read_verilog "../osnt_sume_common/hdl/verilog/sume_axi_master_if.v"
+read_verilog "./hdl/verilog/osnt_sume_nic_output_port_lookup.v"
+read_verilog "./../osnt_sume_common/hdl/verilog/fallthrough_small_fifo.v"
+read_verilog "./../osnt_sume_common/hdl/verilog/small_fifo.v"
 
 update_compile_order -fileset sources_1
 
 ipx::package_project
 
 # Set ip descriptions
-source ../../../lib/osnt_ip_property_common.tcl
+source ../lib/osnt_ip_property_common.tcl
 
-ipx::add_bus_parameter FREQ_HZ [ipx::get_bus_interfaces M_AXI -of_objects [ipx::current_core]]
+ipx::add_bus_parameter FREQ_HZ [ipx::get_bus_interfaces s_axis -of_objects [ipx::current_core]]
+ipx::add_bus_parameter FREQ_HZ [ipx::get_bus_interfaces m_axis -of_objects [ipx::current_core]]
 
 ipx::infer_user_parameters [ipx::current_core]
 ipx::check_integrity [ipx::current_core]

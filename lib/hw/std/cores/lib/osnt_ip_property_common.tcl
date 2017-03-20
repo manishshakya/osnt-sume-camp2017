@@ -26,42 +26,13 @@
 # @NETFPGA_LICENSE_HEADER_END@
 
 
-# Set variables.
-set   design               osnt_sume_axi_sim_transactor
-set   ip_version           1.00
-set   ip_version_display   v1_00
-
-source ../../../lib/osnt_ip_set_common.tcl
-
-# Project setting.
-create_project -name ${design} -force -dir "./${project_dir}" -part ${device} -ip
-
-set_property source_mgmt_mode All [current_project]  
-set_property top ${design} [current_fileset]
-
-# IP build.
-read_vhdl "./hdl/vhdl/osnt_sume_axi_sim_transactor.vhd"
-read_vhdl "./hdl/vhdl/transactor_fifos.vhd"
-read_vhdl "./hdl/vhdl/cntr_incr_decr_addn_f.vhd"
-read_vhdl "./hdl/vhdl/dynshreg_f.vhd"
-read_vhdl "./hdl/vhdl/srl_fifo_rbu_f.vhd"
-read_vhdl "./hdl/vhdl/srl_fifo_f.vhd"
-read_vhdl "./hdl/vhdl/lib_pkg.vhd"
-read_vhdl "./../osnt_sume_common/hdl/vhdl/axis_sim_pkg.vhd"
-
-update_compile_order -fileset sources_1
-
-ipx::package_project
-
-# Set ip descriptions
-source ../../../lib/osnt_ip_property_common.tcl
-
-ipx::add_bus_parameter FREQ_HZ [ipx::get_bus_interfaces M_AXI -of_objects [ipx::current_core]]
-
-ipx::infer_user_parameters [ipx::current_core]
-ipx::check_integrity [ipx::current_core]
-ipx::save_core [ipx::current_core]
-
-close_project
-exit
+set_property   vendor               ${lib_name}                      [ipx::current_core]
+set_property   library              ${lib_name}                      [ipx::current_core]
+set_property   version              ${ip_version}                    [ipx::current_core]
+set_property   display_name         ${design}_${ip_version_display}  [ipx::current_core]
+set_property   description          ${design}_${ip_version_display}  [ipx::current_core]
+set_property   taxonomy             ${lib_name}                      [ipx::current_core]
+set_property   vendor_display_name  ${lib_name}                      [ipx::current_core]
+set_property   company_url          ${url_path}                      [ipx::current_core]
+set_property   supported_families   ${fpga_family}                   [ipx::current_core]
 

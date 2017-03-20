@@ -31,7 +31,7 @@ set   design               osnt_sume_riffa_dma
 set   ip_version           1.00
 set   ip_version_display   v1_00
 
-source ../../../lib/osnt_ip_set_common.tcl
+source ../lib/osnt_ip_set_common.tcl
 
 ## include all .xci files
 set xil_ip  		{axis_fifo_2clk_32d_4u}	
@@ -141,7 +141,7 @@ update_compile_order -fileset sim_1
 ipx::package_project -force -import_files $xil_ip_xci
 
 # Set ip descriptions
-source ../../../lib/osnt_ip_property_common.tcl
+source ../lib/osnt_ip_property_common.tcl
 
 # Auto Generate Parameters
 ipx::remove_all_hdl_parameter [ipx::current_core]
