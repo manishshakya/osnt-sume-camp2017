@@ -162,13 +162,13 @@ create_bd_cell -type ip -vlnv OSNT-SUME-NetFPGA:OSNT-SUME-NetFPGA:osnt_sume_bram
 create_bd_cell -type ip -vlnv OSNT-SUME-NetFPGA:OSNT-SUME-NetFPGA:osnt_sume_bram:1.00 osnt_sume_bram_3
 
 # Block design modules
-source ./../../lib/tcl/bd_sume_osnt_dma_engine.tcl
+source ./tcl/bd_sume_osnt_dma_engine.tcl
 create_hier_cell_sume_osnt_dma_engine [current_bd_instance .] sume_osnt_dma 256
 
-source ./../../lib/tcl/bd_sume_osnt_10g_all_interface.tcl
+source ./tcl/bd_sume_osnt_10g_all_interface.tcl
 create_hier_cell_sume_osnt_10g_all_interface [current_bd_instance .] sume_osnt_10g_interface 256 
 
-source ./../../lib/tcl/bd_sume_osnt_mbsys.tcl
+source ./tcl/bd_sume_osnt_mbsys.tcl
 create_hier_cell_mbsys [current_bd_instance .] mbsys
 
 create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:2.1 axi_interconnect_0

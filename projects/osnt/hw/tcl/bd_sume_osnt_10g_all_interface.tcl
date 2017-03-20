@@ -140,7 +140,7 @@ proc create_hier_cell_sume_osnt_10g_all_interface { parentCell coreName tdataWid
    connect_bd_intf_net [get_bd_intf_pin S_AXI] [get_bd_intf_pins osnt_sume_10g_axi_if_0/S_AXI]
 
 
-   source ./../../lib/tcl/bd_sume_osnt_10g_interface.tcl
+   source ./tcl/bd_sume_osnt_10g_interface.tcl
    create_hier_cell_sume_osnt_10g_interface [current_bd_instance .] sume_osnt_10g_interface_0 True  0x01 $tdataWidth
    create_hier_cell_sume_osnt_10g_interface [current_bd_instance .] sume_osnt_10g_interface_1 False 0x04 $tdataWidth
    create_hier_cell_sume_osnt_10g_interface [current_bd_instance .] sume_osnt_10g_interface_2 False 0x10 $tdataWidth
