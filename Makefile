@@ -25,8 +25,8 @@
 #
 # @NETFPGA_LICENSE_HEADER_END@
 
-STD_HW_IP_REPO = ./lib/hw/std/ips
-OSNT_HW_IP_REPO = ./lib/hw/osnt/ips
+STD_HW_IP_REPO = ./lib/hw/std/cores
+OSNT_HW_IP_REPO = ./lib/hw/osnt/cores
 DRV_SW_IP_REPO = ./lib/sw/driver/osnt_sume_riffa_v1_00/
 
 cores: clean
