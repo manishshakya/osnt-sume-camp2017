@@ -50,6 +50,8 @@ MAX_VAL=$$(( `cat max` - $(OSNT_CONST) ))
 .PHONY: twoport
 .PHONY: allport
 
+.ONESHELL:
+
 all: clean build traces oneport twoport allport
 
 build: 
@@ -63,10 +65,11 @@ build:
 	mkdir cli
 	mkdir lib
 	mkdir tools
+	$(MAKE) -C $(LIB)
 	cp $(PCAP_GEN_PATH)/pcap_gen.py .
 	cp $(TESTS_PATH)/* tools/
 	cp $(LIB)/* lib/
-	cp $(CLI_PATH)/* cli/ 
+	cp $(CLI_PATH)/* cli/
 
 clean:
 	@echo "***********************************************"
@@ -99,20 +102,21 @@ oneport:
 	@echo "**************************************************"
 	@echo "* Test 1: 1000 packets latency, no cross traffic *"
 	@echo "**************************************************"
-	cd cli/	
+	cd cli/ && \
 	for i in 60 61 64 65 96 97 128 129 256 512 1024 1514 ; do \
-		python osnt-tool-cmd.py -ifp0 traces/$$i\B.cap -flt filter.cfg -rpn0 $(PKT_NUM) -ipg0 9000 -txs0 6 -rxs1 7 -lty1 -rnm > oneport/$$i\B.out ; \
-		grep Min oneport/$$i\B.out >tmp ; \
+		python osnt-tool-cmd.py -ifp0 ../traces/$$i\B.cap -flt ../filter.cfg -rpn0 $(PKT_NUM) -ipg0 90000 -txs0 6 -rxs1 7 -lpn $(PKT_NUM) -lty1 -rnm > ../oneport/$$i\B.out ; \
+		grep Min ../oneport/$$i\B.out >tmp ; \
 		cat tmp | cut -d, -f1|cut -d " " -f4|cut -d. -f1 >min ; \
 		cat tmp | cut -d, -f2|cut -d " " -f3|cut -d. -f1 >max ; \
 		echo $$i\B $(MIN_VAL) >> ../oneport/min.txt; \
 		echo $$i\B $(MAX_VAL) >> ../oneport/max.txt; \
 		rm tmp max min; \
-	done
+		sleep 2; \
+	done ; 
 	@echo "Test done. Minimum latency:"
-	cat ../oneport/min.txt
-	@echo "Maximum latency:"
-	cat ../oneport/max.txt 
+	cat oneport/min.txt 
+	@echo "Maximum latency:" 
+	cat oneport/max.txt 
 
 twoport:
 	@echo "************************************************************"
