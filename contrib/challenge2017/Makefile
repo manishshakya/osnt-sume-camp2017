@@ -34,8 +34,10 @@
 #         Creates and runs NetFPGA Challenge 2017 tests.
 #
 SHELL=/bin/bash
-SCRIPTS_PATH=../../util/app/gui
-GEN_PATH=../../util/app
+PCAP_GEN_PATH=../../projects/osnt/sw/host/app/
+TESTS_PATH=../../projects/osnt/sw/host/app/tools/
+LIB=../../projects/osnt/sw/host/app/lib/
+CLI_PATH=../../projects/osnt/sw/host/app/cli
 OSNT_CONST=478
 PKT_NUM=1000
 MIN_VAL=$$((`cat min` - $(OSNT_CONST) )) 
@@ -58,11 +60,13 @@ build:
 	mkdir oneport
 	mkdir twoport
 	mkdir allport
-	cp $(SCRIPTS_PATH)/*.py .
-	rm *_gui.py
-	cp -r $(SCRIPTS_PATH)/lib .
-	cp $(GEN_PATH)/pcap_gen.py .
-
+	mkdir cli
+	mkdir lib
+	mkdir tools
+	cp $(PCAP_GEN_PATH)/pcap_gen.py .
+	cp $(TESTS_PATH)/* tools/
+	cp $(LIB)/* lib/
+	cp $(CLI_PATH)/* cli/ 
 
 clean:
 	@echo "***********************************************"
@@ -74,6 +78,8 @@ clean:
 	rm -rf allport/
 	rm -rf *.py *.pyc *.pcap *.dat 
 	rm -rf lib/
+	rm -rf cli/
+	rm -rf tools/
 
 traces:
 	@echo "***********************************************"
@@ -94,7 +100,7 @@ oneport:
 	@echo "* Test 1: 1000 packets latency, no cross traffic *"
 	@echo "**************************************************"	
 	for i in 60 61 64 65 96 97 128 129 256 512 1024 1514 ; do \
-		python osnt-tool-cmd.py -ifp0 traces/$$i\B.cap -flt filter.cfg -rpn0 $(PKT_NUM) -ipg0 9000 -txs0 6 -rxs1 7 -lty1 -rnm > oneport/$$i\B.out ; \
+		python cli/osnt-tool-cmd.py -ifp0 traces/$$i\B.cap -flt filter.cfg -rpn0 $(PKT_NUM) -ipg0 9000 -txs0 6 -rxs1 7 -lty1 -rnm > oneport/$$i\B.out ; \
 		grep Min oneport/$$i\B.out >tmp ; \
 		cat tmp | cut -d, -f1|cut -d " " -f4|cut -d. -f1 >min ; \
 		cat tmp | cut -d, -f2|cut -d " " -f3|cut -d. -f1 >max ; \
