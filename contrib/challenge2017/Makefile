@@ -118,20 +118,29 @@ oneport:
 	@echo "Maximum latency:" 
 	cat oneport/max.txt 
 
+
+SRC_IP="10.0.0.1"
 twoport:
 	@echo "************************************************************"
 	@echo "* Test 2 - 1000 packets latency, single port cross traffic *"
 	@echo "************************************************************"	
-	@echo "This test is not working yet"
+	@python pcap_gen.py -o test_pkt_0.cap -n 1 -l 60 -s "de:ad:be:ef:f0:01" -d "aa:bb:cc:dd:ee:ff" -r $(SRC_IP) -t "10.0.0.2"
+	@python pcap_gen.py -o test_pkt_1.cap -n 1 -l 1514 -s "de:ad:be:ef:f0:01" -d "aa:bb:cc:dd:ee:ff" -r "10.1.1.1" -t "10.1.1.2"
+	echo "2 $(SRC_IP) 255.255.255.255 0.0.0.0 0.0.0.0 0x0 0x0 0x00 0x0" > packet_filter.cfg
+	cd cli && python osnt-tool-cmd.py -ifp0 ./../test_pkt_0.cap 
+	cd cli && python osnt-tool-cmd.py -ifp1 ./../test_pkt_1.cap -ipg0 10000000 -rpn1 10000000 -rpn0 $(PKT_NUM) -flt ./../packet_filter.cfg -txs0 6 -rxs1 7 -lpn $(PKT_NUM) -lty1 -rnm
 	
 
 allport:
 	@echo "***************************************************************"
 	@echo "* Test 3 - 1000 packets latency, cross traffic from all ports *"
 	@echo "***************************************************************"	
-	@echo "This test is not working yet"
-	
-
-
-	
-
+	@python pcap_gen.py -o test_pkt_0.cap -n 1 -l 64 -s "de:ad:be:ef:f0:01" -d "aa:bb:cc:dd:ee:ff" -r $(SRC_IP) -t "10.0.0.2"
+	@python pcap_gen.py -o test_pkt_1.cap -n 1 -l 1514 -s "de:ad:be:ef:f0:01" -d "aa:bb:cc:dd:ee:ff" -r "10.1.1.1" -t "10.1.1.2"
+	@python pcap_gen.py -o test_pkt_2.cap -n 1 -l 1514 -s "de:ad:be:ef:f0:01" -d "aa:bb:cc:dd:ee:ff" -r "10.2.2.1" -t "10.2.2.2"
+	@python pcap_gen.py -o test_pkt_3.cap -n 1 -l 1514 -s "de:ad:be:ef:f0:01" -d "aa:bb:cc:dd:ee:ff" -r "10.3.3.1" -t "10.3.3.2"
+	echo "2 $(SRC_IP) 255.255.255.255 0.0.0.0 0.0.0.0 0x0 0x0 0x00 0x0" > packet_filter.cfg
+	cd cli && python osnt-tool-cmd.py -ifp0 ./../test_pkt_0.cap 
+	cd cli && python osnt-tool-cmd.py -ifp2 ./../test_pkt_2.cap 
+	cd cli && python osnt-tool-cmd.py -ifp3 ./../test_pkt_3.cap 
+	cd cli && python osnt-tool-cmd.py -ifp1 ./../test_pkt_1.cap -ipg0 10000000 -rpn3 10000000 -rpn2 10000000 -rpn1 10000000 -rpn0 $(PKT_NUM) -flt ./../packet_filter.cfg -txs0 6 -rxs1 7 -lpn $(PKT_NUM) -lty1 -rnm

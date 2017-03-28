@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2015 University of Cambridge
-# Gianni Antichi
+# Copyright (c) 2017 University of Cambridge
+# Copyright (c) 2017 Gianni Antichi
+# Copyright (c) 2017 Jong Hun Han
 # All rights reserved.
 #
-# This software was developed by Stanford University and the University of Cambridge Computer Laboratory 
-# under National Science Foundation under Grant No. CNS-0855268,
-# the University of Cambridge Computer Laboratory under EPSRC INTERNET Project EP/H040536/1 and
-# by the University of Cambridge Computer Laboratory under DARPA/AFRL contract FA8750-11-C-0249 ("MRC2"), 
-# as part of the DARPA MRC research programme.
+# This software was developed by University of Cambridge Computer Laboratory
+# under the ENDEAVOUR project (grant agreement 644960) as part of
+# the European Union's Horizon 2020 research and innovation programme.
 #
 # @NETFPGA_LICENSE_HEADER_START@
 #
@@ -136,8 +135,10 @@ def main(argv):
 	found_option = False
 	default_sMAC = True
 	default_dMAC = True
+        default_sIP  = True
+        default_dIP  = True
        	try:
-		opts, args = getopt.getopt(sys.argv[1:], "ho:n:l:s:d:", ["help", "output=", "npkts=", "length=", "srcMAC=", "dstMAC="])
+		opts, args = getopt.getopt(sys.argv[1:], "ho:n:l:s:d:r:t", ["help", "output=", "npkts=", "length=", "srcMAC=", "dstMAC=", "srcIP=", "dstIP="])
 	except getopt.GetoptError, err:
 		print str(err)
 		usage()
@@ -159,6 +160,12 @@ def main(argv):
 		elif opt in ("-d", "--dstMAC"):
                         dMAC = arg
 			default_dMAC = False	
+		elif opt in ("-r", "--srcIP"):
+                        sIP = arg
+			default_sIP = False	
+		elif opt in ("-t", "--dstIP"):
+                        dIP = arg
+			default_dIP = False	
 	if not found_option:
 		print 'wrong options'
 		usage()
@@ -172,9 +179,10 @@ def main(argv):
        		sMAC = "aa:bb:cc:dd:ee:ff"
 	if default_dMAC:
        		dMAC = "de:ad:be:ef:f0:01"
-       
-       	sIP = "192.168.0.1"
-       	dIP = "192.168.1.1"
+        if default_sIP:
+                sIP = "192.168.0.1"
+        if default_dIP:
+       	        dIP = "192.168.1.1"
 
 	l4s = 120
 	l4d = 121
