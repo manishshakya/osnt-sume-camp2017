@@ -1,6 +1,6 @@
 #
-# Copyright (c) 2016 University of Cambridge
-# Copyright (c) 2016 Jong Hun Han
+# Copyright (c) 2016-2017 University of Cambridge
+# Copyright (c) 2016-2017 Jong Hun Han
 # All rights reserved.
 #
 # This software was developed by University of Cambridge Computer Laboratory
@@ -37,6 +37,11 @@ all:
 	$(MAKE) -C ./osnt_sume_packet_cutter_v1_00
 	$(MAKE) -C ./osnt_sume_rate_limiter_v1_00
 	$(MAKE) -C ./osnt_sume_timestamp_v1_00
+	$(MAKE) -C ./osnt_sume_extmem_pcap_replay_engine_v1_00
+	$(MAKE) -C ./osnt_sume_qdrA_v1_00
+	$(MAKE) -C ./osnt_sume_qdrC_v1_00
+	$(MAKE) -C ./osnt_sume_ddr3A_v1_00
+	$(MAKE) -C ./osnt_sume_ddr3B_v1_00
 
 clean:
 	$(MAKE) -C ./osnt_sume_10g_axi_if_v1_00 clean
@@ -50,4 +55,8 @@ clean:
 	$(MAKE) -C ./osnt_sume_packet_cutter_v1_00 clean
 	$(MAKE) -C ./osnt_sume_rate_limiter_v1_00 clean
 	$(MAKE) -C ./osnt_sume_timestamp_v1_00 clean
-
+	$(MAKE) -C ./osnt_sume_extmem_pcap_replay_engine_v1_00 clean
+	$(MAKE) -C ./osnt_sume_qdrA_v1_00 clean
+	$(MAKE) -C ./osnt_sume_qdrC_v1_00 clean
+	$(MAKE) -C ./osnt_sume_ddr3A_v1_00 clean
+	$(MAKE) -C ./osnt_sume_ddr3B_v1_00 clean
