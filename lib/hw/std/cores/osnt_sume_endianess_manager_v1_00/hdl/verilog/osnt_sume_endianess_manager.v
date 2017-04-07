@@ -40,8 +40,8 @@
 
 module osnt_sume_endianess_manager
 #(
-        parameter       C_S_AXIS_TDATA_WIDTH = 256,
-        parameter       C_M_AXIS_TDATA_WIDTH = 256,
+        parameter       C_S_AXIS_DATA_WIDTH = 256,
+        parameter       C_M_AXIS_DATA_WIDTH = 256,
         parameter       C_M_AXIS_TUSER_WIDTH = 128,
         parameter       C_S_AXIS_TUSER_WIDTH = 128
 )
@@ -49,33 +49,33 @@ module osnt_sume_endianess_manager
 	input                                         ACLK,
 	input                                         ARESETN,
 
-	output     [(C_M_AXIS_TDATA_WIDTH/8)-1:0]     M_AXIS_TKEEP,
+	output     [(C_M_AXIS_DATA_WIDTH/8)-1:0]     M_AXIS_TKEEP,
 	output     [C_M_AXIS_TUSER_WIDTH-1:0]         M_AXIS_TUSER,
-	input      [(C_S_AXIS_TDATA_WIDTH/8)-1:0]     S_AXIS_TKEEP,
+	input      [(C_S_AXIS_DATA_WIDTH/8)-1:0]     S_AXIS_TKEEP,
 	input      [C_S_AXIS_TUSER_WIDTH-1:0]         S_AXIS_TUSER,
 	
         output                                        S_AXIS_TREADY,
-	input      [C_S_AXIS_TDATA_WIDTH-1:0]         S_AXIS_TDATA,
+	input      [C_S_AXIS_DATA_WIDTH-1:0]         S_AXIS_TDATA,
 	input                                         S_AXIS_TLAST,
 	input                                         S_AXIS_TVALID,
 
 	output                                        M_AXIS_TVALID,
-	output     [C_M_AXIS_TDATA_WIDTH-1:0]         M_AXIS_TDATA,
+	output     [C_M_AXIS_DATA_WIDTH-1:0]         M_AXIS_TDATA,
 	output                                        M_AXIS_TLAST,
 	input                                         M_AXIS_TREADY,
 
-        output     [(C_M_AXIS_TDATA_WIDTH/8)-1:0]     M_AXIS_INT_TKEEP,
+        output     [(C_M_AXIS_DATA_WIDTH/8)-1:0]     M_AXIS_INT_TKEEP,
         output     [C_M_AXIS_TUSER_WIDTH-1:0]         M_AXIS_INT_TUSER,
-        input      [(C_S_AXIS_TDATA_WIDTH/8)-1:0]     S_AXIS_INT_TKEEP,
+        input      [(C_S_AXIS_DATA_WIDTH/8)-1:0]     S_AXIS_INT_TKEEP,
         input      [C_S_AXIS_TUSER_WIDTH-1:0]         S_AXIS_INT_TUSER,
 
         output                                        S_AXIS_INT_TREADY,
-        input      [C_S_AXIS_TDATA_WIDTH-1:0]         S_AXIS_INT_TDATA,
+        input      [C_S_AXIS_DATA_WIDTH-1:0]         S_AXIS_INT_TDATA,
         input                                         S_AXIS_INT_TLAST,
         input                                         S_AXIS_INT_TVALID,
 
         output                                        M_AXIS_INT_TVALID,
-        output     [C_M_AXIS_TDATA_WIDTH-1:0]         M_AXIS_INT_TDATA,
+        output     [C_M_AXIS_DATA_WIDTH-1:0]         M_AXIS_INT_TDATA,
         output                                        M_AXIS_INT_TLAST,
         input                                         M_AXIS_INT_TREADY
 
@@ -89,7 +89,7 @@ module osnt_sume_endianess_manager
 
   bridge
   #(
-     .C_AXIS_DATA_WIDTH (C_M_AXIS_TDATA_WIDTH),
+     .C_AXIS_DATA_WIDTH (C_M_AXIS_DATA_WIDTH),
      .C_AXIS_TUSER_WIDTH (C_M_AXIS_TUSER_WIDTH)
    ) le_be_bridge
    (
@@ -119,7 +119,7 @@ module osnt_sume_endianess_manager
 
   bridge
   #(
-    .C_AXIS_DATA_WIDTH (C_S_AXIS_TDATA_WIDTH),
+    .C_AXIS_DATA_WIDTH (C_S_AXIS_DATA_WIDTH),
     .C_AXIS_TUSER_WIDTH (C_S_AXIS_TUSER_WIDTH)
   ) be_le_bridge
    (
