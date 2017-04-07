@@ -1,7 +1,7 @@
 #
 # Copyright (c) 2017 University of Cambridge
 # Copyright (c) 2017 Jong Hun Han
-# All rights reserved.
+# All rights reserved
 #
 # This software was developed by University of Cambridge Computer Laboratory
 # under the ENDEAVOUR project (grant agreement 644960) as part of

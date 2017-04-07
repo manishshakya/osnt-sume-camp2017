@@ -110,9 +110,8 @@ function integer log2;
          log2=log2+1;
       end
    end
-endfunction//log2
+endfunction
 
-// ------------ Internal Params --------
 localparam  MAX_PKT_SIZE      = 2000; //In bytes
 localparam  IN_FIFO_DEPTH_BIT = log2(MAX_PKT_SIZE/(C_M_AXIS_TDATA_WIDTH/8));
 
@@ -131,21 +130,23 @@ wire           app_rd_valid_o;
 wire  [143:0]  app_rd_data_o;
 wire           init_calib_complete_o;
 
+wire  bus2mem_addr_en, bus2mem_wr_en, bus2mem_rd_en;
+
 reg   [C_S_AXI_ADDR_WIDTH-1:0]      replay_no, replay_no_next;
 
 wire  rst_clk;
 
-wire                                Bus2IP_Clk;
-wire                                Bus2IP_Resetn;
-wire  [C_S_AXI_ADDR_WIDTH-1:0]      Bus2IP_Addr;
-wire  [0:0]                         Bus2IP_CS;
-wire                                Bus2IP_RNW; // 0: wr, 1: rd
-wire  [C_S_AXI_DATA_WIDTH-1:0]      Bus2IP_Data;
-wire  [C_S_AXI_DATA_WIDTH/8-1:0]    Bus2IP_BE;
-reg   [C_S_AXI_DATA_WIDTH-1:0]      IP2Bus_Data;
-reg                                 IP2Bus_RdAck;
-reg                                 IP2Bus_WrAck;
-wire                                IP2Bus_Error = 0;
+wire                                         Bus2IP_Clk;
+wire                                         Bus2IP_Resetn;
+wire  [C_S_AXI_ADDR_WIDTH-1:0]               Bus2IP_Addr;
+wire  [0:0]                                  Bus2IP_CS;
+wire                                         Bus2IP_RNW; // 0: wr, 1: rd
+wire  [C_S_AXI_DATA_WIDTH-1:0]               Bus2IP_Data;
+wire  [C_S_AXI_DATA_WIDTH/8-1:0]             Bus2IP_BE;
+reg   [C_S_AXI_DATA_WIDTH-1:0]               IP2Bus_Data;
+reg                                          IP2Bus_RdAck;
+reg                                          IP2Bus_WrAck;
+wire                                         IP2Bus_Error = 0;
 
 wire  [C_M_AXIS_TDATA_WIDTH-1:0]             m_async_tdata;
 wire  [((C_M_AXIS_TDATA_WIDTH/8))-1:0]       m_async_tkeep;
@@ -216,20 +217,25 @@ always @(posedge clk)
 
 wire en_start_replay = r_start_replay[1] & ~r_start_replay[2];
 wire en_wr_done = r_wr_done[1] & ~r_wr_done[2];
-wire en_sw_rst = r_sw_rst[1] & ~r_sw_rst[2];
-
+wire en_sw_rst0 = r_sw_rst[1] & ~r_sw_rst[2];
+wire en_sw_rst1 = ~r_sw_rst[1] & r_sw_rst[2];
 
 always @(posedge clk)
-   if (rst_clk) begin
+   if (rst_clk)
       r_replay_count <= 0;
-   end
-   else if (en_sw_rst) begin
+   else if (en_sw_rst0)
       r_replay_count <= 0;
-   end
-   else if (en_start_replay) begin
+   else if (en_start_replay)
       r_replay_count <= replay_count;
-   end
 
+reg sw_rst_ff;
+always @(posedge clk)
+   if (rst_clk)
+      sw_rst_ff   <= 0;
+   else if (en_sw_rst0)
+      sw_rst_ff   <= 1;
+   else if (en_sw_rst1)
+      sw_rst_ff   <= 0;
 
 assign resetn = ~rst_clk;
 
@@ -269,7 +275,6 @@ always @(m_conv_b2m_tkeep or m_conv_b2m_tdata or m_conv_b2m_tuser or m_conv_b2m_
    endcase
 end
    
-
 reg   [3:0] st_current, st_next;
 always @(posedge clk)
    if (rst_clk) begin
@@ -286,24 +291,30 @@ always @(posedge clk)
    end
 
 always @(posedge clk)
-   if (rst_clk) begin
+   if (rst_clk)
       wr_end_addr    <= 0;
-   end
-   else if (app_wr_cmd_i) begin 
+   else if (app_wr_cmd_i)
       wr_end_addr    <= app_wr_addr_i;
-   end
 
 reg r_clear;
 always @(posedge clk)
-   if (rst_clk) begin
+   if (rst_clk)
       r_clear  <= 0;
-   end
-   else if (en_sw_rst) begin
+   else if (en_sw_rst0)
       r_clear  <= 1;
-   end
-   else if (st_current == `IDLE) begin
+   else if (st_current == `IDLE)
       r_clear  <= 0;
-   end
+
+assign bus2mem_addr_en = (Bus2IP_Addr[15:0] == 16'h0000) & Bus2IP_CS;
+assign bus2mem_wr_en   = (Bus2IP_Addr[15:0] == 16'h0010) & Bus2IP_CS;
+assign bus2mem_rd_en   = (Bus2IP_Addr[15:0] == 16'h0020) & Bus2IP_CS;
+
+reg   [18+4:0]   bus2mem_addr;
+always @(posedge clk)
+   if (rst_clk)
+      bus2mem_addr   <= 0;
+   else if (bus2mem_addr_en & ~Bus2IP_RNW)
+      bus2mem_addr   <= Bus2IP_Data[18+4:0];
 
 always @(*) begin
    app_wr_cmd_i      = 0;
@@ -322,33 +333,35 @@ always @(*) begin
    st_next           = 0;
    case(st_current)
       `IDLE : begin
-         st_next           = (Bus2IP_CS & ~Bus2IP_RNW) ? `BUS_WR        :
-                             (Bus2IP_CS &  Bus2IP_RNW) ? `BUS_RD        :
-                             (m_conv_b2m_tvalid)       ? `AXIS_WR_TUSER :
-                             (en_start_replay)         ? `AXIS_RD       : `IDLE;
+         st_next           = (Bus2IP_CS & ~Bus2IP_RNW)      ? `BUS_WR        :
+                             (Bus2IP_CS &  Bus2IP_RNW)      ? `BUS_RD        :
+                             (m_conv_b2m_tvalid)            ? `AXIS_WR_TUSER :
+                             (en_start_replay & ~sw_rst_ff) ? `AXIS_RD       : `IDLE;
       end
       `BUS_WR : begin
-         app_wr_cmd_i      = 1;
-         app_wr_addr_i     = Bus2IP_Addr[(18+4):4];
          st_next           = `BUS_WR_DONE;
-         case (Bus2IP_Addr[3:2])
-            2'b00 : begin
-               app_wr_data_i[(0*36)+:36] = {4'h0, Bus2IP_Data};
-               app_wr_bw_n_i[(0*4)+:4]   = 4'h0;
-            end
-            2'b01 : begin
-               app_wr_data_i[(1*36)+:36] = {4'h0, Bus2IP_Data};
-               app_wr_bw_n_i[(1*4)+:4]   = 4'h0;
-            end
-            2'b10 : begin
-               app_wr_data_i[(2*36)+:36] = {4'h0, Bus2IP_Data};
-               app_wr_bw_n_i[(2*4)+:4]   = 4'h0;
-            end
-            2'b11 : begin
-               app_wr_data_i[(3*36)+:36] = {4'h0, Bus2IP_Data};
-               app_wr_bw_n_i[(3*4)+:4]   = 4'h0;
-            end
-         endcase
+         if (bus2mem_wr_en) begin
+            app_wr_cmd_i      = 1;
+            app_wr_addr_i     = bus2mem_addr[22:4];
+            case (bus2mem_addr[3:2])
+               2'b00 : begin
+                  app_wr_data_i[(0*36)+:36] = {4'h0, Bus2IP_Data};
+                  app_wr_bw_n_i[(0*4)+:4]   = 4'h0;
+               end
+               2'b01 : begin
+                  app_wr_data_i[(1*36)+:36] = {4'h0, Bus2IP_Data};
+                  app_wr_bw_n_i[(1*4)+:4]   = 4'h0;
+               end
+               2'b10 : begin
+                  app_wr_data_i[(2*36)+:36] = {4'h0, Bus2IP_Data};
+                  app_wr_bw_n_i[(2*4)+:4]   = 4'h0;
+               end
+               2'b11 : begin
+                  app_wr_data_i[(3*36)+:36] = {4'h0, Bus2IP_Data};
+                  app_wr_bw_n_i[(3*4)+:4]   = 4'h0;
+               end
+            endcase
+         end
       end
       `BUS_WR_DONE : begin
          IP2Bus_WrAck   = 1;
@@ -359,19 +372,29 @@ always @(*) begin
       end
       `BUS_RD : begin
          app_rd_cmd_i   = 1;
-         app_rd_addr_i  = Bus2IP_Addr[(18+4):4];
+         app_rd_addr_i  = bus2mem_addr[22:4];
          st_next        = `BUS_RD_DONE;
       end
       `BUS_RD_DONE : begin
-         if (app_rd_valid_o) begin
+         if (bus2mem_addr_en) begin
+            IP2Bus_Data    = bus2mem_addr;
             IP2Bus_RdAck   = 1;
             st_next        = `BUS_RD_WAIT;
-            case (Bus2IP_Addr[3:2])
+         end
+         else if (app_rd_valid_o & bus2mem_rd_en) begin
+            IP2Bus_RdAck   = 1;
+            st_next        = `BUS_RD_WAIT;
+            case (bus2mem_addr[3:2])
                2'b00 : IP2Bus_Data = app_rd_data_o[(0*36)+:32];
                2'b01 : IP2Bus_Data = app_rd_data_o[(1*36)+:32];
                2'b10 : IP2Bus_Data = app_rd_data_o[(2*36)+:32];
                2'b11 : IP2Bus_Data = app_rd_data_o[(3*36)+:32];
             endcase
+         end
+         else if (app_rd_valid_o) begin
+            IP2Bus_Data    = 0;
+            IP2Bus_RdAck   = 1;
+            st_next        = `BUS_RD_WAIT;
          end
          else begin
             IP2Bus_Data    = 0;
@@ -448,12 +471,10 @@ end
 
 
 always @(posedge clk)
-   if (rst_clk) begin
+   if (rst_clk)
       m2b_tuser   <= 0;
-   end
-   else begin
+   else
       m2b_tuser   <= m2b_tuser_next;
-   end
 
 always @(mem_data_out or mem_data_empty or mem_data_full) begin
    m2b_tkeep = 0;
@@ -477,15 +498,6 @@ always @(mem_data_out or mem_data_empty or mem_data_full) begin
    endcase
 end
 
-reg   [127:0]  r_tuser;
-always @(posedge clk)
-   if (rst_clk) begin
-      r_tuser  <= 0;
-   end
-   else if (~mem_data_empty & mem_data_out[127+9]) begin
-      r_tuser  <= mem_data_out[127:0];
-   end
-
 always @(*) begin
    fifo_in_tdata     = 0;
    fifo_in_tuser     = 0;
@@ -494,7 +506,7 @@ always @(*) begin
    fifo_tvalid       = 0;
    mem_data_rd       = 0;
    m2b_tuser_next    = m2b_tuser;
-   //    tlast                 tuser 
+   //    tlast                tuser 
    case({mem_data_out[127+8], mem_data_out[127+9], ~mem_data_empty})
       3'b011 : begin
          fifo_in_tdata     = 0;
@@ -507,7 +519,7 @@ always @(*) begin
       end
       3'b001 : begin
          fifo_in_tdata     = mem_data_out[127:0];
-         fifo_in_tuser     = r_tuser;
+         fifo_in_tuser     = m2b_tuser;
          fifo_in_tkeep     = m2b_tkeep;
          fifo_in_tlast     = 0;
          fifo_tvalid       = 1;
@@ -536,7 +548,7 @@ sume_axi_ipif #
 ) sume_axi_ipif
 (
    .S_AXI_ACLK             (  clk                     ),
-   .S_AXI_ARESETN          (  resetn                   ),
+   .S_AXI_ARESETN          (  resetn                  ),
    .S_AXI_AWADDR           (  S_AXI_AWADDR            ),
    .S_AXI_AWVALID          (  S_AXI_AWVALID           ),
    .S_AXI_WDATA            (  S_AXI_WDATA             ),
@@ -741,6 +753,5 @@ mig_qdrA
    .init_calib_complete    (  init_calib_complete_o   ),
    .sys_rst                (  sys_rst                 )
 );
-
   
 endmodule
