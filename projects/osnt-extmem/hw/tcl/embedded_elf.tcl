@@ -50,6 +50,6 @@ reset_run impl_1 -prev_step
 launch_runs impl_1 -to_step write_bitstream
 wait_on_run impl_1
 open_run impl_1
-write_bitstream -force ../bitfiles/osnt.bit
+write_bitstream -force ../bitfiles/osnt-extmem.bit
 
 exit
