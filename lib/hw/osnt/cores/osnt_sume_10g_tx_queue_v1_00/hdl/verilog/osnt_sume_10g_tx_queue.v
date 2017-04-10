@@ -239,8 +239,9 @@ always @(*) begin
       // IDLE makes a gap between packets.
       `IDLE : begin
          if (~tx0_last_empty & ~tx0_fifo_empty) begin
-            if (tx_ts_pos != 0 && ts_cnt == tx_ts_pos) begin
-               m_axis_tdata   = r_ts_value;
+            if (tx_ts_pos != 0 && ts_cnt == tx_ts_pos - 1) begin
+               //m_axis_tdata   = r_ts_value;
+               m_axis_tdata   = {pkt_cnt, SIGNATURE};
             end
             else begin
                m_axis_tdata   = tx0_fifo_out_tdata;
@@ -274,7 +275,7 @@ always @(*) begin
          if (tx_ts_pos != 0 && ts_cnt == tx_ts_pos) begin
             m_axis_tdata   = r_ts_value;
          end
-         else if (tx_ts_pos != 0 && ts_cnt == (tx_ts_pos + 1)) begin
+         else if (tx_ts_pos != 0 && tx_ts_pos != 1 && ts_cnt == (tx_ts_pos - 1)) begin
             m_axis_tdata   = {pkt_cnt, SIGNATURE};
          end
          else begin
