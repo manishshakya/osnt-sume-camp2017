@@ -299,6 +299,10 @@ class MainWindow(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             self.pcaps['nf'+str(iface)] = os.path.join(dlg.GetDirectory(), dlg.GetFilename())
             self.pcap_file_btn[iface].SetLabel(dlg.GetFilename())
+            result = self.pcap_engine.load_pcap(self.pcaps)
+            self.average_pkt_len.update(result['average_pkt_len'])
+            self.average_word_cnt.update(result['average_word_cnt'])
+            self.pkts_loaded.update(result['pkts_loaded'])
         else:
             self.pkts_loaded['nf'+str(iface)] = 0
             self.average_pkt_len['nf'+str(iface)] = 1500
@@ -306,10 +310,6 @@ class MainWindow(wx.Frame):
             self.pcaps.pop('nf'+str(iface), 0)
             self.pcap_file_btn[iface].SetLabel('Select Pcap File')
         
-        result = self.pcap_engine.load_pcap(self.pcaps)
-        self.average_pkt_len.update(result['average_pkt_len'])
-        self.average_word_cnt.update(result['average_word_cnt'])
-        self.pkts_loaded.update(result['pkts_loaded'])
         self.readings_init()
         self.log('Selected Pcap file for port '+str(iface))
         for iface in self.pkts_loaded:

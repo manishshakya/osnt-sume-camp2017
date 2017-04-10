@@ -31,13 +31,13 @@
 # 2) Send <N> packets through port <X>, with IPG of <Y> and measure latency and bandwidth (not full rate).
 
 #python osnt-tool-cmd.py -ifp0 <pcap file> -flt <filter rule> -rpn0 <replay no> -ipg0 <inter packet gap nsec> -txs0 <tx timestamp pos> -rxs0 <rx timestamp pos> -lpn <no of packet for capturing> -lty0 (monitoring port) -rnm (run and monitoring)
-python ../cli/osnt-tool-cmd.py -ifp0 ../../sample_traces/1500.cap -flt ../gui/filter.cfg -ipg0 8000 -rpn0 1000 -txs0 6 -rxs0 7 -lpn 1000 -lty0 -rnm
-sleep 1
+python ../cli/osnt-tool-cmd.py -ifp0 ../sample_traces/1500.cap -flt ../gui/filter.cfg -ipg0 10000 -rpn0 1000 -txs0 6 -rxs0 7 -lpn 1000 -lty0 -rnm
+sleep 1                                                                                            
 
-python ../cli/osnt-tool-cmd.py -ifp1 ../../sample_traces/1500.cap -flt ../gui/filter.cfg -ipg1 8000 -rpn1 1000 -txs1 6 -rxs1 7 -lpn 1000 -lty1 -rnm 
-sleep 1                                                                                            
-                                                                                                   
-python ../cli/osnt-tool-cmd.py -ifp2 ../../sample_traces/1500.cap -flt ../gui/filter.cfg -ipg2 8000 -rpn2 1000 -txs2 6 -rxs2 7 -lpn 1000 -lty2 -rnm 
-sleep 1                                                                                            
-                                                                                                   
-python ../cli/osnt-tool-cmd.py -ifp3 ../../sample_traces/1500.cap -flt ../gui/filter.cfg -ipg3 8000 -rpn3 1000 -txs3 6 -rxs3 7 -lpn 1000 -lty3 -rnm
+python ../cli/osnt-tool-cmd.py -ifp1 ../sample_traces/1500.cap -flt ../gui/filter.cfg -ipg1 10000 -rpn1 1000 -txs1 6 -rxs1 7 -lpn 1000 -lty1 -rnm 
+sleep 1                                                                                         
+                                                                                                
+python ../cli/osnt-tool-cmd.py -ifp2 ../sample_traces/1500.cap -flt ../gui/filter.cfg -ipg2 10000 -rpn2 1000 -txs2 6 -rxs2 7 -lpn 1000 -lty2 -rnm 
+sleep 1                                                                                         
+                                                                                                
+python ../cli/osnt-tool-cmd.py -ifp3 ../sample_traces/1500.cap -flt ../gui/filter.cfg -ipg3 10000 -rpn3 1000 -txs3 6 -rxs3 7 -lpn 1000 -lty3 -rnm

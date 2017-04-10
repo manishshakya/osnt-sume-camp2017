@@ -45,7 +45,7 @@ sleep 0.5
 xmd -tcl run_xmd.tcl -tclargs $bitimage
 
 sleep 0.5
-bash ../../../scripts/pci_rescan_run.sh
+bash ../../../tools/scripts/pci_rescan_run.sh
 
 sleep 0.5
 rmmod sume_riffa

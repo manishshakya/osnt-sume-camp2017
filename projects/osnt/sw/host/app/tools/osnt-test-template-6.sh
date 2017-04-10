@@ -34,9 +34,9 @@
 
 # Two ports tests at full rate.
 if [ $1 == "2" ];then
-   python ../cli/osnt-tool-cmd.py -ifp0 ../../sample_traces/1500.cap
+   python ../cli/osnt-tool-cmd.py -ifp0 ../sample_traces/1500.cap
    sleep 1
-   python ../cli/osnt-tool-cmd.py -ifp1 ../../sample_traces/1500.cap
+   python ../cli/osnt-tool-cmd.py -ifp1 ../sample_traces/1500.cap
    sleep 1
    #python osnt-tool-cmd.py -rpn0 <replay no> -rpn1 <replay no> -run
    python ../cli/osnt-tool-cmd.py -rpn0 10000000 -rpn1 10000000 -run
@@ -44,24 +44,24 @@ fi
 
 # Three ports tests at full rate.
 if [ $1 == "3" ];then
-   python ../cli/osnt-tool-cmd.py -ifp0 ../../sample_traces/1500.cap
+   python ../cli/osnt-tool-cmd.py -ifp0 ../sample_traces/1500.cap
    sleep 1
-   python ../cli/osnt-tool-cmd.py -ifp1 ../../sample_traces/1500.cap
+   python ../cli/osnt-tool-cmd.py -ifp1 ../sample_traces/1500.cap
    sleep 1
-   python ../cli/osnt-tool-cmd.py -ifp2 ../../sample_traces/1500.cap
+   python ../cli/osnt-tool-cmd.py -ifp2 ../sample_traces/1500.cap
    sleep 1
    python ../cli/osnt-tool-cmd.py -rpn0 10000000 -rpn1 10000000 -rpn2 10000000 -run
 fi
 
 # Four ports tests at full rate.
 if [ $1 == "4" ];then
-   python ../cli/osnt-tool-cmd.py -ifp0 ../../sample_traces/1500.cap
+   python ../cli/osnt-tool-cmd.py -ifp0 ../sample_traces/1500.cap
    sleep 1
-   python ../cli/osnt-tool-cmd.py -ifp1 ../../sample_traces/1500.cap
+   python ../cli/osnt-tool-cmd.py -ifp1 ../sample_traces/1500.cap
    sleep 1
-   python ../cli/osnt-tool-cmd.py -ifp2 ../../sample_traces/1500.cap
+   python ../cli/osnt-tool-cmd.py -ifp2 ../sample_traces/1500.cap
    sleep 1
-   python ../cli/osnt-tool-cmd.py -ifp3 ../../sample_traces/1500.cap
+   python ../cli/osnt-tool-cmd.py -ifp3 ../sample_traces/1500.cap
    sleep 1
    python ../cli/osnt-tool-cmd.py -rpn0 10000000 -rpn1 10000000 -rpn2 10000000 -rpn3 10000000 -run
 fi
