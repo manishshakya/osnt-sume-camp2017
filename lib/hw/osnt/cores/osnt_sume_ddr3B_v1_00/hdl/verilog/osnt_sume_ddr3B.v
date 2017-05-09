@@ -132,7 +132,7 @@ wire  [511:0]     app_rd_data_o;
 wire              app_rd_data_end_o;
 wire              app_rd_data_valid_o;
 wire              app_rdy_o;
-wire              init_calib_complete;
+wire              init_calib_complete_o;
 
 wire              rst_clk;
 
@@ -186,7 +186,7 @@ wire                                         fifo_out_tlast;
 wire  [94:0]                                 fifo_out_meta;
 
 wire  pkt_data_end;
-wire  bus2mem_addr_en, bus2mem_wr_en, bus2mem_rd_en;
+wire  bus2mem_addr_en, end_addr_rd_en, calib_rd_en, bus2mem_wr_en, bus2mem_rd_en;
 
 reg   [C_S_AXI_ADDR_WIDTH-1 : 0]             r_replay_count;
 reg   [2:0]    r_start_replay, r_wr_done, r_sw_rst;
@@ -226,6 +226,8 @@ always @(posedge clk)
       sw_rst_ff   <= 0;
 
 assign bus2mem_addr_en = (Bus2IP_Addr[15:0] == 16'h0000) & Bus2IP_CS;
+assign end_addr_rd_en  = (Bus2IP_Addr[15:0] == 16'h0004) & Bus2IP_CS;
+assign calib_rd_en     = (Bus2IP_Addr[15:0] == 16'h0008) & Bus2IP_CS;
 assign bus2mem_wr_en   = (Bus2IP_Addr[15:0] == 16'h0010) & Bus2IP_CS;
 assign bus2mem_rd_en   = (Bus2IP_Addr[15:0] == 16'h0020) & Bus2IP_CS;
 
@@ -408,11 +410,17 @@ always @(*) begin
             IP2Bus_RdAck   = 1;
             st_next        = `BUS_RD_WAIT;
          end
-         else if (~bus2mem_rd_en) begin
+         else if (end_addr_rd_en) begin
+            IP2Bus_Data    = wr_end_addr;
             IP2Bus_RdAck   = 1;
             st_next        = `BUS_RD_WAIT;
          end
-         else if (app_rd_data_valid_o) begin
+         else if (calib_rd_en) begin
+            IP2Bus_Data    = {31'b0, init_calib_complete_o};
+            IP2Bus_RdAck   = 1;
+            st_next        = `BUS_RD_WAIT;
+         end
+         else if (app_rd_data_valid_o & bus2mem_rd_en) begin
             IP2Bus_RdAck   = 1;
             st_next        = `BUS_RD_WAIT;
             case (bus2mem_addr[5:2])
@@ -465,6 +473,10 @@ always @(*) begin
                   IP2Bus_Data = app_rd_data_o[(15*32)+:32];
                end
             endcase
+         end
+         else if (app_rd_data_valid_o) begin
+            IP2Bus_RdAck   = 1;
+            st_next        = `BUS_RD_WAIT;
          end
          else begin
             IP2Bus_Data    = 0;
@@ -706,7 +718,7 @@ mig_ddr3B
    .app_zq_ack             (  ),
    .ui_clk                 (  clk                     ),
    .ui_clk_sync_rst        (  rst_clk                 ),
-   .init_calib_complete    (  init_calib_complete     ),
+   .init_calib_complete    (  init_calib_complete_o   ),
    // The 12 MSB bits of the temperature sensor transfer
    // function need to be connected to this port. This port
    // will be synchronized w.r.t. to fabric clock internally.

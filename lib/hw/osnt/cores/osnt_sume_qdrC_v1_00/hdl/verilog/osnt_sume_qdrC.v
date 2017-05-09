@@ -1,7 +1,7 @@
 //
 // Copyright (c) 2017 University of Cambridge
 // Copyright (c) 2017 Jong Hun Han
-// All rights reserved
+// All rights reserved.
 //
 // This software was developed by University of Cambridge Computer Laboratory
 // under the ENDEAVOUR project (grant agreement 644960) as part of
@@ -130,7 +130,7 @@ wire           app_rd_valid_o;
 wire  [143:0]  app_rd_data_o;
 wire           init_calib_complete_o;
 
-wire  bus2mem_addr_en, bus2mem_wr_en, bus2mem_rd_en;
+wire  bus2mem_addr_en, end_addr_rd_en, calib_rd_en, bus2mem_wr_en, bus2mem_rd_en;
 
 reg   [C_S_AXI_ADDR_WIDTH-1:0]      replay_no, replay_no_next;
 
@@ -306,6 +306,8 @@ always @(posedge clk)
       r_clear  <= 0;
 
 assign bus2mem_addr_en = (Bus2IP_Addr[15:0] == 16'h0000) & Bus2IP_CS;
+assign end_addr_rd_en  = (Bus2IP_Addr[15:0] == 16'h0004) & Bus2IP_CS;
+assign calib_rd_en     = (Bus2IP_Addr[15:0] == 16'h0008) & Bus2IP_CS;
 assign bus2mem_wr_en   = (Bus2IP_Addr[15:0] == 16'h0010) & Bus2IP_CS;
 assign bus2mem_rd_en   = (Bus2IP_Addr[15:0] == 16'h0020) & Bus2IP_CS;
 
@@ -378,6 +380,16 @@ always @(*) begin
       `BUS_RD_DONE : begin
          if (bus2mem_addr_en) begin
             IP2Bus_Data    = bus2mem_addr;
+            IP2Bus_RdAck   = 1;
+            st_next        = `BUS_RD_WAIT;
+         end
+         else if (end_addr_rd_en) begin
+            IP2Bus_Data    = wr_end_addr;
+            IP2Bus_RdAck   = 1;
+            st_next        = `BUS_RD_WAIT;
+         end
+         else if (calib_rd_en) begin
+            IP2Bus_Data    = {31'b0, init_calib_complete_o};
             IP2Bus_RdAck   = 1;
             st_next        = `BUS_RD_WAIT;
          end
