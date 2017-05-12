@@ -120,13 +120,13 @@ endfunction
 localparam  MAX_PKT_SIZE      = 4000; //In bytes
 localparam  IN_FIFO_DEPTH_BIT = log2(MAX_PKT_SIZE/(C_M_AXIS_TDATA_WIDTH/8));
 
-reg   [29:0]      app_addr_i;
-reg   [2:0]       app_cmd_i; // read;001, write;000
-reg               app_en_i;
-reg   [511:0]     app_wdf_data_i;
-reg               app_wdf_end_i;
-reg   [63:0]      app_wdf_mask_i;
-reg               app_wdf_wren_i;
+wire  [29:0]      app_addr_i;
+wire  [2:0]       app_cmd_i; // read;001, write;000
+wire              app_en_i;
+wire  [511:0]     app_wdf_data_i;
+wire              app_wdf_end_i;
+wire  [63:0]      app_wdf_mask_i;
+wire              app_wdf_wren_i;
 wire              app_wdf_rdy_o;
 wire  [511:0]     app_rd_data_o;
 wire              app_rd_data_end_o;
@@ -134,13 +134,11 @@ wire              app_rd_data_valid_o;
 wire              app_rdy_o;
 wire              init_calib_complete_o;
 
+wire              app_ref_req_i;
+wire              app_ref_ack_o;
+
 wire              rst_clk;
-
-reg   [26:0]   wr_mem_addr, wr_mem_addr_next;
-reg   [26:0]   rd_mem_addr, rd_mem_addr_next;
-reg   [26:0]   wr_end_addr;
-
-reg   [C_S_AXI_ADDR_WIDTH-1:0]      replay_no, replay_no_next;
+wire              st_valid;
 
 wire                                         Bus2IP_Clk;
 wire                                         Bus2IP_Resetn;
@@ -149,9 +147,9 @@ wire  [0:0]                                  Bus2IP_CS;
 wire                                         Bus2IP_RNW; // 0: wr, 1: rd
 wire  [C_S_AXI_DATA_WIDTH-1:0]               Bus2IP_Data;
 wire  [C_S_AXI_DATA_WIDTH/8-1:0]             Bus2IP_BE;
-reg   [C_S_AXI_DATA_WIDTH-1:0]               IP2Bus_Data;
-reg                                          IP2Bus_RdAck;
-reg                                          IP2Bus_WrAck;
+wire  [C_S_AXI_DATA_WIDTH-1:0]               IP2Bus_Data;
+wire                                         IP2Bus_RdAck;
+wire                                         IP2Bus_WrAck;
 wire                                         IP2Bus_Error = 0;
 
 assign resetn = ~rst_clk;
@@ -160,14 +158,9 @@ wire  [C_M_AXIS_TDATA_WIDTH-1:0]             m_async_tdata;
 wire  [(C_M_AXIS_TDATA_WIDTH/8)-1:0]         m_async_tkeep;
 wire  [C_M_AXIS_TUSER_WIDTH-1:0]             m_async_tuser;
 wire                                         m_async_tvalid;
-reg                                          m_async_tready;
+wire                                         m_async_tready;
 wire                                         m_async_tlast;
 
-reg   [C_M_AXIS_TDATA_WIDTH-1:0]             s_async_tdata;
-reg   [(C_M_AXIS_TDATA_WIDTH/8)-1:0]         s_async_tkeep;
-reg   [C_M_AXIS_TUSER_WIDTH-1:0]             s_async_tuser;
-reg                                          s_async_tvalid;
-reg                                          s_async_tlast;
 wire                                         s_async_tready;
 
 wire  fifo_empty;
@@ -185,377 +178,81 @@ wire  [C_M_AXIS_TUSER_WIDTH-1:0]             fifo_out_tuser;
 wire                                         fifo_out_tlast;
 wire  [94:0]                                 fifo_out_meta;
 
-wire  pkt_data_end;
-wire  bus2mem_addr_en, end_addr_rd_en, calib_rd_en, bus2mem_wr_en, bus2mem_rd_en;
+ddr_if_controller
+#(
+   .C_S_AXI_DATA_WIDTH     (  C_S_AXI_DATA_WIDTH      ),
+   .C_S_AXI_ADDR_WIDTH     (  C_S_AXI_ADDR_WIDTH      ),
+   .C_M_AXIS_TDATA_WIDTH   (  C_M_AXIS_TDATA_WIDTH    ),
+   .C_M_AXIS_TUSER_WIDTH   (  C_M_AXIS_TUSER_WIDTH    ),
+   .C_S_AXIS_TDATA_WIDTH   (  C_S_AXIS_TDATA_WIDTH    ),
+   .C_S_AXIS_TUSER_WIDTH   (  C_S_AXIS_TUSER_WIDTH    )
+)
+ddr_if_controller
+(
+   .clk                    (  clk                     ),
+   .rst_clk                (  rst_clk                 ),
+                                                    
+   .axis_aclk              (  axis_aclk               ),
+   .axis_aresetn           (  axis_aresetn            ),
+                                                    
+   .m_axis_tdata           (  m_axis_tdata            ),
+   .m_axis_tkeep           (  m_axis_tkeep            ),
+   .m_axis_tuser           (  m_axis_tuser            ),
+   .m_axis_tvalid          (  m_axis_tvalid           ),
+   .m_axis_tready          (  m_axis_tready           ),
+   .m_axis_tlast           (  m_axis_tlast            ),
+                                                    
+   .m_async_tdata          (  m_async_tdata           ),
+   .m_async_tkeep          (  m_async_tkeep           ),
+   .m_async_tuser          (  m_async_tuser           ),
+   .m_async_tvalid         (  m_async_tvalid          ),
+   .m_async_tready         (  m_async_tready          ),
+   .m_async_tlast          (  m_async_tlast           ),
+                                                    
+   .s_async_tready         (  s_async_tready          ),
+   .s_axis_tdata           (  s_axis_tdata            ),
+   .s_axis_tkeep           (  s_axis_tkeep            ),
+   .s_axis_tuser           (  s_axis_tuser            ),
+   .s_axis_tvalid          (  s_axis_tvalid           ),
+   .s_axis_tready          (  s_axis_tready           ),
+   .s_axis_tlast           (  s_axis_tlast            ),
+                                                    
+   .sw_rst                 (  sw_rst                  ),
+   .replay_count           (  replay_count            ),
+   .start_replay           (  start_replay            ),
+   .wr_done                (  wr_done                 ),
+                                                    
+   .app_addr_i             (  app_addr_i              ),
+   .app_cmd_i              (  app_cmd_i               ), // read;001, write;000
+   .app_en_i               (  app_en_i                ),
+   .app_wdf_data_i         (  app_wdf_data_i          ),
+   .app_wdf_end_i          (  app_wdf_end_i           ),
+   .app_wdf_mask_i         (  app_wdf_mask_i          ),
+   .app_wdf_wren_i         (  app_wdf_wren_i          ),
+                                                    
+   .app_wdf_rdy_o          (  app_wdf_rdy_o           ),
+   .app_rd_data_o          (  app_rd_data_o           ),
+   .app_rd_data_end_o      (  app_rd_data_end_o       ),
+   .app_rd_data_valid_o    (  app_rd_data_valid_o     ),
+   .app_rdy_o              (  app_rdy_o               ),
+   .init_calib_complete_o  (  init_calib_complete_o   ),
 
-reg   [C_S_AXI_ADDR_WIDTH-1 : 0]             r_replay_count;
-reg   [2:0]    r_start_replay, r_wr_done, r_sw_rst;
+   .app_ref_req_i          (  app_ref_req_i           ),
+   .app_ref_ack_o          (  app_ref_ack_o           ),
+                                                    
+   .Bus2IP_Addr            (  Bus2IP_Addr             ),
+   .Bus2IP_CS              (  Bus2IP_CS               ),
+   .Bus2IP_RNW             (  Bus2IP_RNW              ), // 0: wr, 1: rd
+   .Bus2IP_Data            (  Bus2IP_Data             ),
+   .Bus2IP_BE              (  Bus2IP_BE               ),
+                                                    
+   .IP2Bus_Data            (  IP2Bus_Data             ),
+   .IP2Bus_RdAck           (  IP2Bus_RdAck            ),
+   .IP2Bus_WrAck           (  IP2Bus_WrAck            ),
 
-always @(posedge clk)
-   if (rst_clk) begin
-      r_start_replay    <= 0;
-      r_wr_done         <= 0;
-      r_sw_rst          <= 0;
-   end
-   else begin
-      r_start_replay    <= {r_start_replay[1:0], start_replay};
-      r_wr_done         <= {r_wr_done[1:0], wr_done};
-      r_sw_rst          <= {r_sw_rst[1:0], sw_rst};
-   end
+   .st_valid               (  st_valid                )
+);
 
-wire en_start_replay = r_start_replay[1] & ~r_start_replay[2];
-wire en_wr_done = r_wr_done[1] & ~r_wr_done[2];
-wire en_sw_rst0 = r_sw_rst[1] & ~r_sw_rst[2];
-wire en_sw_rst1 = ~r_sw_rst[1] & r_sw_rst[2];
-
-always @(posedge clk)
-   if (rst_clk)
-      r_replay_count <= 0;
-   else if (en_sw_rst0)
-      r_replay_count <= 0;
-   else if (en_start_replay)
-      r_replay_count <= replay_count;
-
-reg sw_rst_ff;
-always @(posedge clk)
-   if (rst_clk)
-      sw_rst_ff   <= 0;
-   else if (en_sw_rst0)
-      sw_rst_ff   <= 1;
-   else if (en_sw_rst1)
-      sw_rst_ff   <= 0;
-
-assign bus2mem_addr_en = (Bus2IP_Addr[15:0] == 16'h0000) & Bus2IP_CS;
-assign end_addr_rd_en  = (Bus2IP_Addr[15:0] == 16'h0004) & Bus2IP_CS;
-assign calib_rd_en     = (Bus2IP_Addr[15:0] == 16'h0008) & Bus2IP_CS;
-assign bus2mem_wr_en   = (Bus2IP_Addr[15:0] == 16'h0010) & Bus2IP_CS;
-assign bus2mem_rd_en   = (Bus2IP_Addr[15:0] == 16'h0020) & Bus2IP_CS;
-
-reg   [31:0]   bus2mem_addr;
-always @(posedge clk)
-   if (rst_clk)
-      bus2mem_addr   <= 0;
-   else if (bus2mem_addr_en & ~Bus2IP_RNW)
-      bus2mem_addr   <= Bus2IP_Data;
-
-`define  IDLE           0
-`define  BUS_WR         1
-`define  BUS_WR_DONE    2
-`define  BUS_WR_WAIT    3
-`define  BUS_RD         4
-`define  BUS_RD_DONE    5
-`define  BUS_RD_WAIT    6
-`define  AXIS_WR        7
-`define  AXIS_WR_WAIT   8
-`define  AXIS_WR_VALID  9
-`define  AXIS_RD        10
-`define  AXIS_RD_WAIT   11
-
-reg   [3:0] st_current, st_next;
-always @(posedge clk)
-   if (rst_clk) begin
-      st_current     <= 0;
-      replay_no      <= 0;
-      wr_mem_addr    <= 0;
-      rd_mem_addr    <= 0;
-   end
-   else begin
-      st_current     <= st_next;
-      replay_no      <= replay_no_next;
-      wr_mem_addr    <= wr_mem_addr_next;
-      rd_mem_addr    <= rd_mem_addr_next;
-   end
-
-always @(posedge clk)
-   if (rst_clk)
-      wr_end_addr    <= 0;
-   else if ((app_cmd_i == 3'b000) & app_en_i & app_wdf_wren_i)
-      wr_end_addr    <= wr_mem_addr;
-
-reg r_clear;
-always @(posedge clk)
-   if (rst_clk)
-      r_clear  <= 0;
-   else if (en_sw_rst0)
-      r_clear  <= 1;
-   else if (st_current == `IDLE)
-      r_clear  <= 0;
-
-always @(*) begin
-   app_addr_i        = 0;
-   app_cmd_i         = 0;
-   app_en_i          = 0;
-   app_wdf_end_i     = 0;
-   app_wdf_wren_i    = 0;
-   app_wdf_data_i    = 0;
-   app_wdf_mask_i    = {64{1'b1}};
-   IP2Bus_WrAck      = 0;
-   IP2Bus_RdAck      = 0;
-   IP2Bus_Data       = 0;
-   m_async_tready    = 0;
-   rd_mem_addr_next  = 0;
-   wr_mem_addr_next  = 0;
-   replay_no_next    = 0;
-   st_next           = 0;
-   case(st_current)
-      `IDLE : begin
-         st_next        = (Bus2IP_CS & ~Bus2IP_RNW & app_wdf_rdy_o) ? `BUS_WR  :
-                          (Bus2IP_CS &  Bus2IP_RNW & app_rdy_o)     ? `BUS_RD  :
-                          (m_async_tvalid)                          ? `AXIS_WR :
-                          (en_start_replay && ~sw_rst_ff)           ? `AXIS_RD : `IDLE;
-      end
-      `BUS_WR : begin
-         st_next        = `BUS_WR_DONE;
-         if (bus2mem_wr_en) begin
-            // 0000 1000
-            // 0100 0000
-            app_addr_i     = {1'b0, bus2mem_addr[31:6], 3'b0};
-            app_cmd_i      = 3'b000;
-            app_en_i       = 1;
-            app_wdf_end_i  = 1;
-            app_wdf_wren_i = 1;
-            st_next        = `BUS_WR_DONE;
-            case (bus2mem_addr[5:2])
-               4'h0 : begin
-                  app_wdf_data_i[(0*32)+:32] = Bus2IP_Data;
-                  app_wdf_mask_i[(0*4)+:4]   = 4'h0;
-               end
-               4'h1 : begin
-                  app_wdf_data_i[(1*32)+:32] = Bus2IP_Data;
-                  app_wdf_mask_i[(1*4)+:4]   = 4'h0;
-               end
-               4'h2 : begin
-                  app_wdf_data_i[(2*32)+:32] = Bus2IP_Data;
-                  app_wdf_mask_i[(2*4)+:4]   = 4'h0;
-               end
-               4'h3 : begin
-                  app_wdf_data_i[(3*32)+:32] = Bus2IP_Data;
-                  app_wdf_mask_i[(3*4)+:4]   = 4'h0;
-               end
-               4'h4 : begin
-                  app_wdf_data_i[(4*32)+:32] = Bus2IP_Data;
-                  app_wdf_mask_i[(4*4)+:4]   = 4'h0;
-               end
-               4'h5 : begin
-                  app_wdf_data_i[(5*32)+:32] = Bus2IP_Data;
-                  app_wdf_mask_i[(5*4)+:4]   = 4'h0;
-               end
-               4'h6 : begin
-                  app_wdf_data_i[(6*32)+:32] = Bus2IP_Data;
-                  app_wdf_mask_i[(6*4)+:4]   = 4'h0;
-               end
-               4'h7 : begin
-                  app_wdf_data_i[(7*32)+:32] = Bus2IP_Data;
-                  app_wdf_mask_i[(7*4)+:4]   = 4'h0;
-               end
-               4'h8 : begin
-                  app_wdf_data_i[(8*32)+:32] = Bus2IP_Data;
-                  app_wdf_mask_i[(8*4)+:4]   = 4'h0;
-               end
-               4'h9 : begin
-                  app_wdf_data_i[(9*32)+:32] = Bus2IP_Data;
-                  app_wdf_mask_i[(9*4)+:4]   = 4'h0;
-               end
-               4'ha : begin
-                  app_wdf_data_i[(10*32)+:32] = Bus2IP_Data;
-                  app_wdf_mask_i[(10*4)+:4]   = 4'h0;
-               end
-               4'hb : begin
-                  app_wdf_data_i[(11*32)+:32] = Bus2IP_Data;
-                  app_wdf_mask_i[(11*4)+:4]   = 4'h0;
-               end
-               4'hc : begin
-                  app_wdf_data_i[(12*32)+:32] = Bus2IP_Data;
-                  app_wdf_mask_i[(12*4)+:4]   = 4'h0;
-               end
-               4'hd : begin
-                  app_wdf_data_i[(13*32)+:32] = Bus2IP_Data;
-                  app_wdf_mask_i[(13*4)+:4]   = 4'h0;
-               end
-               4'he : begin
-                  app_wdf_data_i[(14*32)+:32] = Bus2IP_Data;
-                  app_wdf_mask_i[(14*4)+:4]   = 4'h0;
-               end
-               4'hf : begin
-                  app_wdf_data_i[(15*32)+:32] = Bus2IP_Data;
-                  app_wdf_mask_i[(15*4)+:4]   = 4'h0;
-               end
-            endcase
-         end
-      end
-      `BUS_WR_DONE : begin
-         IP2Bus_WrAck   = 1;
-         st_next        = `BUS_WR_WAIT;
-      end
-      `BUS_WR_WAIT : begin
-         st_next        = (Bus2IP_CS) ? `BUS_WR_WAIT : `IDLE;
-      end
-      `BUS_RD : begin
-         if (bus2mem_addr_en) begin
-            st_next        = `BUS_RD_DONE;
-         end
-         else if (app_rdy_o) begin
-            app_addr_i     = {1'b0, bus2mem_addr[31:6], 3'b0};
-            app_cmd_i      = 3'b001;
-            app_en_i       = 1;
-            st_next        = `BUS_RD_DONE;
-         end
-         else begin
-            st_next        = `BUS_RD;
-         end
-      end
-      `BUS_RD_DONE : begin
-         if (bus2mem_addr_en) begin
-            IP2Bus_Data    = bus2mem_addr;
-            IP2Bus_RdAck   = 1;
-            st_next        = `BUS_RD_WAIT;
-         end
-         else if (end_addr_rd_en) begin
-            IP2Bus_Data    = wr_end_addr;
-            IP2Bus_RdAck   = 1;
-            st_next        = `BUS_RD_WAIT;
-         end
-         else if (calib_rd_en) begin
-            IP2Bus_Data    = {31'b0, init_calib_complete_o};
-            IP2Bus_RdAck   = 1;
-            st_next        = `BUS_RD_WAIT;
-         end
-         else if (app_rd_data_valid_o & bus2mem_rd_en) begin
-            IP2Bus_RdAck   = 1;
-            st_next        = `BUS_RD_WAIT;
-            case (bus2mem_addr[5:2])
-               4'h0 : begin
-                  IP2Bus_Data = app_rd_data_o[(0*32)+:32];
-               end
-               4'h1 : begin
-                  IP2Bus_Data = app_rd_data_o[(1*32)+:32];
-               end
-               4'h2 : begin
-                  IP2Bus_Data = app_rd_data_o[(2*32)+:32];
-               end
-               4'h3 : begin
-                  IP2Bus_Data = app_rd_data_o[(3*32)+:32];
-               end
-               4'h4 : begin
-                  IP2Bus_Data = app_rd_data_o[(4*32)+:32];
-               end
-               4'h5 : begin
-                  IP2Bus_Data = app_rd_data_o[(5*32)+:32];
-               end
-               4'h6 : begin
-                  IP2Bus_Data = app_rd_data_o[(6*32)+:32];
-               end
-               4'h7 : begin
-                  IP2Bus_Data = app_rd_data_o[(7*32)+:32];
-               end
-               4'h8 : begin
-                  IP2Bus_Data = app_rd_data_o[(8*32)+:32];
-               end
-               4'h9 : begin
-                  IP2Bus_Data = app_rd_data_o[(9*32)+:32];
-               end
-               4'ha : begin
-                  IP2Bus_Data = app_rd_data_o[(10*32)+:32];
-               end
-               4'hb : begin
-                  IP2Bus_Data = app_rd_data_o[(11*32)+:32];
-               end
-               4'hc : begin
-                  IP2Bus_Data = app_rd_data_o[(12*32)+:32];
-               end
-               4'hd : begin
-                  IP2Bus_Data = app_rd_data_o[(13*32)+:32];
-               end
-               4'he : begin
-                  IP2Bus_Data = app_rd_data_o[(14*32)+:32];
-               end
-               4'hf : begin
-                  IP2Bus_Data = app_rd_data_o[(15*32)+:32];
-               end
-            endcase
-         end
-         else if (app_rd_data_valid_o) begin
-            IP2Bus_RdAck   = 1;
-            st_next        = `BUS_RD_WAIT;
-         end
-         else begin
-            IP2Bus_Data    = 0;
-            IP2Bus_RdAck   = 0;
-            st_next        = `BUS_RD_DONE;
-         end
-      end
-      `BUS_RD_WAIT : begin
-         st_next        = (Bus2IP_CS) ? `BUS_RD_WAIT : `IDLE;
-      end
-      `AXIS_WR : begin
-         if (m_async_tvalid & app_wdf_rdy_o) begin
-            app_addr_i        = {wr_mem_addr, 3'b0};
-            app_cmd_i         = 3'b000;
-            app_en_i          = 1;
-            app_wdf_end_i     = 1;
-            app_wdf_wren_i    = 1;
-            app_wdf_data_i    = {95'h0, m_async_tlast, m_async_tuser, m_async_tkeep, m_async_tdata};
-            app_wdf_mask_i    = 64'h0;
-            wr_mem_addr_next  = wr_mem_addr;
-            st_next           = (r_clear) ? `IDLE : `AXIS_WR_WAIT;
-         end
-         else begin
-            wr_mem_addr_next  = (r_clear) ? 0 : (en_wr_done) ? 0 : wr_mem_addr;
-            st_next           = (r_clear) ? `IDLE : (en_wr_done) ? `IDLE : `AXIS_WR;
-         end
-      end
-      `AXIS_WR_WAIT : begin
-         if (app_rdy_o) begin
-            app_addr_i        = {wr_mem_addr, 3'b0};
-            app_cmd_i         = 3'b001;
-            app_en_i          = 1;
-            wr_mem_addr_next  = (r_clear) ? 0 : wr_mem_addr;
-            st_next           = (r_clear) ? `IDLE : `AXIS_WR_VALID;
-         end
-         else begin
-            wr_mem_addr_next  = (r_clear) ? 0 : wr_mem_addr;
-            st_next           = (r_clear) ? `IDLE : `AXIS_WR_WAIT;
-         end
-      end
-      `AXIS_WR_VALID : begin
-         if (app_rd_data_valid_o) begin
-            if (app_rd_data_o == {95'h0, m_async_tlast, m_async_tuser, m_async_tkeep, m_async_tdata}) begin
-               m_async_tready    = 1;
-               wr_mem_addr_next  = (r_clear) ? 0 : wr_mem_addr + 1;
-               st_next           = (r_clear) ? `IDLE : `AXIS_WR;
-            end
-            else begin
-               wr_mem_addr_next  = (r_clear) ? 0 : wr_mem_addr;
-               st_next           = (r_clear) ? `IDLE : `AXIS_WR;
-            end
-         end
-         else begin
-            wr_mem_addr_next  = (r_clear) ? 0 : wr_mem_addr;
-            st_next           = (r_clear) ? `IDLE : `AXIS_WR_VALID;
-         end
-      end
-      `AXIS_RD : begin
-         if (s_async_tready & app_rdy_o) begin
-            app_addr_i        = {rd_mem_addr, 3'b0};
-            app_cmd_i         = 3'b001;
-            app_en_i          = 1;
-            rd_mem_addr_next  = rd_mem_addr + 1;
-            replay_no_next    = (rd_mem_addr == wr_end_addr) ? replay_no + 1 : replay_no;
-            st_next           = (r_clear) ? `IDLE : (rd_mem_addr == wr_end_addr) ? `AXIS_RD_WAIT : `AXIS_RD;
-         end
-         else begin
-            rd_mem_addr_next  = rd_mem_addr;
-            replay_no_next    = replay_no;
-            st_next           = (r_clear) ? `IDLE : `AXIS_RD;
-         end
-      end
-      `AXIS_RD_WAIT : begin
-         rd_mem_addr_next  = 0;
-         replay_no_next    = replay_no;
-         st_next           = (r_clear) ? `IDLE : (replay_no < r_replay_count) ? `AXIS_RD : `IDLE;
-      end
-   endcase
-end
 
 // -- AXILITE IPIF
 sume_axi_ipif #
@@ -564,7 +261,8 @@ sume_axi_ipif #
    .C_S_AXI_ADDR_WIDTH     (  C_S_AXI_ADDR_WIDTH      ),
    .C_BASEADDR             (  C_BASEADDR              ),
    .C_HIGHADDR             (  C_HIGHADDR              )
-) sume_axi_ipif
+)
+sume_axi_ipif
 (
    .S_AXI_ACLK             (  clk                     ),
    .S_AXI_ARESETN          (  resetn                  ),
@@ -650,8 +348,6 @@ assign fifo_in_tkeep = app_rd_data_o[256+:32];
 assign fifo_in_tuser = app_rd_data_o[288+:128];
 assign fifo_in_tlast = app_rd_data_o[416+:1];
 
-wire st_valid = (st_current != `AXIS_WR) & (st_current != `AXIS_WR_WAIT) & (st_current != `AXIS_WR_VALID);
-
 fallthrough_small_fifo
 #(
    .WIDTH            (  1+C_M_AXIS_TUSER_WIDTH+(C_M_AXIS_TDATA_WIDTH/8)+C_M_AXIS_TDATA_WIDTH       ),
@@ -711,10 +407,10 @@ mig_ddr3A
    .app_rd_data_valid      (  app_rd_data_valid_o     ),
    .app_rdy                (  app_rdy_o               ),
    .app_sr_req             (  0), //0
-   .app_ref_req            (  0), //for refresh
+   .app_ref_req            (  0), //app_ref_req_i           ), //for refresh
    .app_zq_req             (  0), //for cal
    .app_sr_active          (  ), 
-   .app_ref_ack            (  ),
+   .app_ref_ack            (  app_ref_ack_o           ),
    .app_zq_ack             (  ),
    .ui_clk                 (  clk                     ),
    .ui_clk_sync_rst        (  rst_clk                 ),
