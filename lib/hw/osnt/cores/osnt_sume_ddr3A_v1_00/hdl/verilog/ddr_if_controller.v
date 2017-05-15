@@ -103,19 +103,6 @@ module ddr_if_controller
    output                                                st_valid
 );
 
-function integer log2;
-   input integer number;
-   begin
-      log2=0;
-      while(2**log2<number) begin
-         log2=log2+1;
-      end
-   end
-endfunction
-
-localparam  MAX_PKT_SIZE      = 4000; //In bytes
-localparam  IN_FIFO_DEPTH_BIT = log2(MAX_PKT_SIZE/(C_M_AXIS_TDATA_WIDTH/8));
-
 `define  IDLE              0
 
 `define  BUS_WR            1

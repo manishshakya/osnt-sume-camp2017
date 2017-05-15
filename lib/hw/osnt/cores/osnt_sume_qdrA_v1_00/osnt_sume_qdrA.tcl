@@ -61,6 +61,7 @@ generate_target all [get_files  ./${project_dir}/mig_qdrA/mig_qdrA.xci]
 
 # IP build.
 read_verilog "./hdl/verilog/osnt_sume_qdrA.v"
+read_verilog "./hdl/verilog/qdr_if_controller.v"
 read_verilog "./../../../std/cores/osnt_sume_common/hdl/verilog/fallthrough_small_fifo.v"
 read_verilog "./../../../std/cores/osnt_sume_common/hdl/verilog/small_fifo.v"
 read_verilog "./../../../std/cores/osnt_sume_common/hdl/verilog/sume_axi_ipif.v"

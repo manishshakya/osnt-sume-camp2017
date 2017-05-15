@@ -51,6 +51,7 @@ generate_target all [get_files  ./${project_dir}/ddr3B_async_fifo_0/ddr3B_async_
 
 # IP build.
 read_verilog "./hdl/verilog/osnt_sume_ddr3B.v"
+read_verilog "../osnt_sume_ddr3A_v1_00/hdl/verilog/ddr_if_controller.v"
 read_verilog "./../../../std/cores/osnt_sume_common/hdl/verilog/fallthrough_small_fifo.v"
 read_verilog "./../../../std/cores/osnt_sume_common/hdl/verilog/small_fifo.v"
 read_verilog "./../../../std/cores/osnt_sume_common/hdl/verilog/sume_axi_ipif.v"
