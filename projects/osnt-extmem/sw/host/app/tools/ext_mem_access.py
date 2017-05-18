@@ -36,7 +36,7 @@ input_arg.add_argument("--addr", type=str, help="Type the memory address for the
 input_arg.add_argument("--wr_data", type=str, help="Type the data to be written into the memory - eg. 0x1234")
 args = input_arg.parse_args()
 
-drA_base_addr   = "0x7a000000"
+qdrA_base_addr  = "0x7a000000"
 qdrC_base_addr  = "0x7b000000"
 ddr3A_base_addr = "0x7c000000"
 ddr3B_base_addr = "0x7d000000"
@@ -60,13 +60,13 @@ else:
     sys.exit(1)
 
 if (args.wr_data):
-    wraxi(base_addr, mem_address)
-    wraxi(add_hex(base_addr, "0x10"), args.wr_data) 
+    wraxi(add_hex(base_addr, "0x0c"), mem_address)
+    wraxi(add_hex(base_addr, "0x20"), args.wr_data) 
     print '\nWrite done. Address : ', str(mem_address), ' Write Data : ', str(args.wr_data), '\n'
     sys.exit(1)
 else:
-    wraxi(base_addr, mem_address)
-    rd_data = rdaxi(add_hex(base_addr, "0x20"))
+    wraxi(add_hex(base_addr, "0x0c"), mem_address)
+    rd_data = rdaxi(add_hex(base_addr, "0x40"))
     print '\nRead done. Address : ', str(mem_address), ' Read Data : ', rd_data, '\n'
     sys.exit(1)
 
