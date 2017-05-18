@@ -180,7 +180,7 @@ set_property -dict [list CONFIG.REG_FILE {../../../../tv/reg_stim.axi}] [get_bd_
 
 create_bd_cell -type ip -vlnv OSNT-SUME-NetFPGA:OSNT-SUME-NetFPGA:osnt_sume_axi_if:1.00 osnt_sume_axi_if_0
 
-source ./tcl/osnt_sume_connection.tcl
+source ./tcl/osnt-extmem_sume_connection.tcl
 
 # Bus register map address configuration
 assign_bd_address [get_bd_addr_segs {osnt_sume_bram_pcap_replay_uengine_0/s_axi/reg0 }]

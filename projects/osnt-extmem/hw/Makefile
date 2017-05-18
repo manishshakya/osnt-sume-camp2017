@@ -28,7 +28,7 @@
 project_name = project
 
 project: clean
-	vivado -mode tcl -source ./tcl/osnt_sume.tcl
+	vivado -mode tcl -source ./tcl/osnt-extmem_sume.tcl
 
 export_to_sdk:
 	if test -d project; then\

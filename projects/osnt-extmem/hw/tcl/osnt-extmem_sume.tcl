@@ -29,9 +29,9 @@ set project_dir   project
 set design        system 
 set device        xc7vx690tffg1761-3
 
-set const0 ./constraint/osnt_sume.xdc
-set const1 ./constraint/osnt_sume_10g.xdc
-set const2 ./constraint/osnt_sume_timing.xdc
+set const0 ./constraint/osnt-extmem_sume.xdc
+set const1 ./constraint/osnt-extmem_sume_10g.xdc
+set const2 ./constraint/osnt-extmem_sume_timing.xdc
 
 set osnt_ip_param_list {
    input_arbiter                 0           0x0         0x0
@@ -140,8 +140,8 @@ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:2.1 axi_interconnec
 set_property -dict [list CONFIG.NUM_SI {2} CONFIG.NUM_MI {15}] [get_bd_cells axi_interconnect_0]
 
 # Create external ports and make connection
-source ./tcl/osnt_sume_port.tcl
-source ./tcl/osnt_sume_connection.tcl
+source ./tcl/osnt-extmem_sume_port.tcl
+source ./tcl/osnt-extmem_sume_connection.tcl
 
 # Bus register map address configuration
 create_bd_addr_seg -range 0x10000 -offset 0x00000000 [get_bd_addr_spaces mbsys/microblaze_0/Data] \

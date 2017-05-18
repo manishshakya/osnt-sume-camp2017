@@ -31,7 +31,7 @@ WS = SDK_Workspace
 
 project:
 	if [ -d ./SDK_Workspace ]; then rm -rf ./SDK_Workspace; mkdir SDK_Workspace; fi
-	xsdk -batch -source ./tcl/osnt_xsdk.tcl
+	xsdk -batch -source ./tcl/osnt-extmem_xsdk.tcl
 
 compile:
 	cp -rf ./src/*.* ./SDK_Workspace/system/system/src;\
