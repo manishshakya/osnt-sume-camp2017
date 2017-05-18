@@ -44,20 +44,6 @@ module ddr_if_controller
    input                                                 axis_aclk,
    input                                                 axis_aresetn,
 
-   output         [C_M_AXIS_TDATA_WIDTH-1:0]             m_axis_tdata,
-   output         [(C_M_AXIS_TDATA_WIDTH/8)-1:0]         m_axis_tkeep,
-   output         [C_M_AXIS_TUSER_WIDTH-1:0]             m_axis_tuser,
-   output                                                m_axis_tvalid,
-   input                                                 m_axis_tready,
-   output                                                m_axis_tlast,
-
-   input          [C_S_AXIS_TDATA_WIDTH-1:0]             s_axis_tdata,
-   input          [(C_S_AXIS_TDATA_WIDTH/8)-1:0]         s_axis_tkeep,
-   input          [C_S_AXIS_TUSER_WIDTH-1:0]             s_axis_tuser,
-   input                                                 s_axis_tvalid,
-   output                                                s_axis_tready,
-   input                                                 s_axis_tlast,
-
    input          [C_M_AXIS_TDATA_WIDTH-1:0]             m_async_tdata,
    input          [(C_M_AXIS_TDATA_WIDTH/8)-1:0]         m_async_tkeep,
    input          [C_M_AXIS_TUSER_WIDTH-1:0]             m_async_tuser,
@@ -113,21 +99,21 @@ module ddr_if_controller
 `define  BUS_RD_WAIT       6
 
 `define  AXIS_BUS_WR       1
-`define  AXIS_BUS_RD       2
-`define  AXIS_WR_0         3
-`define  AXIS_WR_CHECK_0   4
-`define  AXIS_WR_VALID_0   5
-`define  AXIS_WR_1         6
-`define  AXIS_WR_CHECK_1   7
-`define  AXIS_WR_VALID_1   8
-`define  AXIS_WR_2         9
-`define  AXIS_WR_CHECK_2   10
-`define  AXIS_WR_VALID_2   11
-`define  AXIS_WR_3         12
-`define  AXIS_WR_CHECK_3   13
-`define  AXIS_WR_VALID_3   14
-`define  AXIS_WR_CHECK     15
-`define  AXIS_WR_VALID     16
+`define  AXIS_BUS_WR_WAIT  2
+`define  AXIS_BUS_RD       3
+`define  AXIS_BUS_RD_WAIT  4
+`define  AXIS_WR_0         5
+`define  AXIS_WR_CHECK_0   6
+`define  AXIS_WR_VALID_0   7
+`define  AXIS_WR_1         8
+`define  AXIS_WR_CHECK_1   9
+`define  AXIS_WR_VALID_1   10
+`define  AXIS_WR_2         11
+`define  AXIS_WR_CHECK_2   12
+`define  AXIS_WR_VALID_2   13
+`define  AXIS_WR_3         14
+`define  AXIS_WR_CHECK_3   15
+`define  AXIS_WR_VALID_3   16
 `define  AXIS_RD           17
 `define  AXIS_RD_WAIT      18
 
@@ -176,15 +162,34 @@ reg   r_clear;
 reg   r_m_async_tlast;
 reg   [31:0]   pkt_cnt;
 
-assign st_valid = (st_axis_current != `AXIS_WR_0) &
+assign st_valid = (st_bus_current != `BUS_RD_DONE) &
+                  (st_axis_current != `AXIS_WR_0) &
                   (st_axis_current != `AXIS_WR_1) &
                   (st_axis_current != `AXIS_WR_2) &
                   (st_axis_current != `AXIS_WR_3) &
                   (st_axis_current != `AXIS_WR_CHECK_0) & (st_axis_current != `AXIS_WR_VALID_0) &
                   (st_axis_current != `AXIS_WR_CHECK_1) & (st_axis_current != `AXIS_WR_VALID_1) &
                   (st_axis_current != `AXIS_WR_CHECK_2) & (st_axis_current != `AXIS_WR_VALID_2) &
-                  (st_axis_current != `AXIS_WR_CHECK_3) & (st_axis_current != `AXIS_WR_VALID_3) &
-                  (st_axis_current != `AXIS_WR_CHECK)   & (st_axis_current != `AXIS_WR_VALID);
+                  (st_axis_current != `AXIS_WR_CHECK_3) & (st_axis_current != `AXIS_WR_VALID_3);
+
+reg   r_app_rd_valid_1, r_app_rd_valid_2;
+reg   [511:0]  r_app_rd_data;
+always @(posedge clk)
+   if (rst_clk) begin
+      r_app_rd_valid_1  <= 0;
+      r_app_rd_valid_2  <= 0;
+   end
+   else begin
+      r_app_rd_valid_1  <= app_rd_data_valid_o;
+      r_app_rd_valid_2  <= r_app_rd_valid_1;
+   end
+
+always @(posedge clk)
+   if (rst_clk)
+      r_app_rd_data  <= 0;
+   else if (app_rd_data_valid_o)
+      r_app_rd_data  <= app_rd_data_o;
+
 
 always @(posedge clk)
    if (rst_clk) begin
@@ -286,8 +291,14 @@ always @(*) begin
          st_bus_next    = `BUS_WR_DONE;
       end
       `BUS_WR_DONE : begin
-         IP2Bus_WrAck   = 1;
-         st_bus_next    = `BUS_WR_WAIT;
+         if (wr_bus2mem_en) begin
+            IP2Bus_WrAck   = (st_axis_current == `AXIS_BUS_WR_WAIT) ? 1 : 0;
+            st_bus_next    = (st_axis_current == `AXIS_BUS_WR_WAIT) ? `BUS_WR_WAIT : `BUS_WR_DONE;
+         end
+         else begin
+            IP2Bus_WrAck   = 1;
+            st_bus_next    = `BUS_WR_WAIT;
+         end
       end
       `BUS_WR_WAIT : begin
          st_bus_next    = (Bus2IP_CS) ? `BUS_WR_WAIT : `IDLE;
@@ -297,56 +308,56 @@ always @(*) begin
       end
       `BUS_RD_DONE : begin
          if (rd_mem2bus_en) begin
-            IP2Bus_RdAck   = (app_rd_data_valid_o) ? 1 : 0;
-            st_bus_next    = (app_rd_data_valid_o) ? `BUS_RD_WAIT : `BUS_RD_DONE;
+            IP2Bus_RdAck   = (r_app_rd_valid_2) ? 1 : 0;
+            st_bus_next    = (r_app_rd_valid_2) ? `BUS_RD_WAIT : `BUS_RD_DONE;
             case (bus2mem_addr[5:2])
                4'h0 : begin
-                  IP2Bus_Data = app_rd_data_o[( 0*32)+:32];
+                  IP2Bus_Data = r_app_rd_data[( 0*32)+:32];
                end
                4'h1 : begin
-                  IP2Bus_Data = app_rd_data_o[( 1*32)+:32];
+                  IP2Bus_Data = r_app_rd_data[( 1*32)+:32];
                end
                4'h2 : begin
-                  IP2Bus_Data = app_rd_data_o[( 2*32)+:32];
+                  IP2Bus_Data = r_app_rd_data[( 2*32)+:32];
                end
                4'h3 : begin
-                  IP2Bus_Data = app_rd_data_o[( 3*32)+:32];
+                  IP2Bus_Data = r_app_rd_data[( 3*32)+:32];
                end
                4'h4 : begin
-                  IP2Bus_Data = app_rd_data_o[( 4*32)+:32];
+                  IP2Bus_Data = r_app_rd_data[( 4*32)+:32];
                end
                4'h5 : begin
-                  IP2Bus_Data = app_rd_data_o[( 5*32)+:32];
+                  IP2Bus_Data = r_app_rd_data[( 5*32)+:32];
                end
                4'h6 : begin
-                  IP2Bus_Data = app_rd_data_o[( 6*32)+:32];
+                  IP2Bus_Data = r_app_rd_data[( 6*32)+:32];
                end
                4'h7 : begin
-                  IP2Bus_Data = app_rd_data_o[( 7*32)+:32];
+                  IP2Bus_Data = r_app_rd_data[( 7*32)+:32];
                end
                4'h8 : begin
-                  IP2Bus_Data = app_rd_data_o[( 8*32)+:32];
+                  IP2Bus_Data = r_app_rd_data[( 8*32)+:32];
                end
                4'h9 : begin
-                  IP2Bus_Data = app_rd_data_o[( 9*32)+:32];
+                  IP2Bus_Data = r_app_rd_data[( 9*32)+:32];
                end
                4'ha : begin
-                  IP2Bus_Data = app_rd_data_o[(10*32)+:32];
+                  IP2Bus_Data = r_app_rd_data[(10*32)+:32];
                end
                4'hb : begin
-                  IP2Bus_Data = app_rd_data_o[(11*32)+:32];
+                  IP2Bus_Data = r_app_rd_data[(11*32)+:32];
                end
                4'hc : begin
-                  IP2Bus_Data = app_rd_data_o[(12*32)+:32];
+                  IP2Bus_Data = r_app_rd_data[(12*32)+:32];
                end
                4'hd : begin
-                  IP2Bus_Data = app_rd_data_o[(13*32)+:32];
+                  IP2Bus_Data = r_app_rd_data[(13*32)+:32];
                end
                4'he : begin
-                  IP2Bus_Data = app_rd_data_o[(14*32)+:32];
+                  IP2Bus_Data = r_app_rd_data[(14*32)+:32];
                end
                4'hf : begin
-                  IP2Bus_Data = app_rd_data_o[(15*32)+:32];
+                  IP2Bus_Data = r_app_rd_data[(15*32)+:32];
                end
             endcase
          end
@@ -374,8 +385,8 @@ wire  [511:0]  pattern_1 = {256'h0, {128{1'b1}}, 128'h0};
 wire  [511:0]  pattern_2 = {128'h0, {128{1'b1}}, 256'h0};
 wire  [511:0]  pattern_3 = {{128{1'b1}}, 384'h0};
 
-assign wr_bus2mem_en = (Bus2IP_Addr[15:0] == `WR_MEM_DATA) & Bus2IP_CS & ~Bus2IP_RNW;
-assign rd_mem2bus_en = (Bus2IP_Addr[15:0] == `RD_MEM_DATA) & Bus2IP_CS &  Bus2IP_RNW;
+assign wr_bus2mem_en = (Bus2IP_Addr[15:0] == `WR_MEM_DATA) & Bus2IP_CS;
+assign rd_mem2bus_en = (Bus2IP_Addr[15:0] == `RD_MEM_DATA) & Bus2IP_CS;
 
 // FSM for the stream data control
 always @(*) begin
@@ -393,13 +404,13 @@ always @(*) begin
    st_axis_next      = 0;
    case(st_axis_current)
       `IDLE : begin
-         st_axis_next      = (wr_bus2mem_en)                 ? `AXIS_BUS_WR  :
-                             (rd_mem2bus_en)                 ? `AXIS_BUS_RD  :
-                             (m_async_tvalid)                ? `AXIS_WR_0    :
-                             (en_start_replay && ~sw_rst_ff) ? `AXIS_RD      : `IDLE;
+         st_axis_next      = (wr_bus2mem_en & (st_bus_current == `BUS_WR_DONE)) ? `AXIS_BUS_WR  :
+                             (rd_mem2bus_en & (st_bus_current == `BUS_RD_DONE)) ? `AXIS_BUS_RD  :
+                             (m_async_tvalid)                                   ? `AXIS_WR_0    :
+                             (en_start_replay && ~sw_rst_ff)                    ? `AXIS_RD      : `IDLE;
       end
       `AXIS_BUS_WR : begin
-         st_axis_next      = (app_wdf_rdy_o) ? `IDLE : `AXIS_BUS_WR;
+         st_axis_next      = (app_wdf_rdy_o) ? `AXIS_BUS_WR_WAIT : `AXIS_BUS_WR;
          // 0000 1000
          // 0100 0000
          app_addr_i        = {1'b0, bus2mem_addr[31:6], 3'b0};
@@ -474,11 +485,17 @@ always @(*) begin
             end
          endcase
       end
+      `AXIS_BUS_WR_WAIT : begin
+         st_axis_next      = (st_bus_current == `IDLE) ? `IDLE : `AXIS_BUS_WR_WAIT;
+      end
       `AXIS_BUS_RD : begin
          app_addr_i        = {1'b0, bus2mem_addr[31:6], 3'b0};
          app_cmd_i         = 3'b001;
          app_en_i          = 1;
-         st_axis_next      = (app_rdy_o) ? `IDLE : `AXIS_BUS_RD;
+         st_axis_next      = (app_rdy_o) ? `AXIS_BUS_RD_WAIT : `AXIS_BUS_RD;
+      end
+      `AXIS_BUS_RD_WAIT : begin
+         st_axis_next      = (st_bus_current == `IDLE) ? `IDLE : `AXIS_BUS_RD_WAIT;
       end
       `AXIS_WR_0 : begin
          if (m_async_tvalid) begin
@@ -665,36 +682,6 @@ always @(*) begin
             st_axis_next      = (r_clear) ? `IDLE : `AXIS_WR_VALID_3;
          end
       end
-      //`AXIS_WR_CHECK : begin
-      //   if (app_rdy_o) begin
-      //      app_addr_i        = {wr_mem_addr, 3'b0};
-      //      app_cmd_i         = 3'b001;
-      //      app_en_i          = 1;
-      //      wr_mem_addr_next  = (r_clear) ? 0 : wr_mem_addr;
-      //      st_axis_next      = (r_clear) ? `IDLE : `AXIS_WR_VALID;
-      //   end
-      //   else begin
-      //      wr_mem_addr_next  = (r_clear) ? 0 : wr_mem_addr;
-      //      st_axis_next      = (r_clear) ? `IDLE : `AXIS_WR_CHECK;
-      //   end
-      //end
-      //`AXIS_WR_VALID : begin
-      //   if (app_rd_data_valid_o) begin
-      //      if (app_rd_data_o == wdf_data) begin
-      //         m_async_tready    = 1;
-      //         wr_mem_addr_next  = (r_clear) ? 0 : wr_mem_addr+1;
-      //         st_axis_next      = (r_clear) ? `IDLE : `AXIS_WR_0;
-      //      end
-      //      else begin
-      //         wr_mem_addr_next  = (r_clear) ? 0 : wr_mem_addr;
-      //         st_axis_next      = (r_clear) ? `IDLE : `AXIS_WR_0;
-      //      end
-      //   end
-      //   else begin
-      //      wr_mem_addr_next  = (r_clear) ? 0 : wr_mem_addr;
-      //      st_axis_next      = (r_clear) ? `IDLE : `AXIS_WR_VALID;
-      //   end
-      //end
       `AXIS_RD : begin
          if (s_async_tready & app_rdy_o) begin
             app_addr_i        = {rd_mem_addr, 3'b0};

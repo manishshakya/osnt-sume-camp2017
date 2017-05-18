@@ -49,6 +49,7 @@ module qdr_if_controller
    output   reg   [18:0]                                 app_rd_addr_i,
 
    input                                                 app_rd_valid_o,
+   output                                                mem_wr_en,
    input          [143:0]                                app_rd_data_o,
    input                                                 init_calib_complete_o,
 
@@ -94,16 +95,20 @@ module qdr_if_controller
 `define  BUS_WR_DONE       2
 `define  BUS_WR_WAIT       3
 `define  BUS_RD            4
-`define  BUS_RD_DONE       5
-`define  BUS_RD_WAIT       6
+`define  BUS_RD_DLY1       5
+`define  BUS_RD_DLY2       6
+`define  BUS_RD_DONE       7
+`define  BUS_RD_WAIT       8
 
 `define  AXIS_BUS_WR       1
-`define  AXIS_BUS_RD       2
-`define  AXIS_WR_TUSER     3
-`define  AXIS_WR           4
-`define  AXIS_RD           5
-`define  AXIS_RD_WAIT      6
-`define  AXIS_WR_FLUSH     7
+`define  AXIS_BUS_WR_WAIT  2
+`define  AXIS_BUS_RD       3
+`define  AXIS_BUS_RD_WAIT  4
+`define  AXIS_WR_TUSER     5
+`define  AXIS_WR           6
+`define  AXIS_RD           7
+`define  AXIS_RD_WAIT      8
+`define  AXIS_WR_FLUSH     9
 
 `define  CTRL_STATUS       16'h0000
 `define  PKT_CNT_NO        16'h0004
@@ -116,7 +121,7 @@ reg   [18:0]                                 wr_mem_addr, wr_mem_addr_next;
 reg   [18:0]                                 rd_mem_addr, rd_mem_addr_next;
 reg   [18:0]   wr_end_addr;
 
-wire  bus2mem_addr_en, end_addr_rd_en, calib_rd_en, wr_pkt_rd_en, wr_bus2mem_en, rd_bus2mem_en;
+wire  bus2mem_addr_en, end_addr_rd_en, calib_rd_en, wr_pkt_rd_en, wr_bus2mem_en, rd_mem2bus_en;
 
 reg   [C_S_AXI_ADDR_WIDTH-1:0]      replay_no, replay_no_next;
 
@@ -125,13 +130,13 @@ reg   [((C_S_AXIS_TDATA_WIDTH/8)/2)-1:0]     m2b_tkeep;
 
 reg   [C_S_AXI_ADDR_WIDTH-1 : 0]             r_replay_count;
 reg   [2:0]    r_start_replay, r_wr_done, r_sw_rst;
-reg   [4:0]   no_tkeep;
+reg   [4:0]    no_tkeep;
 reg   sw_rst_ff;
-reg   [3:0] st_bus_current, st_bus_next;
-reg   [3:0] st_axis_current, st_axis_next;
+reg   [3:0]    st_bus_current, st_bus_next;
+reg   [3:0]    st_axis_current, st_axis_next;
 reg   r_clear;
 reg   [31:0]   pkt_cnt;
-reg   [18+4:0]   bus2mem_addr;
+reg   [18+4:0] bus2mem_addr;
 
 always @(posedge clk)
    if (rst_clk) begin
@@ -204,6 +209,13 @@ always @(posedge clk)
       rd_mem_addr       <= rd_mem_addr_next;
    end
 
+reg   [143:0]  r_app_rd_data;
+always @(posedge clk)
+   if (rst_clk)
+      r_app_rd_data  <= 0;
+   else if (app_rd_valid_o)
+      r_app_rd_data  <= app_rd_data_o;
+
 always @(posedge clk)
    if (rst_clk)
       wr_end_addr    <= 0;
@@ -226,14 +238,16 @@ always @(posedge clk)
    else if (app_wr_cmd_i && (app_wr_data_i[143:133] == 11'h004))
       pkt_cnt  <= pkt_cnt + 1;
 
-assign wr_bus2mem_en   = (Bus2IP_Addr[15:0] == `WR_MEM_DATA) & Bus2IP_CS;
-assign rd_bus2mem_en   = (Bus2IP_Addr[15:0] == `RD_MEM_DATA) & Bus2IP_CS;
+assign wr_bus2mem_en = (Bus2IP_Addr[15:0] == `WR_MEM_DATA) & Bus2IP_CS;
+assign rd_mem2bus_en = (Bus2IP_Addr[15:0] == `RD_MEM_DATA) & Bus2IP_CS;
 
 always @(posedge clk)
    if (rst_clk)
       bus2mem_addr   <= 0;
    else if ((Bus2IP_Addr[15:0] == `BUS_MEM_ADDR) & Bus2IP_CS & ~Bus2IP_RNW)
       bus2mem_addr   <= Bus2IP_Data[18+4:0];
+
+assign mem_wr_en = (st_bus_current != `BUS_RD_DONE) && (st_bus_current != `BUS_RD_DLY1) && (st_bus_current != `BUS_RD_DLY2);
 
 always @(*) begin
    IP2Bus_WrAck      = 0;
@@ -249,24 +263,36 @@ always @(*) begin
          st_bus_next    = `BUS_WR_DONE;
       end
       `BUS_WR_DONE : begin
-         IP2Bus_WrAck   = 1;
-         st_bus_next    = `BUS_WR_WAIT;
+         if (wr_bus2mem_en) begin
+            IP2Bus_WrAck   = (st_axis_current == `AXIS_BUS_WR_WAIT) ? 1 : 0;
+            st_bus_next    = (st_axis_current == `AXIS_BUS_WR_WAIT) ? `BUS_WR_WAIT : `BUS_WR_DONE;
+         end
+         else begin
+            IP2Bus_WrAck   = 1;
+            st_bus_next    = `BUS_WR_WAIT;
+         end
       end
       `BUS_WR_WAIT : begin
          st_bus_next    = (Bus2IP_CS) ? `BUS_WR_WAIT : `IDLE;
       end
       `BUS_RD : begin
-         st_bus_next        = `BUS_RD_DONE;
+         st_bus_next    = (rd_mem2bus_en) ? `BUS_RD_DLY1 : `BUS_RD_DONE;
+      end
+      `BUS_RD_DLY1 : begin
+         st_bus_next    = (app_rd_valid_o) ? `BUS_RD_DLY2 : `BUS_RD_DLY1;
+      end
+      `BUS_RD_DLY2 : begin
+         st_bus_next    = `BUS_RD_DONE;
       end
       `BUS_RD_DONE : begin
-         if (app_rd_valid_o & rd_bus2mem_en) begin
+         if (rd_mem2bus_en) begin
             IP2Bus_RdAck   = 1;
-            st_bus_next    = (app_rd_valid_o) ? `BUS_RD_WAIT : `BUS_RD_DONE;
+            st_bus_next    = `BUS_RD_WAIT;
             case (bus2mem_addr[3:2])
-               2'b00 : IP2Bus_Data = app_rd_data_o[(0*36)+:32];
-               2'b01 : IP2Bus_Data = app_rd_data_o[(1*36)+:32];
-               2'b10 : IP2Bus_Data = app_rd_data_o[(2*36)+:32];
-               2'b11 : IP2Bus_Data = app_rd_data_o[(3*36)+:32];
+               2'b00 : IP2Bus_Data = r_app_rd_data[(0*36)+:32];
+               2'b01 : IP2Bus_Data = r_app_rd_data[(1*36)+:32];
+               2'b10 : IP2Bus_Data = r_app_rd_data[(2*36)+:32];
+               2'b11 : IP2Bus_Data = r_app_rd_data[(3*36)+:32];
             endcase
          end
          else begin
@@ -281,7 +307,7 @@ always @(*) begin
          end
       end
       `BUS_RD_WAIT : begin
-         st_bus_next        = (Bus2IP_CS) ? `BUS_RD_WAIT : `IDLE;
+         st_bus_next    = (Bus2IP_CS) ? `BUS_RD_WAIT : `IDLE;
       end
    endcase
 end
@@ -300,13 +326,13 @@ always @(*) begin
    st_axis_next      = 0;
    case(st_axis_current)
       `IDLE : begin
-         st_axis_next   = (wr_bus2mem_en & ~Bus2IP_RNW)  ? `AXIS_BUS_WR   :
-                          (rd_bus2mem_en &  Bus2IP_RNW)  ? `AXIS_BUS_RD   :
-                          (m_conv_b2m_tvalid)            ? `AXIS_WR_TUSER :
-                          (en_start_replay & ~sw_rst_ff) ? `AXIS_RD       : `IDLE;
+         st_axis_next   = (wr_bus2mem_en & (st_bus_current == `BUS_WR_DONE)) ? `AXIS_BUS_WR   :
+                          (rd_mem2bus_en & (st_bus_current == `BUS_RD_DLY1)) ? `AXIS_BUS_RD   :
+                          (m_conv_b2m_tvalid)                                ? `AXIS_WR_TUSER :
+                          (en_start_replay & ~sw_rst_ff)                     ? `AXIS_RD       : `IDLE;
       end
       `AXIS_BUS_WR : begin
-         st_axis_next   = `IDLE;
+         st_axis_next   = `AXIS_BUS_WR_WAIT;
          app_wr_cmd_i   = 1;
          app_wr_addr_i  = bus2mem_addr[22:4];
          case (bus2mem_addr[3:2])
@@ -328,10 +354,16 @@ always @(*) begin
             end
          endcase
       end
+      `AXIS_BUS_WR_WAIT : begin
+         st_axis_next   = (st_bus_current == `IDLE) ? `IDLE : `AXIS_BUS_WR_WAIT;
+      end
       `AXIS_BUS_RD : begin
          app_rd_cmd_i   = 1;
          app_rd_addr_i  = bus2mem_addr[22:4];
-         st_axis_next   = `IDLE;
+         st_axis_next   = `AXIS_BUS_RD_WAIT;
+      end
+      `AXIS_BUS_RD_WAIT : begin
+         st_axis_next   = (st_bus_current == `IDLE) ? `IDLE : `AXIS_BUS_RD_WAIT;
       end
       `AXIS_WR_TUSER : begin
          if (m_conv_b2m_tvalid) begin
@@ -340,7 +372,7 @@ always @(*) begin
             app_wr_data_i     = {7'h0, 1'b1, 8'h0, m_conv_b2m_tuser};
             app_wr_bw_n_i     = 16'h0;
             wr_mem_addr_next  = wr_mem_addr + 1;
-            st_axis_next           = (r_clear) ? `IDLE : `AXIS_WR;
+            st_axis_next      = (r_clear) ? `IDLE : `AXIS_WR;
          end
          else begin
             app_wr_cmd_i      = 0;
@@ -348,18 +380,18 @@ always @(*) begin
             app_wr_data_i     = 0;
             app_wr_bw_n_i     = 16'hff;
             wr_mem_addr_next  = wr_mem_addr;
-            st_axis_next           = (r_clear) ? `IDLE : (en_wr_done) ? `IDLE : `AXIS_WR_TUSER;
+            st_axis_next      = (r_clear) ? `IDLE : (en_wr_done) ? `IDLE : `AXIS_WR_TUSER;
          end
       end
       `AXIS_WR_FLUSH : begin
          if (m_conv_b2m_tvalid) begin
             wr_mem_addr_next  = wr_mem_addr;
             m_conv_b2m_tready = 1;
-            st_axis_next           = (r_clear) ? `IDLE : `AXIS_WR_FLUSH;
+            st_axis_next      = (r_clear) ? `IDLE : `AXIS_WR_FLUSH;
          end
          else begin
             wr_mem_addr_next  = wr_mem_addr;
-            st_axis_next           = (r_clear) ? `IDLE : (en_wr_done) ? `IDLE : `AXIS_WR_FLUSH;
+            st_axis_next      = (r_clear) ? `IDLE : (en_wr_done) ? `IDLE : `AXIS_WR_FLUSH;
          end
       end
       `AXIS_WR : begin
@@ -371,7 +403,7 @@ always @(*) begin
                app_wr_bw_n_i     = 16'h0;
                wr_mem_addr_next  = wr_mem_addr;
                m_conv_b2m_tready = 1;
-               st_axis_next           = (r_clear) ? `IDLE : `AXIS_WR_FLUSH;
+               st_axis_next      = (r_clear) ? `IDLE : `AXIS_WR_FLUSH;
             end
             else begin
                app_wr_cmd_i      = 1;
@@ -380,7 +412,7 @@ always @(*) begin
                app_wr_bw_n_i     = 16'h0;
                wr_mem_addr_next  = wr_mem_addr + 1;
                m_conv_b2m_tready = 1;
-               st_axis_next           = (r_clear) ? `IDLE : (m_conv_b2m_tlast) ? `AXIS_WR_TUSER : `AXIS_WR;
+               st_axis_next      = (r_clear) ? `IDLE : (m_conv_b2m_tlast) ? `AXIS_WR_TUSER : `AXIS_WR;
             end
          end
          else begin
@@ -390,7 +422,7 @@ always @(*) begin
             app_wr_bw_n_i     = 16'hff;
             wr_mem_addr_next  = wr_mem_addr;
             m_conv_b2m_tready = 0;
-            st_axis_next           = (r_clear) ? `IDLE : `AXIS_WR_TUSER;
+            st_axis_next      = (r_clear) ? `IDLE : `AXIS_WR_TUSER;
          end
       end
       `AXIS_RD : begin
@@ -399,14 +431,14 @@ always @(*) begin
             app_rd_addr_i     = rd_mem_addr;
             rd_mem_addr_next  = rd_mem_addr + 1;
             replay_no_next    = (rd_mem_addr == wr_end_addr) ? replay_no + 1 : replay_no;
-            st_axis_next           = (r_clear) ? `IDLE : (rd_mem_addr == wr_end_addr) ? `AXIS_RD_WAIT : `AXIS_RD;
+            st_axis_next      = (r_clear) ? `IDLE : (rd_mem_addr == wr_end_addr) ? `AXIS_RD_WAIT : `AXIS_RD;
          end
          else begin
             app_rd_cmd_i      = 0;
             app_rd_addr_i     = rd_mem_addr;
             rd_mem_addr_next  = rd_mem_addr;
             replay_no_next    = replay_no;
-            st_axis_next           = (r_clear) ? `IDLE : `AXIS_RD;
+            st_axis_next      = (r_clear) ? `IDLE : `AXIS_RD;
          end
       end
       `AXIS_RD_WAIT : begin

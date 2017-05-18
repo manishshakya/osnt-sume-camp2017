@@ -126,6 +126,8 @@ wire           app_rd_valid_o;
 wire  [143:0]  app_rd_data_o;
 wire           init_calib_complete_o;
 
+wire  mem_wr_en;
+
 wire  rst_clk;
 assign resetn = ~rst_clk;
 
@@ -207,6 +209,7 @@ qdr_if_controller
                                                    
    .app_rd_valid_o         (  app_rd_valid_o          ),
    .app_rd_data_o          (  app_rd_data_o           ),
+   .mem_wr_en              (  mem_wr_en               ),
    .init_calib_complete_o  (  init_calib_complete_o   ),
                                                    
    .Bus2IP_Addr            (  Bus2IP_Addr             ),
@@ -398,23 +401,23 @@ mem_fifo
 
 fallthrough_small_fifo
 #(
-   .WIDTH            (  144               ),
-   .MAX_DEPTH_BITS   (  10                )
+   .WIDTH            (  144                           ),
+   .MAX_DEPTH_BITS   (  10                            )
 )
 mem_store
 (
    //Outputs
-   .dout             (  mem_data_out      ),
-   .full             (                    ),
-   .nearly_full      (  mem_data_full     ),
-   .prog_full        (                    ),
-   .empty            (  mem_data_empty    ),
+   .dout             (  mem_data_out                  ),
+   .full             (                                ),
+   .nearly_full      (  mem_data_full                 ),
+   .prog_full        (                                ),
+   .empty            (  mem_data_empty                ),
    //Inputs
-   .din              (  app_rd_data_o     ),
-   .wr_en            (  app_rd_valid_o    ),
-   .rd_en            (  mem_data_rd       ),
-   .reset            (  rst_clk           ),
-   .clk              (  clk               )
+   .din              (  app_rd_data_o                 ),
+   .wr_en            (  app_rd_valid_o & mem_wr_en    ),
+   .rd_en            (  mem_data_rd                   ),
+   .reset            (  rst_clk                       ),
+   .clk              (  clk                           )
 );
 
 mig_qdrC

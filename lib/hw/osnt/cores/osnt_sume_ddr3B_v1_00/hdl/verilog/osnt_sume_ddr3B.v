@@ -195,13 +195,6 @@ ddr_if_controller
    .axis_aclk              (  axis_aclk               ),
    .axis_aresetn           (  axis_aresetn            ),
                                                     
-   .m_axis_tdata           (  m_axis_tdata            ),
-   .m_axis_tkeep           (  m_axis_tkeep            ),
-   .m_axis_tuser           (  m_axis_tuser            ),
-   .m_axis_tvalid          (  m_axis_tvalid           ),
-   .m_axis_tready          (  m_axis_tready           ),
-   .m_axis_tlast           (  m_axis_tlast            ),
-                                                    
    .m_async_tdata          (  m_async_tdata           ),
    .m_async_tkeep          (  m_async_tkeep           ),
    .m_async_tuser          (  m_async_tuser           ),
@@ -210,12 +203,6 @@ ddr_if_controller
    .m_async_tlast          (  m_async_tlast           ),
                                                     
    .s_async_tready         (  s_async_tready          ),
-   .s_axis_tdata           (  s_axis_tdata            ),
-   .s_axis_tkeep           (  s_axis_tkeep            ),
-   .s_axis_tuser           (  s_axis_tuser            ),
-   .s_axis_tvalid          (  s_axis_tvalid           ),
-   .s_axis_tready          (  s_axis_tready           ),
-   .s_axis_tlast           (  s_axis_tlast            ),
                                                     
    .sw_rst                 (  sw_rst                  ),
    .replay_count           (  replay_count            ),
