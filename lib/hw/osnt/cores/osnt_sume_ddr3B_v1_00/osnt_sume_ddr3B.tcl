@@ -49,6 +49,30 @@ set_property -dict [list CONFIG.TDATA_NUM_BYTES {32} CONFIG.TUSER_WIDTH {128} CO
 generate_target {instantiation_template} [get_files ./${project_dir}/ddr3B_async_fifo_0/ddr3B_async_fifo_0.xci]
 generate_target all [get_files  ./${project_dir}/ddr3B_async_fifo_0/ddr3B_async_fifo_0.xci]
 
+#256->64
+create_ip -name axis_dwidth_converter -vendor xilinx.com -library ip -version 1.1 -module_name ddr3B_fifo_conv_b2m_0 -dir ./${project_dir}
+set_property -dict [list CONFIG.S_TDATA_NUM_BYTES {32} CONFIG.M_TDATA_NUM_BYTES {8} CONFIG.TUSER_BITS_PER_BYTE {16} CONFIG.HAS_TLAST {1} CONFIG.HAS_TKEEP {1}] [get_ips ddr3B_fifo_conv_b2m_0]
+generate_target {instantiation_template} [get_files ./${project_dir}/ddr3B_fifo_conv_b2m_0/ddr3B_fifo_conv_b2m_0.xci]
+generate_target all [get_files  ./${project_dir}/ddr3B_fifo_conv_b2m_0/ddr3B_fifo_conv_b2m_0.xci]
+
+#64->448
+create_ip -name axis_dwidth_converter -vendor xilinx.com -library ip -version 1.1 -module_name ddr3B_fifo_conv_b2m_1 -dir ./${project_dir}
+set_property -dict [list CONFIG.S_TDATA_NUM_BYTES {8} CONFIG.M_TDATA_NUM_BYTES {56} CONFIG.TUSER_BITS_PER_BYTE {16} CONFIG.HAS_TLAST {1} CONFIG.HAS_TKEEP {1}] [get_ips ddr3B_fifo_conv_b2m_1]
+generate_target {instantiation_template} [get_files ./${project_dir}/ddr3B_fifo_conv_b2m_1/ddr3B_fifo_conv_b2m_1.xci]
+generate_target all [get_files  ./${project_dir}/ddr3B_fifo_conv_b2m_1/ddr3B_fifo_conv_b2m_1.xci]
+
+#448->64
+create_ip -name axis_dwidth_converter -vendor xilinx.com -library ip -version 1.1 -module_name ddr3B_fifo_conv_m2b_0 -dir ./${project_dir}
+set_property -dict [list CONFIG.S_TDATA_NUM_BYTES {56} CONFIG.M_TDATA_NUM_BYTES {8} CONFIG.TUSER_BITS_PER_BYTE {16} CONFIG.HAS_TLAST {1} CONFIG.HAS_TKEEP {1}] [get_ips ddr3B_fifo_conv_m2b_0]
+generate_target {instantiation_template} [get_files ./${project_dir}/ddr3B_fifo_conv_m2b_0/ddr3B_fifo_conv_m2b_0.xci]
+generate_target all [get_files  ./${project_dir}/ddr3B_fifo_conv_m2b_0/ddr3B_fifo_conv_m2b_0.xci]
+
+#448->64
+create_ip -name axis_dwidth_converter -vendor xilinx.com -library ip -version 1.1 -module_name ddr3B_fifo_conv_m2b_1 -dir ./${project_dir}
+set_property -dict [list CONFIG.S_TDATA_NUM_BYTES {8} CONFIG.M_TDATA_NUM_BYTES {32} CONFIG.TUSER_BITS_PER_BYTE {16} CONFIG.HAS_TLAST {1} CONFIG.HAS_TKEEP {1}] [get_ips ddr3B_fifo_conv_m2b_1]
+generate_target {instantiation_template} [get_files ./${project_dir}/ddr3B_fifo_conv_m2b_1/ddr3B_fifo_conv_m2b_1.xci]
+generate_target all [get_files  ./${project_dir}/ddr3B_fifo_conv_m2b_1/ddr3B_fifo_conv_m2b_1.xci]
+
 # IP build.
 read_verilog "./hdl/verilog/osnt_sume_ddr3B.v"
 read_verilog "../osnt_sume_ddr3A_v1_00/hdl/verilog/ddr_if_controller.v"

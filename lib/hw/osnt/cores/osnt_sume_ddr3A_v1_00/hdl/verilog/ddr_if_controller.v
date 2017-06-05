@@ -29,13 +29,11 @@
 
 module ddr_if_controller
 #(
-   parameter   C_S_AXI_DATA_WIDTH      = 32,          
-   parameter   C_S_AXI_ADDR_WIDTH      = 32,          
+   parameter   C_S_AXI_DATA_WIDTH      = 32,
+   parameter   C_S_AXI_ADDR_WIDTH      = 32,
 
-   parameter   C_M_AXIS_TDATA_WIDTH    = 256,
-   parameter   C_M_AXIS_TUSER_WIDTH    = 128,
-   parameter   C_S_AXIS_TDATA_WIDTH    = 256,
-   parameter   C_S_AXIS_TUSER_WIDTH    = 128
+   parameter   C_M_AXIS_TDATA_WIDTH    = 512,
+   parameter   C_M_AXIS_TUSER_WIDTH    = 128
 )
 (
    input                                                 clk,
@@ -44,14 +42,11 @@ module ddr_if_controller
    input                                                 axis_aclk,
    input                                                 axis_aresetn,
 
-   input          [C_M_AXIS_TDATA_WIDTH-1:0]             m_async_tdata,
-   input          [(C_M_AXIS_TDATA_WIDTH/8)-1:0]         m_async_tkeep,
-   input          [C_M_AXIS_TUSER_WIDTH-1:0]             m_async_tuser,
-   input                                                 m_async_tvalid,
-   output   reg                                          m_async_tready,
-   input                                                 m_async_tlast,
+   input          [C_M_AXIS_TDATA_WIDTH-1:0]             b2m_fifo_out_data,
+   input                                                 b2m_fifo_empty,
+   output   reg                                          b2m_fifo_rd_en,
 
-   input                                                 s_async_tready,
+   input                                                 s_conv_m2b_tready,
 
    input                                                 sw_rst,
    input          [C_S_AXI_ADDR_WIDTH-1 : 0]             replay_count,
@@ -130,36 +125,21 @@ reg   [26:0]   wr_mem_addr, wr_mem_addr_next;
 reg   [26:0]   rd_mem_addr, rd_mem_addr_next;
 reg   [26:0]   wr_end_addr;
 
-reg   [C_S_AXI_ADDR_WIDTH-1:0]               replay_no, replay_no_next;
-
-wire  fifo_empty;
-wire  fifo_full;
-
-wire  [C_M_AXIS_TDATA_WIDTH-1:0]             fifo_in_tdata;
-wire  [(C_M_AXIS_TDATA_WIDTH/8)-1:0]         fifo_in_tkeep;
-wire  [C_M_AXIS_TUSER_WIDTH-1:0]             fifo_in_tuser;
-wire                                         fifo_in_tlast;
-wire  [94:0]                                 fifo_in_meta;
-
-wire  [C_M_AXIS_TDATA_WIDTH-1:0]             fifo_out_tdata;
-wire  [(C_M_AXIS_TDATA_WIDTH/8)-1:0]         fifo_out_tkeep;
-wire  [C_M_AXIS_TUSER_WIDTH-1:0]             fifo_out_tuser;
-wire                                         fifo_out_tlast;
-wire  [94:0]                                 fifo_out_meta;
+reg   [C_S_AXI_ADDR_WIDTH-1:0]   replay_no, replay_no_next;
 
 wire  wr_bus2mem_en, rd_mem2bus_en;
 wire  [511:0]  wdf_data;
 
-reg   [C_S_AXI_ADDR_WIDTH-1 : 0]             r_replay_count;
+reg   [C_S_AXI_ADDR_WIDTH-1:0]   r_replay_count;
 reg   [2:0] r_start_replay, r_wr_done, r_sw_rst;
 
-wire  w_m_async_tlast;
+wire  w_m_conv_b2m_tlast;
 reg   sw_rst_ff;
 reg   [31:0]   bus2mem_addr;
 reg   [3:0]    st_bus_current, st_bus_next;
 reg   [4:0]    st_axis_current, st_axis_next;
 reg   r_clear;
-reg   r_m_async_tlast;
+reg   r_m_conv_b2m_tlast;
 reg   [31:0]   pkt_cnt;
 
 assign st_valid = (st_bus_current != `BUS_RD_DONE) &
@@ -246,18 +226,18 @@ always @(posedge clk)
 
 always @(posedge clk)
    if (rst_clk)
-      r_m_async_tlast   <= 0;
+      r_m_conv_b2m_tlast   <= 0;
    else
-      r_m_async_tlast   <= m_async_tlast & m_async_tvalid;
+      r_m_conv_b2m_tlast   <= b2m_fifo_out_data[511] & ~b2m_fifo_empty;
 
-assign w_m_async_tlast = (m_async_tlast & m_async_tvalid) & ~r_m_async_tlast;
+assign w_m_conv_b2m_tlast = (b2m_fifo_out_data[511] & ~b2m_fifo_empty) & ~r_m_conv_b2m_tlast;
 
 always @(posedge clk)
    if (rst_clk)
       pkt_cnt     <= 0;
-   else if (r_clear || (m_async_tvalid && (st_axis_next == `AXIS_WR_0) && (st_axis_current == `IDLE)))
+   else if (r_clear || (~b2m_fifo_empty && (st_axis_next == `AXIS_WR_0) && (st_axis_current == `IDLE)))
       pkt_cnt     <= 0;
-   else if (w_m_async_tlast)
+   else if (w_m_conv_b2m_tlast)
       pkt_cnt     <= pkt_cnt + 1;
 
 always @(posedge clk)
@@ -365,7 +345,7 @@ always @(*) begin
             IP2Bus_RdAck   = 1;
             st_bus_next    = `BUS_RD_WAIT;
             case(Bus2IP_Addr[15:0])
-               `CTRL_STATUS  : IP2Bus_Data = {28'b0, app_wdf_rdy_o, app_rdy_o, m_async_tvalid, init_calib_complete_o};
+               `CTRL_STATUS  : IP2Bus_Data = {28'b0, app_wdf_rdy_o, app_rdy_o, b2m_fifo_empty, init_calib_complete_o};
                `PKT_CNT_NO   : IP2Bus_Data = pkt_cnt;
                `PKT_END_ADDR : IP2Bus_Data = wr_end_addr;
                `BUS_MEM_ADDR : IP2Bus_Data = bus2mem_addr;
@@ -379,7 +359,8 @@ always @(*) begin
 end
 
 
-assign wdf_data = {95'h0, m_async_tlast, m_async_tuser, m_async_tkeep, m_async_tdata};
+assign wdf_data = b2m_fifo_out_data;
+
 wire  [511:0]  pattern_0 = {384'h0, {128{1'b1}}};
 wire  [511:0]  pattern_1 = {256'h0, {128{1'b1}}, 128'h0};
 wire  [511:0]  pattern_2 = {128'h0, {128{1'b1}}, 256'h0};
@@ -397,7 +378,7 @@ always @(*) begin
    app_wdf_wren_i    = 0;
    app_wdf_data_i    = 0;
    app_wdf_mask_i    = {64{1'b1}};
-   m_async_tready    = 0;
+   b2m_fifo_rd_en    = 0;
    rd_mem_addr_next  = 0;
    wr_mem_addr_next  = 0;
    replay_no_next    = 0;
@@ -406,7 +387,7 @@ always @(*) begin
       `IDLE : begin
          st_axis_next      = (wr_bus2mem_en & (st_bus_current == `BUS_WR_DONE)) ? `AXIS_BUS_WR  :
                              (rd_mem2bus_en & (st_bus_current == `BUS_RD_DONE)) ? `AXIS_BUS_RD  :
-                             (m_async_tvalid)                                   ? `AXIS_WR_0    :
+                             (~b2m_fifo_empty)                                  ? `AXIS_WR_0    :
                              (en_start_replay && ~sw_rst_ff)                    ? `AXIS_RD      : `IDLE;
       end
       `AXIS_BUS_WR : begin
@@ -498,7 +479,7 @@ always @(*) begin
          st_axis_next      = (st_bus_current == `IDLE) ? `IDLE : `AXIS_BUS_RD_WAIT;
       end
       `AXIS_WR_0 : begin
-         if (m_async_tvalid) begin
+         if (~b2m_fifo_empty) begin
             app_addr_i        = {wr_mem_addr, 3'b0};
             app_cmd_i         = 3'b000;
             app_en_i          = 1;
@@ -544,7 +525,7 @@ always @(*) begin
          end
       end
       `AXIS_WR_1 : begin
-         if (m_async_tvalid) begin
+         if (~b2m_fifo_empty) begin
             app_addr_i        = {wr_mem_addr, 3'b0};
             app_cmd_i         = 3'b000;
             app_en_i          = 1;
@@ -590,7 +571,7 @@ always @(*) begin
          end
       end
       `AXIS_WR_2 : begin
-         if (m_async_tvalid) begin
+         if (~b2m_fifo_empty) begin
             app_addr_i        = {wr_mem_addr, 3'b0};
             app_cmd_i         = 3'b000;
             app_en_i          = 1;
@@ -636,7 +617,7 @@ always @(*) begin
          end
       end
       `AXIS_WR_3 : begin
-         if (m_async_tvalid) begin
+         if (~b2m_fifo_empty) begin
             app_addr_i        = {wr_mem_addr, 3'b0};
             app_cmd_i         = 3'b000;
             app_en_i          = 1;
@@ -668,7 +649,7 @@ always @(*) begin
       `AXIS_WR_VALID_3 : begin
          if (app_rd_data_valid_o) begin
             if ((app_rd_data_o & pattern_3) == (wdf_data & pattern_3)) begin
-               m_async_tready    = 1;
+               b2m_fifo_rd_en    = 1;
                wr_mem_addr_next  = (r_clear) ? 0 : wr_mem_addr+1;
                st_axis_next      = (r_clear) ? `IDLE : `AXIS_WR_0;
             end
@@ -683,7 +664,7 @@ always @(*) begin
          end
       end
       `AXIS_RD : begin
-         if (s_async_tready & app_rdy_o) begin
+         if (s_conv_m2b_tready & app_rdy_o) begin
             app_addr_i        = {rd_mem_addr, 3'b0};
             app_cmd_i         = 3'b001;
             app_en_i          = 1;

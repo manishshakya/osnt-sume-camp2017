@@ -161,83 +161,117 @@ wire                                         m_async_tvalid;
 wire                                         m_async_tready;
 wire                                         m_async_tlast;
 
-wire                                         s_async_tready;
+wire  [63:0]                                 m0_conv_b2m_tdata;
+wire  [(64/8)-1:0]                           m0_conv_b2m_tkeep;
+wire  [127:0]                                m0_conv_b2m_tuser;
+wire                                         m0_conv_b2m_tvalid;
+wire                                         m0_conv_b2m_tready;
+wire                                         m0_conv_b2m_tlast;
 
-wire  fifo_empty;
-wire  fifo_full;
+wire  [447:0]                                m1_conv_b2m_tdata;
+wire  [(448/8)-1:0]                          m1_conv_b2m_tkeep;
+wire  [(16*(448/8))-1:0]                     m1_conv_b2m_tuser;
+wire                                         m1_conv_b2m_tvalid;
+reg                                          m1_conv_b2m_tready;
+wire                                         m1_conv_b2m_tlast;
 
-wire  [C_M_AXIS_TDATA_WIDTH-1:0]             fifo_in_tdata;
-wire  [(C_M_AXIS_TDATA_WIDTH/8)-1:0]         fifo_in_tkeep;
-wire  [C_M_AXIS_TUSER_WIDTH-1:0]             fifo_in_tuser;
-wire                                         fifo_in_tlast;
-wire  [94:0]                                 fifo_in_meta;
+wire  [63:0]                                 m0_conv_m2b_tdata;
+wire  [(64/8)-1:0]                           m0_conv_m2b_tkeep;
+wire  [127:0]                                m0_conv_m2b_tuser;
+wire                                         m0_conv_m2b_tvalid;
+wire                                         m0_conv_m2b_tready;
+wire                                         m0_conv_m2b_tlast;
 
-wire  [C_M_AXIS_TDATA_WIDTH-1:0]             fifo_out_tdata;
-wire  [(C_M_AXIS_TDATA_WIDTH/8)-1:0]         fifo_out_tkeep;
-wire  [C_M_AXIS_TUSER_WIDTH-1:0]             fifo_out_tuser;
-wire                                         fifo_out_tlast;
-wire  [94:0]                                 fifo_out_meta;
+wire  [255:0]                                m1_conv_m2b_tdata;
+wire  [(256/8)-1:0]                          m1_conv_m2b_tkeep;
+wire  [(16*(256/8))-1:0]                     m1_conv_m2b_tuser;
+wire                                         m1_conv_m2b_tvalid;
+wire                                         m1_conv_m2b_tready;
+wire                                         m1_conv_m2b_tlast;
+
+reg   [447:0]                                s_conv_m2b_tdata;
+reg   [(448/8)-1:0]                          s_conv_m2b_tkeep;
+reg   [(16*(448/8))-1:0]                     s_conv_m2b_tuser;
+reg                                          s_conv_m2b_tvalid;
+wire                                         s_conv_m2b_tready;
+reg                                          s_conv_m2b_tlast;
+
+wire  [511:0]  m2b_fifo_out_data;
+wire  m2b_fifo_empty;
+wire  m2b_fifo_full;
+reg   m2b_fifo_rd_en;
+
+reg   [511:0]  b2m_fifo_in_data;
+wire  [511:0]  b2m_fifo_out_data;
+wire  b2m_fifo_rd_en, b2m_fifo_empty, b2m_fifo_full;
+reg   b2m_fifo_wr_en;
+
+reg   [1:0]    b2m_st_current, b2m_st_next;
+
+`define  IDLE  0
+`define  SEND  1
+
+reg   [1:0]    m2b_st_current, m2b_st_next;
+reg   [127:0]  m2b_tuser_current, m2b_tuser_next;
+
+wire  en_tuser, en_tlast;
+
 
 ddr_if_controller
 #(
-   .C_S_AXI_DATA_WIDTH     (  C_S_AXI_DATA_WIDTH      ),
-   .C_S_AXI_ADDR_WIDTH     (  C_S_AXI_ADDR_WIDTH      ),
-   .C_M_AXIS_TDATA_WIDTH   (  C_M_AXIS_TDATA_WIDTH    ),
-   .C_M_AXIS_TUSER_WIDTH   (  C_M_AXIS_TUSER_WIDTH    ),
-   .C_S_AXIS_TDATA_WIDTH   (  C_S_AXIS_TDATA_WIDTH    ),
-   .C_S_AXIS_TUSER_WIDTH   (  C_S_AXIS_TUSER_WIDTH    )
+   .C_S_AXI_DATA_WIDTH     (  C_S_AXI_DATA_WIDTH         ),
+   .C_S_AXI_ADDR_WIDTH     (  C_S_AXI_ADDR_WIDTH         ),
+   .C_M_AXIS_TDATA_WIDTH   (  512                        ),
+   .C_M_AXIS_TUSER_WIDTH   (  128                        )
 )
 ddr_if_controller
 (
-   .clk                    (  clk                     ),
-   .rst_clk                (  rst_clk                 ),
+   .clk                    (  clk                        ),
+   .rst_clk                (  rst_clk                    ),
                                                     
-   .axis_aclk              (  axis_aclk               ),
-   .axis_aresetn           (  axis_aresetn            ),
+   .axis_aclk              (  axis_aclk                  ),
+   .axis_aresetn           (  axis_aresetn               ),
                                                     
-   .m_async_tdata          (  m_async_tdata           ),
-   .m_async_tkeep          (  m_async_tkeep           ),
-   .m_async_tuser          (  m_async_tuser           ),
-   .m_async_tvalid         (  m_async_tvalid          ),
-   .m_async_tready         (  m_async_tready          ),
-   .m_async_tlast          (  m_async_tlast           ),
-                                                    
-   .s_async_tready         (  s_async_tready          ),
+   .b2m_fifo_out_data      (  b2m_fifo_out_data          ),
+   .b2m_fifo_empty         (  b2m_fifo_empty             ),
+   .b2m_fifo_rd_en         (  b2m_fifo_rd_en             ),
 
-   .sw_rst                 (  sw_rst                  ),
-   .replay_count           (  replay_count            ),
-   .start_replay           (  start_replay            ),
-   .wr_done                (  wr_done                 ),
-                                                    
-   .app_addr_i             (  app_addr_i              ),
-   .app_cmd_i              (  app_cmd_i               ), // read;001, write;000
-   .app_en_i               (  app_en_i                ),
-   .app_wdf_data_i         (  app_wdf_data_i          ),
-   .app_wdf_end_i          (  app_wdf_end_i           ),
-   .app_wdf_mask_i         (  app_wdf_mask_i          ),
-   .app_wdf_wren_i         (  app_wdf_wren_i          ),
-                                                    
-   .app_wdf_rdy_o          (  app_wdf_rdy_o           ),
-   .app_rd_data_o          (  app_rd_data_o           ),
-   .app_rd_data_end_o      (  app_rd_data_end_o       ),
-   .app_rd_data_valid_o    (  app_rd_data_valid_o     ),
-   .app_rdy_o              (  app_rdy_o               ),
-   .init_calib_complete_o  (  init_calib_complete_o   ),
+   .s_conv_m2b_tready      (  s_conv_m2b_tready          ),
 
-   .app_ref_req_i          (  app_ref_req_i           ),
-   .app_ref_ack_o          (  app_ref_ack_o           ),
+   .sw_rst                 (  sw_rst                     ),
+   .replay_count           (  replay_count               ),
+   .start_replay           (  start_replay               ),
+   .wr_done                (  wr_done                    ),
                                                     
-   .Bus2IP_Addr            (  Bus2IP_Addr             ),
-   .Bus2IP_CS              (  Bus2IP_CS               ),
-   .Bus2IP_RNW             (  Bus2IP_RNW              ), // 0: wr, 1: rd
-   .Bus2IP_Data            (  Bus2IP_Data             ),
-   .Bus2IP_BE              (  Bus2IP_BE               ),
+   .app_addr_i             (  app_addr_i                 ),
+   .app_cmd_i              (  app_cmd_i                  ), // read;001, write;000
+   .app_en_i               (  app_en_i                   ),
+   .app_wdf_data_i         (  app_wdf_data_i             ),
+   .app_wdf_end_i          (  app_wdf_end_i              ),
+   .app_wdf_mask_i         (  app_wdf_mask_i             ),
+   .app_wdf_wren_i         (  app_wdf_wren_i             ),
                                                     
-   .IP2Bus_Data            (  IP2Bus_Data             ),
-   .IP2Bus_RdAck           (  IP2Bus_RdAck            ),
-   .IP2Bus_WrAck           (  IP2Bus_WrAck            ),
+   .app_wdf_rdy_o          (  app_wdf_rdy_o              ),
+   .app_rd_data_o          (  app_rd_data_o              ),
+   .app_rd_data_end_o      (  app_rd_data_end_o          ),
+   .app_rd_data_valid_o    (  app_rd_data_valid_o        ),
+   .app_rdy_o              (  app_rdy_o                  ),
+   .init_calib_complete_o  (  init_calib_complete_o      ),
 
-   .st_valid               (  st_valid                )
+   .app_ref_req_i          (  app_ref_req_i              ),
+   .app_ref_ack_o          (  app_ref_ack_o              ),
+                                                    
+   .Bus2IP_Addr            (  Bus2IP_Addr                ),
+   .Bus2IP_CS              (  Bus2IP_CS                  ),
+   .Bus2IP_RNW             (  Bus2IP_RNW                 ), // 0: wr, 1: rd
+   .Bus2IP_Data            (  Bus2IP_Data                ),
+   .Bus2IP_BE              (  Bus2IP_BE                  ),
+                                                    
+   .IP2Bus_Data            (  IP2Bus_Data                ),
+   .IP2Bus_RdAck           (  IP2Bus_RdAck               ),
+   .IP2Bus_WrAck           (  IP2Bus_WrAck               ),
+
+   .st_valid               (  st_valid                   )
 );
 
 
@@ -307,18 +341,113 @@ ddr3A_async_fifo_b2m_0
    .m_axis_tuser           (  m_async_tuser           )
 );
 
+//256->64
+ddr3A_fifo_conv_b2m_0
+ddr3A_fifo_conv_b2m_0
+(
+   .aclk                   (  clk                     ),
+   .aresetn                (  resetn                  ),
+
+   .s_axis_tvalid          (  m_async_tvalid          ),
+   .s_axis_tready          (  m_async_tready          ),
+   .s_axis_tdata           (  m_async_tdata           ),
+   .s_axis_tkeep           (  m_async_tkeep           ),
+   .s_axis_tlast           (  m_async_tlast           ),
+   .s_axis_tuser           (  {{(512-128){1'b0}}, m_async_tuser}           ),
+                                             
+   .m_axis_tvalid          (  m0_conv_b2m_tvalid      ),
+   .m_axis_tready          (  m0_conv_b2m_tready      ),
+   .m_axis_tdata           (  m0_conv_b2m_tdata       ),
+   .m_axis_tkeep           (  m0_conv_b2m_tkeep       ),
+   .m_axis_tlast           (  m0_conv_b2m_tlast       ),
+   .m_axis_tuser           (  m0_conv_b2m_tuser       )
+);
+
+//64->448
+ddr3A_fifo_conv_b2m_1
+ddr3A_fifo_conv_b2m_1
+(
+   .aclk                   (  clk                     ),
+   .aresetn                (  resetn                  ),
+
+   .s_axis_tvalid          (  m0_conv_b2m_tvalid      ),
+   .s_axis_tready          (  m0_conv_b2m_tready      ),
+   .s_axis_tdata           (  m0_conv_b2m_tdata       ),
+   .s_axis_tkeep           (  m0_conv_b2m_tkeep       ),
+   .s_axis_tlast           (  m0_conv_b2m_tlast       ),
+   .s_axis_tuser           (  m0_conv_b2m_tuser       ),
+                                             
+   .m_axis_tvalid          (  m1_conv_b2m_tvalid      ),
+   .m_axis_tready          (  m1_conv_b2m_tready      ),
+   .m_axis_tdata           (  m1_conv_b2m_tdata       ),
+   .m_axis_tkeep           (  m1_conv_b2m_tkeep       ),
+   .m_axis_tlast           (  m1_conv_b2m_tlast       ),
+   .m_axis_tuser           (  m1_conv_b2m_tuser       )
+);
+
+always @(posedge clk)
+   if (~resetn) begin
+      b2m_st_current    <= `IDLE;
+   end
+   else begin
+      b2m_st_current    <= b2m_st_next;
+   end
+
+always @(*) begin
+   b2m_fifo_in_data     = 0;
+   b2m_fifo_wr_en       = 0;
+   m1_conv_b2m_tready   = 0;
+   b2m_st_next          = `IDLE;
+   case (b2m_st_current)
+      `IDLE : begin
+         b2m_fifo_in_data     = {{(512-128-8){1'b0}}, 8'h1, m1_conv_b2m_tuser[127:0]};
+         b2m_fifo_wr_en       = ~b2m_fifo_full & m1_conv_b2m_tvalid;
+         m1_conv_b2m_tready   = 0;
+         b2m_st_next          = (~b2m_fifo_full & m1_conv_b2m_tvalid) ? `SEND : `IDLE;
+      end
+      `SEND : begin
+         b2m_fifo_in_data     = {m1_conv_b2m_tlast, 7'b0, m1_conv_b2m_tkeep[55:0], m1_conv_b2m_tdata[447:0]};
+         b2m_fifo_wr_en       = ~b2m_fifo_full & m1_conv_b2m_tvalid;
+         m1_conv_b2m_tready   = ~b2m_fifo_full & m1_conv_b2m_tvalid;
+         b2m_st_next          = (~b2m_fifo_full & m1_conv_b2m_tvalid & m1_conv_b2m_tlast) ? `IDLE : `SEND;
+      end
+   endcase
+end
+
+fallthrough_small_fifo
+#(
+   .WIDTH            (  512                        ),
+   .MAX_DEPTH_BITS   (  IN_FIFO_DEPTH_BIT          )
+)
+b2m_fifo
+(
+   //Outputs
+   .dout             (  b2m_fifo_out_data          ),
+   .full             (),
+   .nearly_full      (  b2m_fifo_full              ),
+   .prog_full        (),
+   .empty            (  b2m_fifo_empty             ),
+   //Inputs
+   .din              (  b2m_fifo_in_data           ),
+   .wr_en            (  b2m_fifo_wr_en             ),
+   .rd_en            (  b2m_fifo_rd_en             ),
+   .reset            (  rst_clk                    ),
+   .clk              (  clk                        )
+);
+
+
 ddr3A_async_fifo_0
 ddr3A_async_fifo_m2b_1
 (
    .s_axis_aclk            (  clk                     ),
    .s_axis_aresetn         (  resetn                  ),
 
-   .s_axis_tvalid          (  ~fifo_empty             ),
-   .s_axis_tready          (  s_async_tready          ),
-   .s_axis_tdata           (  fifo_out_tdata          ),
-   .s_axis_tkeep           (  fifo_out_tkeep          ),
-   .s_axis_tlast           (  fifo_out_tlast          ),
-   .s_axis_tuser           (  fifo_out_tuser          ),
+   .s_axis_tvalid          (  m1_conv_m2b_tvalid      ),
+   .s_axis_tready          (  m1_conv_m2b_tready      ),
+   .s_axis_tdata           (  m1_conv_m2b_tdata       ),
+   .s_axis_tkeep           (  m1_conv_m2b_tkeep       ),
+   .s_axis_tlast           (  m1_conv_m2b_tlast       ),
+   .s_axis_tuser           (  m1_conv_m2b_tuser[127:0]),
                                              
    .m_axis_aclk            (  axis_aclk               ),
    .m_axis_aresetn         (  axis_aresetn            ),
@@ -330,30 +459,115 @@ ddr3A_async_fifo_m2b_1
    .m_axis_tuser           (  m_axis_tuser            )
 );
 
-assign fifo_in_tdata = app_rd_data_o[0+:256];
-assign fifo_in_tkeep = app_rd_data_o[256+:32];
-assign fifo_in_tuser = app_rd_data_o[288+:128];
-assign fifo_in_tlast = app_rd_data_o[416+:1];
+//64-256
+ddr3A_fifo_conv_m2b_1
+ddr3A_fifo_conv_m2b_1
+(
+   .aclk                   (  clk                     ),
+   .aresetn                (  resetn                  ),
+
+   .s_axis_tvalid          (  m0_conv_m2b_tvalid      ),
+   .s_axis_tready          (  m0_conv_m2b_tready      ),
+   .s_axis_tdata           (  m0_conv_m2b_tdata       ),
+   .s_axis_tkeep           (  m0_conv_m2b_tkeep       ),
+   .s_axis_tlast           (  m0_conv_m2b_tlast       ),
+   .s_axis_tuser           (  m0_conv_m2b_tuser       ),
+                                             
+   .m_axis_tvalid          (  m1_conv_m2b_tvalid      ),
+   .m_axis_tready          (  m1_conv_m2b_tready      ),
+   .m_axis_tdata           (  m1_conv_m2b_tdata       ),
+   .m_axis_tkeep           (  m1_conv_m2b_tkeep       ),
+   .m_axis_tlast           (  m1_conv_m2b_tlast       ),
+   .m_axis_tuser           (  m1_conv_m2b_tuser       )
+);
+
+//448->64
+ddr3A_fifo_conv_m2b_0
+ddr3A_fifo_conv_m2b_0
+(
+   .aclk                   (  clk                     ),
+   .aresetn                (  resetn                  ),
+
+   .s_axis_tvalid          (  s_conv_m2b_tvalid       ),
+   .s_axis_tready          (  s_conv_m2b_tready       ),
+   .s_axis_tdata           (  s_conv_m2b_tdata        ),
+   .s_axis_tkeep           (  s_conv_m2b_tkeep        ),
+   .s_axis_tlast           (  s_conv_m2b_tlast        ),
+   .s_axis_tuser           (  s_conv_m2b_tuser        ),
+                                             
+   .m_axis_tvalid          (  m0_conv_m2b_tvalid      ),
+   .m_axis_tready          (  m0_conv_m2b_tready      ),
+   .m_axis_tdata           (  m0_conv_m2b_tdata       ),
+   .m_axis_tkeep           (  m0_conv_m2b_tkeep       ),
+   .m_axis_tlast           (  m0_conv_m2b_tlast       ),
+   .m_axis_tuser           (  m0_conv_m2b_tuser       )
+);
+
+assign en_tuser = (m2b_fifo_out_data[128+:(512-128)] == {{(512-128-8){1'b0}}, 8'h1});
+assign en_tlast = (m2b_fifo_out_data[(512-8)+:8] == {1'b1, 7'b0});
+
+always @(posedge clk)
+   if (~resetn) begin
+      m2b_st_current    <= 0;
+      m2b_tuser_current <= 0;
+   end
+   else begin
+      m2b_st_current    <= m2b_st_next;
+      m2b_tuser_current <= m2b_tuser_next;
+   end
+
+always @(*) begin
+   m2b_tuser_next    = 0;
+   s_conv_m2b_tvalid = 0;
+   s_conv_m2b_tdata  = 0;
+   s_conv_m2b_tkeep  = 0;
+   s_conv_m2b_tlast  = 0;
+   s_conv_m2b_tuser  = 0;
+   m2b_fifo_rd_en    = 0;
+   m2b_st_next       = `IDLE;
+   case (m2b_st_current)
+      `IDLE : begin
+         m2b_tuser_next    = m2b_fifo_out_data[0+:128];
+         s_conv_m2b_tvalid = 0;
+         s_conv_m2b_tdata  = 0;
+         s_conv_m2b_tkeep  = 0;
+         s_conv_m2b_tlast  = 0;
+         s_conv_m2b_tuser  = 0;
+         m2b_fifo_rd_en    = (en_tuser & ~m2b_fifo_empty);
+         m2b_st_next       = (en_tuser & ~m2b_fifo_empty) ? `SEND : `IDLE;
+      end
+      `SEND : begin
+         m2b_tuser_next    = (s_conv_m2b_tready & ~m2b_fifo_empty) ? 0 : m2b_tuser_current;
+         s_conv_m2b_tvalid = ~m2b_fifo_empty;
+         s_conv_m2b_tdata  = m2b_fifo_out_data[0+:448];
+         s_conv_m2b_tkeep  = m2b_fifo_out_data[448+:56];
+         s_conv_m2b_tlast  = en_tlast;
+         s_conv_m2b_tuser  = {{(896-128){1'b0}}, m2b_tuser_current};
+         m2b_fifo_rd_en    = (s_conv_m2b_tready & ~m2b_fifo_empty);
+         m2b_st_next       = (en_tlast & s_conv_m2b_tready & ~m2b_fifo_empty) ? `IDLE : `SEND;
+      end
+   endcase
+end
 
 fallthrough_small_fifo
 #(
-   .WIDTH            (  1+C_M_AXIS_TUSER_WIDTH+(C_M_AXIS_TDATA_WIDTH/8)+C_M_AXIS_TDATA_WIDTH       ),
-   .MAX_DEPTH_BITS   (  IN_FIFO_DEPTH_BIT                                                          )
+   .WIDTH            (  512                     ),
+   .MAX_DEPTH_BITS   (  IN_FIFO_DEPTH_BIT       )
 )
-mem_fifo
+m2b_fifo
 (
    //Outputs
-   .dout             (  {fifo_out_tlast, fifo_out_tuser, fifo_out_tkeep, fifo_out_tdata}           ),
-   .full             (                                                                             ),
-   .nearly_full      (  fifo_full                                                                  ),
-   .prog_full        (                                                                             ),
-   .empty            (  fifo_empty                                                                 ),
+   .dout             (  m2b_fifo_out_data           ),
+   .full             (),
+   .nearly_full      (  m2b_fifo_full               ),
+   .prog_full        (),
+   .empty            (  m2b_fifo_empty              ),
    //Inputs
-   .din              (  {fifo_in_tlast, fifo_in_tuser, fifo_in_tkeep, fifo_in_tdata}               ),
-   .wr_en            (  app_rd_data_valid_o & ~fifo_full & ~Bus2IP_CS & st_valid                   ),
-   .rd_en            (  s_async_tready & ~fifo_empty                                               ),
-   .reset            (  rst_clk                                                                    ),
-   .clk              (  clk                                                                        )
+   .din              (  app_rd_data_o           ),
+   .wr_en            (  app_rd_data_valid_o & ~m2b_fifo_full & ~Bus2IP_CS & st_valid ),
+   .rd_en            (  m2b_fifo_rd_en                          ),
+   .reset            (  rst_clk                                                  ),
+   .clk              (  clk                                                      )
 );
 
 mig_ddr3A
