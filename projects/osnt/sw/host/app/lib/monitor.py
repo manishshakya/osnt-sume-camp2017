@@ -169,7 +169,7 @@ class OSNTMonitorFilter:
 
     def clear_rules(self):
         # Makesure to drop packets as rules are not updated.
-        rd_value = int(rdaxi(self.reg_addr(self.module_base_addr)), 16) & 0xffffffff
+        rd_value = int(rdaxi(OSNT_MON_STATS_BASE_ADDR), 16) & 0xffffffff
         wraxi(OSNT_MON_STATS_BASE_ADDR, hex(rd_value | 0x00000100))
 
         for i in range(OSNT_MON_FILTER_NUM_ENTRIES):
