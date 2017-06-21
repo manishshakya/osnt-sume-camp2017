@@ -223,10 +223,10 @@ always @(*) begin
          st_next                    = (m_conv_256to128_tvalid & s_conv_128to256_tready & m_conv_256to128_tlast) ? `CONV_IDLE : `CONV_SEND;
       end
       `CONV_PASS : begin
-         s_conv_128to256_tvalid     = (m_conv_256to128_tvalid & s_conv_128to256_tready);
+         s_conv_128to256_tvalid     =  m_conv_256to128_tvalid;
          s_conv_128to256_tdata      =  m_conv_256to128_tdata;
          s_conv_128to256_tkeep      =  m_conv_256to128_tkeep;
-         s_conv_128to256_tuser      =  s_conv_128to256_tuser;
+         s_conv_128to256_tuser      =  m_conv_256to128_tuser;
          s_conv_128to256_tlast      =  m_conv_256to128_tlast;
          m_conv_256to128_tready     = (m_conv_256to128_tvalid & s_conv_128to256_tready) ? 1 : 0;
          st_next                    = (m_conv_256to128_tvalid & s_conv_128to256_tready & m_conv_256to128_tlast) ? `CONV_IDLE : `CONV_PASS;
