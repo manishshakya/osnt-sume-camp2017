@@ -613,6 +613,7 @@ mig_ddr3A
    .app_sr_active          (  ), 
    .app_ref_ack            (  app_ref_ack_o           ),
    .app_zq_ack             (  ),
+   //233 -> 185
    .ui_clk                 (  clk                     ),
    .ui_clk_sync_rst        (  rst_clk                 ),
    .init_calib_complete    (  init_calib_complete_o   ),

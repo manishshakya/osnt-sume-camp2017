@@ -457,7 +457,7 @@ mig_qdrA
    .app_rd_addr1           (  0),
    .app_rd_valid1          (),
    .app_rd_data1           (),
-   // source 233MHz => 250MHz
+   // source 200MHz => 250MHz
    .clk                    (  clk                     ),
    .rst_clk                (  rst_clk                 ),
    .init_calib_complete    (  init_calib_complete_o   ),
