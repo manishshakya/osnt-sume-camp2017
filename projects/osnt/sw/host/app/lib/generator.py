@@ -33,7 +33,7 @@
 #  Description:
 #        Code to operate the OSNT Generator
 
-import os
+import os, sys, binascii
 from axi import *
 from time import sleep
 from scapy import *
@@ -58,6 +58,8 @@ RATE_LIMITER_BASE_ADDR = {"nf0" : "0x77e00000",
 DELAY_HEADER_EXTRACTOR_BASE_ADDR = "0x76e00000"
 
 OSNT_MON_TIMER_BASE_ADDR = "0x78a00000"
+
+TS_SIGNATURE = '\xde\xad\xbe\xef\x00\x00\x00\x00'
 
 class DelayField(LongField):
 
@@ -234,14 +236,98 @@ class OSNTGeneratorPcapEngine:
                 wraxi("0x76000060", 0x1)
                 wraxi("0x76000060", 0x0)
 
-    def load_pcap(self, pcaps):
 
+    def load_pcap(self, pcaps):
         # reset
         self.set_reset(True)
 
         # read packets in and set memory boundary
         # check overflow
         pkts = {}
+        pkt_time = {}
+        self.mem_addr_low = [0, 0, 0, 0]
+        self.mem_addr_high = [0, 0, 0, 0]
+        self.enable = [False, False, False, False]
+        self.begin_replay = [False, False, False, False]
+        self.set_mem_addr_low()
+        self.set_mem_addr_high()
+        self.set_enable()
+        self.set_begin_replay()
+        self.set_reset(False)
+        pkts_loaded = {}
+        for i in range(4):
+            iface = 'nf'+str(i)
+            if ('nf'+str(i)) in pcaps:
+                self.enable[i] = True
+                self.begin_replay[i] = True
+                mem_addr_high = self.mem_addr_low[i]
+                pkts.update({'nf'+str(i): rdpcap(pcaps['nf'+str(i)])})
+                pkts_loaded[iface] = 0
+                for pkt in pkts['nf'+str(i)]:
+                    mem_addr_high_nxt = mem_addr_high + ceil(len(pkt)/float(32)) + 1
+                    #if mem_addr_high_nxt >= MEM_HIGH_ADDR:
+                    #    break
+                    pkts_loaded[iface] = pkts_loaded[iface] + 1
+                    mem_addr_high = mem_addr_high_nxt
+                self.mem_addr_high[i] = mem_addr_high
+                if i != 3:
+                    self.mem_addr_low[i+1] = self.mem_addr_high[i]
+
+                pkt_time['nf'+str(i)] = [pkt.time for pkt in pkts['nf'+str(i)]]
+            else:
+                self.mem_addr_high[i] = self.mem_addr_low[i]
+                if i != 3:
+                    self.mem_addr_low[i+1] = self.mem_addr_high[i] 
+
+        self.set_mem_addr_low()
+        self.set_mem_addr_high()
+        sleep(0.5)
+
+        self.set_enable()
+        sleep(0.5)
+
+        average_pkt_len = {}
+        average_word_cnt = {}
+        for iface in pkts:
+            average_pkt_len[iface] = 0
+            average_word_cnt[iface] = 0
+            s = conf.L2socket(iface = iface)
+            for i in range(min(len(pkts[iface]), pkts_loaded[iface])):
+                pkt = pkts[iface][i]
+                average_pkt_len[iface] = average_pkt_len[iface] + len(pkt)
+                average_word_cnt[iface] = average_word_cnt[iface] + ceil(len(pkt)/32.0)
+                s.send(pkt)
+
+            average_pkt_len[iface] = float(average_pkt_len[iface])/len(pkts[iface])
+            average_word_cnt[iface] = float(average_word_cnt[iface])/len(pkts[iface])
+        sleep(1)
+        if iface == 'nf0':
+            wraxi("0x76000054", 0x1)
+            sleep(0.5)
+            wraxi("0x76000054", 0x0)
+        if iface == 'nf1':
+            wraxi("0x76000058", 0x1)
+            sleep(0.5)
+            wraxi("0x76000058", 0x0)
+        if iface == 'nf2':
+            wraxi("0x7600005c", 0x1)
+            sleep(0.5)
+            wraxi("0x7600005c", 0x0)
+        if iface == 'nf3':
+            wraxi("0x76000060", 0x1)
+            sleep(0.5)
+            wraxi("0x76000060", 0x0)
+
+        return {'average_pkt_len':average_pkt_len, 'average_word_cnt':average_word_cnt, 'pkts_loaded':pkts_loaded}
+
+    def load_pcap_ts(self, pcaps):
+        # reset
+        self.set_reset(True)
+
+        # read packets in and set memory boundary
+        # check overflow
+        pkts = {}
+        pkt_time = {}
         self.mem_addr_low = [0, 0, 0, 0]
         self.mem_addr_high = [0, 0, 0, 0]
         self.enable = [False, False, False, False]
@@ -265,13 +351,15 @@ class OSNTGeneratorPcapEngine:
                 pkts_loaded[iface] = 0
                 for pkt in pkts['nf'+str(i)]:
                     mem_addr_high_nxt = mem_addr_high + ceil(len(pkt)/float(32)) + 1
-                    if mem_addr_high_nxt >= MEM_HIGH_ADDR:
-                        break
+                    #if mem_addr_high_nxt >= MEM_HIGH_ADDR:
+                    #    break
                     pkts_loaded[iface] = pkts_loaded[iface] + 1
                     mem_addr_high = mem_addr_high_nxt
                 self.mem_addr_high[i] = mem_addr_high
                 if i != 3:
                     self.mem_addr_low[i+1] = self.mem_addr_high[i]
+
+                pkt_time['nf'+str(i)] = [pkt.time for pkt in pkts['nf'+str(i)]]
             else:
                 self.mem_addr_high[i] = self.mem_addr_low[i]
                 if i != 3:
@@ -283,21 +371,40 @@ class OSNTGeneratorPcapEngine:
 
         self.set_enable()
         sleep(0.5)
-        
+
         average_pkt_len = {}
         average_word_cnt = {}
-        # load packets
+        pkt_time_diff = {} 
+
+        for i in range(4):
+            iface = 'nf'+str(i)
+            if ('nf'+str(i)) in pkt_time:
+                temp_pkt_time_0 = pkt_time[iface]
+                temp_pkt_time_1 = list(range(len(pkt_time[iface]))) 
+                for pkt_no in range(len(pkt_time[iface])):
+                    if (pkt_no != 0):
+                        temp_pkt_time_1[pkt_no] = float(temp_pkt_time_0[pkt_no]) - float(temp_pkt_time_0[pkt_no-1])
+
+                temp_pkt_time_1[0]=1
+                pkt_time_diff[iface]=[int(10**9*ts_value/6.25) for ts_value in temp_pkt_time_1]
+
+        #print "pkt time diff"+str(pkt_time_diff['nf0'])
+
         for iface in pkts:
-            #time = [pkt.time for pkt in pkts[iface]]
-            #delay = [int((time[i+1]-time[i])*DATAPATH_FREQUENCY) for i in range(len(time)-1)]
-            #delay = [0] + delay
             average_pkt_len[iface] = 0
             average_word_cnt[iface] = 0
+            s = conf.L2socket(iface = iface)
             for i in range(min(len(pkts[iface]), pkts_loaded[iface])):
                 pkt = pkts[iface][i]
                 average_pkt_len[iface] = average_pkt_len[iface] + len(pkt)
                 average_word_cnt[iface] = average_word_cnt[iface] + ceil(len(pkt)/32.0)
-                sendp(pkt, iface=iface, verbose=False)
+                
+                pkt_stamp= "{0:0{1}x}".format(pkt_time_diff[iface][i],16)
+                ts_pkt_out = TS_SIGNATURE+binascii.unhexlify(pkt_stamp)
+                s.send(Raw(str(ts_pkt_out)))
+                test_pkt_out_2 = Raw(str(pkt))
+                s.send(test_pkt_out_2)
+
             average_pkt_len[iface] = float(average_pkt_len[iface])/len(pkts[iface])
             average_word_cnt[iface] = float(average_word_cnt[iface])/len(pkts[iface])
         sleep(1)

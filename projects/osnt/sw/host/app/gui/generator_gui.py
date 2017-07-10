@@ -52,6 +52,7 @@ class MainWindow(wx.Frame):
         self.pcaps = {}
         self.rate_limiters = [None]*4
         self.delays = [None]*4
+        self.pts_enable = [False]*4
 
         rx_pos_addr = ["0x79001050", "0x79003050", "0x79005050", "0x79007050"]
         tx_pos_addr = ["0x79001054", "0x79003054", "0x79005054", "0x79007054"]
@@ -90,29 +91,33 @@ class MainWindow(wx.Frame):
         pcap_title.SetBackgroundColour('GRAY')
         pcap_panel = wx.Panel(self)
         pcap_panel.SetBackgroundColour('LIGHT BLUE')
-        pcap_sizer = wx.GridSizer(5, 6, 10, 10)
+        pcap_sizer = wx.GridSizer(5, 7, 10, 10)
         pcap_panel.SetSizer(pcap_sizer)
         self.pcap_file_btn = [None]*4
         self.replay_cnt_input = [None]*4
         self.replay_cnt_txt = [None]*4
+        self.pcap_ts_enable= [None]*4
         self.mem_addr_low_txt = [None]*4
         self.mem_addr_high_txt = [None]*4
         pcap_sizer.AddMany([(wx.StaticText(pcap_panel, label="Interface", style=wx.ALIGN_CENTER), 0, wx.EXPAND),
             (wx.StaticText(pcap_panel, label="Pcap File", style=wx.ALIGN_CENTER), 0, wx.EXPAND),
             (wx.StaticText(pcap_panel, label="Replay Cnt", style=wx.ALIGN_CENTER), 0, wx.EXPAND),
             (wx.StaticText(pcap_panel, label="Replay Cnt Display", style=wx.ALIGN_CENTER), 0, wx.EXPAND),
+            (wx.StaticText(pcap_panel, label="TS Enable", style=wx.ALIGN_CENTER), 0, wx.EXPAND),
             (wx.StaticText(pcap_panel, label="Mem_addr_low", style=wx.ALIGN_CENTER), 0, wx.EXPAND),
             (wx.StaticText(pcap_panel, label="Mem_addr_high", style=wx.ALIGN_CENTER), 0, wx.EXPAND)])
         for i in range(4):
             self.pcap_file_btn[i] = wx.Button(pcap_panel, wx.ID_ANY, "Select Pcap File", style=wx.ALIGN_CENTER, name=str(i))
             self.replay_cnt_input[i] = wx.lib.intctrl.IntCtrl(pcap_panel, min=0, max=(int('0xffffffff', 16)), name=str(i))
             self.replay_cnt_txt[i] = wx.StaticText(pcap_panel, wx.ID_ANY, label='0', style=wx.ALIGN_CENTER)
+            self.pcap_ts_enable[i] = wx.ToggleButton(pcap_panel, wx.ID_ANY, label="TS Enable", style=wx.ALIGN_CENTER, name=str(i))
             self.mem_addr_low_txt[i] = wx.StaticText(pcap_panel, wx.ID_ANY, label='0', style=wx.ALIGN_CENTER)
             self.mem_addr_high_txt[i] = wx.StaticText(pcap_panel, wx.ID_ANY, label='0', style=wx.ALIGN_CENTER)
             pcap_sizer.AddMany([(wx.StaticText(pcap_panel, label=str(i), style=wx.ALIGN_CENTER), 0, wx.EXPAND),
                 (self.pcap_file_btn[i], 0, wx.EXPAND),
                 (self.replay_cnt_input[i], 0, wx.EXPAND),
                 (self.replay_cnt_txt[i], 0, wx.EXPAND),
+                (self.pcap_ts_enable[i], 0, wx.EXPAND),
                 (self.mem_addr_low_txt[i], 0, wx.EXPAND),
                 (self.mem_addr_high_txt[i], 0, wx.EXPAND)])
 
@@ -218,6 +223,7 @@ class MainWindow(wx.Frame):
         for i in range(4):
             self.Bind(wx.EVT_BUTTON, self.on_select_pcap_file, self.pcap_file_btn[i])
             self.Bind(wx.EVT_TEXT, self.on_replay_cnt_change, self.replay_cnt_input[i])
+            self.Bind(wx.EVT_TOGGLEBUTTON, self.on_pcap_ts_enable, self.pcap_ts_enable[i])
             self.Bind(wx.EVT_SCROLL, self.on_rate_change, self.rate_input[i])
             self.Bind(wx.EVT_TOGGLEBUTTON, self.on_rate_limiter_enable, self.rate_limiter_enable_toggle[i])
             self.Bind(wx.EVT_BUTTON, self.on_rate_limiter_reset, self.rate_limiter_reset_button[i])
@@ -247,12 +253,12 @@ class MainWindow(wx.Frame):
         self.sizer.Fit(self)
         self.Show()
 
-
     def readings_init(self):
         for i in range(4):
             iface = 'nf'+str(i)
             self.replay_cnt_input[i].SetValue(self.pcap_engine.replay_cnt[i])
             self.replay_cnt_txt[i].SetLabel(str(self.pcap_engine.replay_cnt[i]))
+            self.pcap_ts_enable[i].SetValue(self.pts_enable[i])
             self.mem_addr_low_txt[i].SetLabel(hex(self.pcap_engine.mem_addr_low[i]))
             self.mem_addr_high_txt[i].SetLabel(hex(self.pcap_engine.mem_addr_high[i]))
             self.rate_input[i].SetValue(self.rate_limiters[i].rate)
@@ -299,7 +305,12 @@ class MainWindow(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             self.pcaps['nf'+str(iface)] = os.path.join(dlg.GetDirectory(), dlg.GetFilename())
             self.pcap_file_btn[iface].SetLabel(dlg.GetFilename())
-            result = self.pcap_engine.load_pcap(self.pcaps)
+            if self.pts_enable[iface] == True:
+               self.log("Load pcap with TS "+str(self.pts_enable[iface]))  
+               result = self.pcap_engine.load_pcap_ts(self.pcaps)
+            else:
+               result = self.pcap_engine.load_pcap(self.pcaps)
+
             self.average_pkt_len.update(result['average_pkt_len'])
             self.average_word_cnt.update(result['average_word_cnt'])
             self.pkts_loaded.update(result['pkts_loaded'])
@@ -341,6 +352,17 @@ class MainWindow(wx.Frame):
         # This value is read back from hardware
         button.SetValue(self.rate_limiters[iface].enable)
         self.log('Rate limiter enable changed for port '+str(iface))
+
+    def on_pcap_ts_enable(self, event):
+        button = event.GetEventObject()
+        iface = int(button.GetName())
+        enable = button.GetValue()
+        self.pts_enable[iface]=enable
+        self.log('PCAP TS enabled button '+str(self.pts_enable[iface]))
+        #self.pts[iface].set_enable(enable)
+        ## This value is read back from hardware
+        #button.SetValue(self.rate_limiters[iface].enable)
+        self.log('PCAP TS enabled '+str(iface)+' '+str(enable))
 
     def on_rate_limiter_reset(self, event):
         button = event.GetEventObject()

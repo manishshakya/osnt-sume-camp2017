@@ -67,6 +67,10 @@ def set_load_pcap(interface, pcap_file):
     initgcli.pcaps[interface] = pcap_file
     result = initgcli.pcap_engine.load_pcap(initgcli.pcaps)
 
+def set_load_pcap_ts(interface, pcap_file):
+    initgcli.pcaps[interface] = pcap_file
+    result = initgcli.pcap_engine.load_pcap_ts(initgcli.pcaps)
+
 def set_load_pcap_only(pcap_file):
     result = initgcli.pcap_engine.load_pcap_only(initgcli.pcaps)
 
@@ -85,6 +89,13 @@ def set_ipg(interface, value):
    initgcli.delays[interface].set_enable(True)
    initgcli.delays[interface].set_use_reg(True)
    print "Inter Packet Gap delay setting..."
+   print "=> nf%d_ipg = %6d\n" %(interface, value)
+
+def set_ipg_ts(interface, value):
+   initgcli.delays[interface].set_delay(value)
+   initgcli.delays[interface].set_enable(True)
+   initgcli.delays[interface].set_use_reg(False)
+   print "Inter Packet Gap delay setting with Timestamp..."
    print "=> nf%d_ipg = %6d\n" %(interface, value)
 
 def set_replay_cnt(interface, value):
