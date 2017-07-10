@@ -116,7 +116,7 @@ wire  [31:0]   ts_value;
 
 `define  CONV_IDLE      0
 `define  CONV_DROP      1
-`define  CONV_PARSE     2
+`define  CONV_WAIT      2
 `define  CONV_SEND      3
 `define  CONV_PASS      4
 
@@ -210,13 +210,24 @@ always @(*) begin
          s_conv_128to256_tlast      = 0;
          s_conv_128to256_tuser_next = (m_conv_256to128_tvalid) ? tuser_ts : s_conv_128to256_tuser_current;
          m_conv_256to128_tready     = (m_conv_256to128_tvalid) ? 1 : 0;
-         st_next                    = (m_conv_256to128_tvalid) ? `CONV_SEND : `CONV_DROP;
+         st_next                    = (m_conv_256to128_tvalid & m_conv_256to128_tlast) ? `CONV_SEND :
+                                      (m_conv_256to128_tvalid                        ) ? `CONV_WAIT : `CONV_DROP;
+      end
+      `CONV_WAIT : begin
+         s_conv_128to256_tvalid     = 0;
+         s_conv_128to256_tdata      = 0;
+         s_conv_128to256_tkeep      = 0;
+         s_conv_128to256_tuser      = 0;
+         s_conv_128to256_tlast      = 0;
+         s_conv_128to256_tuser_next = s_conv_128to256_tuser_current;
+         m_conv_256to128_tready     = (m_conv_256to128_tvalid) ? 1 : 0;
+         st_next                    = (m_conv_256to128_tvalid & m_conv_256to128_tlast) ? `CONV_SEND : `CONV_WAIT;
       end
       `CONV_SEND : begin
          s_conv_128to256_tvalid     =  m_conv_256to128_tvalid;
          s_conv_128to256_tdata      =  m_conv_256to128_tdata;
          s_conv_128to256_tkeep      =  m_conv_256to128_tkeep;
-         s_conv_128to256_tuser      =  s_conv_128to256_tuser_current;
+         s_conv_128to256_tuser      =  {s_conv_128to256_tuser_current[32+:96], m_conv_256to128_tuser[0+:32]};
          s_conv_128to256_tlast      =  m_conv_256to128_tlast;
          s_conv_128to256_tuser_next = (m_conv_256to128_tvalid & s_conv_128to256_tready) ? 0 : s_conv_128to256_tuser_current;
          m_conv_256to128_tready     = (m_conv_256to128_tvalid & s_conv_128to256_tready) ? 1 : 0;

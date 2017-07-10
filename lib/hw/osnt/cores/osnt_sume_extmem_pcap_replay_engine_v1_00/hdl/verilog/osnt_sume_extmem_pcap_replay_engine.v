@@ -206,6 +206,42 @@ wire                                               q3_enable;
                                                   
 wire  [C_S_AXI_DATA_WIDTH-1:0]                     conf_path;
 
+wire  [C_S_AXIS_DATA_WIDTH-1:0]                    m_pre_axis_tdata;
+wire  [((C_S_AXIS_DATA_WIDTH/8))-1:0]              m_pre_axis_tkeep;
+wire  [C_S_AXIS_TUSER_WIDTH-1:0]                   m_pre_axis_tuser;
+wire                                               m_pre_axis_tvalid;
+wire                                               m_pre_axis_tready;
+wire                                               m_pre_axis_tlast;
+
+pre_pcap_mem_store
+#(
+   .C_M_AXIS_DATA_WIDTH       (  C_M_AXIS_DATA_WIDTH     ),
+   .C_S_AXIS_DATA_WIDTH       (  C_S_AXIS_DATA_WIDTH     ),
+   .C_M_AXIS_TUSER_WIDTH      (  C_M_AXIS_TUSER_WIDTH    ),
+   .C_S_AXIS_TUSER_WIDTH      (  C_S_AXIS_TUSER_WIDTH    )
+)
+pre_pcap_mem_store
+(
+   .axis_aclk                 (  axis_aclk               ),
+   .axis_aresetn              (  axis_aresetn            ),
+
+   //Master Stream Ports to external memory for pcap storing
+   .m_axis_tdata              (  m_pre_axis_tdata        ),
+   .m_axis_tkeep              (  m_pre_axis_tkeep        ),
+   .m_axis_tuser              (  m_pre_axis_tuser        ),
+   .m_axis_tvalid             (  m_pre_axis_tvalid       ),
+   .m_axis_tready             (  m_pre_axis_tready       ),
+   .m_axis_tlast              (  m_pre_axis_tlast        ),
+             
+   //Slave Stream Ports from host over DMA 
+   .s_axis_tdata              (  s_axis_tdata            ),
+   .s_axis_tkeep              (  s_axis_tkeep            ),
+   .s_axis_tuser              (  s_axis_tuser            ),
+   .s_axis_tvalid             (  s_axis_tvalid           ),
+   .s_axis_tready             (  s_axis_tready           ),
+   .s_axis_tlast              (  s_axis_tlast            )
+);
+
 pcap_mem_store
 #(
    .C_M_AXIS_DATA_WIDTH       (  C_M_AXIS_DATA_WIDTH     ),
@@ -250,12 +286,12 @@ pcap_mem_store
    .m3_axis_tlast             (  m03_axis_tlast          ),
 
    //Slave Stream Ports from host over DMA 
-   .s_axis_tdata              (  s_axis_tdata            ),
-   .s_axis_tkeep              (  s_axis_tkeep            ),
-   .s_axis_tuser              (  s_axis_tuser            ),
-   .s_axis_tvalid             (  s_axis_tvalid           ),
-   .s_axis_tready             (  s_axis_tready           ),
-   .s_axis_tlast              (  s_axis_tlast            )
+   .s_axis_tdata              (  m_pre_axis_tdata        ),
+   .s_axis_tkeep              (  m_pre_axis_tkeep        ),
+   .s_axis_tuser              (  m_pre_axis_tuser        ),
+   .s_axis_tvalid             (  m_pre_axis_tvalid       ),
+   .s_axis_tready             (  m_pre_axis_tready       ),
+   .s_axis_tlast              (  m_pre_axis_tlast        )
 );
 
 pcap_mem_replay

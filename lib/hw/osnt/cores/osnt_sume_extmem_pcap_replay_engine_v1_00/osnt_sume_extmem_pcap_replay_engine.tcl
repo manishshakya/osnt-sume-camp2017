@@ -40,7 +40,18 @@ create_project -name ${design} -force -dir "./${project_dir}" -part ${device} -i
 set_property source_mgmt_mode All [current_project]  
 set_property top ${design} [current_fileset]
 
+create_ip -name axis_dwidth_converter -vendor xilinx.com -library ip -version 1.1 -module_name fifo_conv_256to128_0 -dir ./${project_dir}
+set_property -dict [list CONFIG.S_TDATA_NUM_BYTES {32} CONFIG.M_TDATA_NUM_BYTES {16} CONFIG.TUSER_BITS_PER_BYTE {8} CONFIG.HAS_TLAST {1} CONFIG.HAS_TKEEP {1}] [get_ips fifo_conv_256to128_0]
+generate_target {instantiation_template} [get_files ./${project_dir}/fifo_conv_256to128_0/fifo_conv_256to128_0.xci]
+generate_target all [get_files  ./${project_dir}/fifo_conv_256to128_0/fifo_conv_256to128_0.xci]
+
+create_ip -name axis_dwidth_converter -vendor xilinx.com -library ip -version 1.1 -module_name fifo_conv_128to256_0 -dir ./${project_dir}
+set_property -dict [list CONFIG.S_TDATA_NUM_BYTES {16} CONFIG.M_TDATA_NUM_BYTES {32} CONFIG.TUSER_BITS_PER_BYTE {8} CONFIG.HAS_TLAST {1} CONFIG.HAS_TKEEP {1}] [get_ips fifo_conv_128to256_0]
+generate_target {instantiation_template} [get_files ./${project_dir}/fifo_conv_128to256_0/fifo_conv_128to256_0.xci]
+generate_target all [get_files  ./${project_dir}/fifo_conv_128to256_0/fifo_conv_128to256_0.xci]
+
 read_verilog "./hdl/verilog/osnt_sume_extmem_pcap_replay_engine.v"
+read_verilog "./hdl/verilog/pre_pcap_mem_store.v"
 read_verilog "./hdl/verilog/pcap_mem_store.v"
 read_verilog "./hdl/verilog/pcap_mem_replay.v"
 read_verilog "./../../../std/cores/osnt_sume_common/hdl/verilog/fallthrough_small_fifo.v"
