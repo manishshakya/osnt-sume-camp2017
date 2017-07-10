@@ -42,6 +42,10 @@ input_arg.add_argument("-ifp0", type=str, help="OSNT SUME generator load packet 
 input_arg.add_argument("-ifp1", type=str, help="OSNT SUME generator load packet into nf1. eg. -if1 <pcap file>")
 input_arg.add_argument("-ifp2", type=str, help="OSNT SUME generator load packet into nf2. eg. -if2 <pcap file>")
 input_arg.add_argument("-ifp3", type=str, help="OSNT SUME generator load packet into nf3. eg. -if3 <pcap file>")
+input_arg.add_argument("-ifpt0", type=str, help="OSNT SUME generator load packet into nf0 with timestamp. eg. -if0 <pcap file>")
+input_arg.add_argument("-ifpt1", type=str, help="OSNT SUME generator load packet into nf1 with timestamp. eg. -if1 <pcap file>")
+input_arg.add_argument("-ifpt2", type=str, help="OSNT SUME generator load packet into nf2 with timestamp. eg. -if2 <pcap file>")
+input_arg.add_argument("-ifpt3", type=str, help="OSNT SUME generator load packet into nf3 with timestamp. eg. -if3 <pcap file>")
 input_arg.add_argument("-rpn0", type=int, help="OSNT SUME generator packet replay no. on nf0. eg. -rpn0 <integer number>")
 input_arg.add_argument("-rpn1", type=int, help="OSNT SUME generator packet replay no. on nf1. eg. -rpn1 <integer number>")
 input_arg.add_argument("-rpn2", type=int, help="OSNT SUME generator packet replay no. on nf2. eg. -rpn2 <integer number>")
@@ -139,6 +143,19 @@ if (args.ifp2):
 if (args.ifp3):
     set_load_pcap("nf3", args.ifp3)
 
+# Load pcap file
+if (args.ifpt0):
+    set_load_pcap_ts("nf0", args.ifpt0)
+
+if (args.ifpt1):
+    set_load_pcap_ts("nf1", args.ifpt1)
+
+if (args.ifpt2):
+    set_load_pcap_ts("nf2", args.ifpt2)
+
+if (args.ifpt3):
+    set_load_pcap_ts("nf3", args.ifpt3)
+
 # Set packet replay number
 if (args.rpn0 or args.rpn0 == 0):
     set_replay_cnt(0, args.rpn0)
@@ -174,8 +191,12 @@ if (args.ipg2):
 if (args.ipg3):
    ipg_value[3] = args.ipg3
 
-for i in range(4):  
-   set_ipg(i, ipg_value[i])
+if (args.ifpt0 or args.ifpt1 or args.ifpt2 or args.ifpt3):
+   for i in range(4):  
+      set_ipg_ts(i, ipg_value[i])
+else:
+   for i in range(4):  
+      set_ipg(i, ipg_value[i])
 
 # Set TX timestamp position
 if (args.txs0):
