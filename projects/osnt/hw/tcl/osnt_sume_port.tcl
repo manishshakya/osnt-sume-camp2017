@@ -1,6 +1,6 @@
 #
-# Copyright (c) 2016 University of Cambridge
-# Copyright (c) 2016 Jong Hun Han
+# Copyright (c) 2016-2017 University of Cambridge
+# Copyright (c) 2016-2017 Jong Hun Han
 # All rights reserved.
 #
 # This software was developed by University of Cambridge Computer Laboratory
@@ -27,8 +27,11 @@
 
 
 #Create system input and output ports
-create_bd_port -dir I fpga_sysclk_n
-create_bd_port -dir I fpga_sysclk_p
+create_bd_port -dir I -type clk fpga_sysclk_n
+set_property CONFIG.FREQ_HZ 200000000 [get_bd_ports fpga_sysclk_n]
+create_bd_port -dir I -type clk fpga_sysclk_p
+set_property CONFIG.FREQ_HZ 200000000 [get_bd_ports fpga_sysclk_p]
+
 create_bd_port -dir I -type rst reset
 set_property -dict [list CONFIG.POLARITY {ACTIVE_HIGH}] [get_bd_ports reset]
 create_bd_port -dir I sfp_refclk_n

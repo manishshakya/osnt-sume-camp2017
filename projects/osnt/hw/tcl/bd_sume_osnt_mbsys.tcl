@@ -1,6 +1,6 @@
 #
-# Copyright (c) 2016 University of Cambridge
-# Copyright (c) 2016 Jong Hun Han
+# Copyright (c) 2016-2017 University of Cambridge
+# Copyright (c) 2016-2017 Jong Hun Han
 # All rights reserved.
 #
 # This software was developed by University of Cambridge Computer Laboratory
@@ -147,7 +147,7 @@ proc create_hier_cell_mbsys { parentCell nameHier } {
    set mdm_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:mdm:3.2 mdm_1 ]
 
    # Create instance: microblaze_0, and set properties
-   set microblaze_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:microblaze:9.6 microblaze_0 ]
+   set microblaze_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:microblaze:10.0 microblaze_0 ]
    set_property -dict [ list CONFIG.C_DEBUG_ENABLED {1} CONFIG.C_D_AXI {1} CONFIG.C_D_LMB {1} CONFIG.C_I_LMB {1}  ] $microblaze_0
 
    # Create instance: microblaze_0_axi_intc, and set properties

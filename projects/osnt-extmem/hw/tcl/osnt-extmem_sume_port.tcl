@@ -27,8 +27,8 @@
 
 
 #Create system input and output ports
-create_bd_port -dir I fpga_sysclk_n
-create_bd_port -dir I fpga_sysclk_p
+create_bd_port -dir I -type clk fpga_sysclk_n
+create_bd_port -dir I -type clk fpga_sysclk_p
 set_property CONFIG.FREQ_HZ 200000000 [get_bd_ports fpga_sysclk_p]
 set_property CONFIG.FREQ_HZ 200000000 [get_bd_ports fpga_sysclk_n]
 

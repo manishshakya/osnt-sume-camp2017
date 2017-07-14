@@ -169,9 +169,15 @@ generate_target all [get_files ./${project_dir}/system.srcs/sources_1/bd/system/
 make_wrapper -files [get_files ./${project_dir}/system.srcs/sources_1/bd/system/system.bd] -top
 add_files -norecurse ./${project_dir}/system.srcs/sources_1/bd/system/hdl/system_wrapper.v
 
-set_property top system_wrapper [current_fileset]
+#set_property top system_wrapper [current_fileset]
 update_compile_order -fileset sources_1
 update_compile_order -fileset sim_1
+
+set_property synth_checkpoint_mode None [get_files ./${project_dir}/system.srcs/sources_1/bd/system/system.bd]
+generate_target all [get_files ./${project_dir}/system.srcs/sources_1/bd/system/system.bd]
+export_ip_user_files -of_objects [get_files ./${project_dir}/system.srcs/sources_1/bd/system/system.bd] -no_script -sync -force -quiet
+
+launch_runs synth_1 -jobs 4
 
 #### Start synthesis and implementation
 synth_design -rtl -name rtl_1

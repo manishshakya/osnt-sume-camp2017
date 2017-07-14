@@ -49,7 +49,7 @@ read_verilog "./hdl/verilog/packet_analyzer/packet_analyzer.v"
 read_verilog "./hdl/verilog/packet_analyzer/tuple_packet_analyzer.v"
 read_verilog "./hdl/verilog/packet_analyzer/packet_monitor.v"
 
-add_file "./hdl/verilog/packet_analyzer/network_protocol_combinations.inc"
+#add_file "./hdl/verilog/packet_analyzer/network_protocol_combinations.inc"
 read_verilog "./hdl/verilog/packet_analyzer/network_protocol_combinations/ETH_IPv4_TCPnUDP.v"
 read_verilog "./hdl/verilog/packet_analyzer/network_protocol_combinations/tuple_ETH_IPv4_TCPnUDP.v"
 read_verilog "./hdl/verilog/packet_analyzer/network_protocol_combinations/ETH_VLAN_IPv4_TCPnUDP.v"

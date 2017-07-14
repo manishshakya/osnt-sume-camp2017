@@ -364,8 +364,8 @@ ddr3B_fifo_conv_b2m_0
 );
 
 //64->448
-ddr3A_fifo_conv_b2m_1
-ddr3A_fifo_conv_b2m_1
+ddr3B_fifo_conv_b2m_1
+ddr3B_fifo_conv_b2m_1
 (
    .aclk                   (  clk                     ),
    .aresetn                (  resetn                  ),
@@ -460,8 +460,8 @@ ddr3B_async_fifo_m2b_1
 );
 
 //64-256
-ddr3A_fifo_conv_m2b_1
-ddr3A_fifo_conv_m2b_1
+ddr3B_fifo_conv_m2b_1
+ddr3B_fifo_conv_m2b_1
 (
    .aclk                   (  clk                     ),
    .aresetn                (  resetn                  ),
@@ -482,8 +482,8 @@ ddr3A_fifo_conv_m2b_1
 );
 
 //448->64
-ddr3A_fifo_conv_m2b_0
-ddr3A_fifo_conv_m2b_0
+ddr3B_fifo_conv_m2b_0
+ddr3B_fifo_conv_m2b_0
 (
    .aclk                   (  clk                     ),
    .aresetn                (  resetn                  ),
